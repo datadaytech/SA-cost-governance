@@ -1,15 +1,12 @@
-<nav search_view="search" color="#5C6773">
-  <view name="cost_dashboard" default="true" />
-  <view name="license_usage" />
-  <view name="search_costs" />
-  <view name="index_allocation" />
-  <collection label="Reports">
-    <saved name="Cost Governance - Daily License Usage" />
-    <saved name="Cost Governance - Weekly Cost Report" />
-    <saved name="Cost Governance - User Search Activity" />
-  </collection>
-  <collection label="Settings">
-    <view name="cost_settings" />
-  </collection>
-  <view name="search" />
+<nav search_view="search" color="#00d4ff">
+  <view name="scheduled_search_governance" default="true" label="Scheduled Search Governance" />
+  <view name="dashboard_governance" label="Dashboard Governance" />
+  <view name="cost_analysis" label="Cost Analysis" />
+  <view name="audit_history" label="Audit History" />
+  <divider />
+  <view name="governance_demo" label="Demo Preview" />
+  <view name="governance_settings" label="Settings" />
+  <divider />
+  <a href="/manager/SA-cost-governance/saved/searches?app=SA-cost-governance" target="_blank">Manage Searches</a>
+  <a href="/manager/SA-cost-governance/data/lookup-table-files" target="_blank">Lookup Files</a>
 </nav>
