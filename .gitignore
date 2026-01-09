@@ -1,0 +1,28 @@
+# Splunk local configurations (environment-specific)
+local/
+
+# Metadata local
+metadata/local.meta
+
+# Test artifacts
+test-results/
+playwright-report/
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Archives
+*.tar.gz
+*.tgz
+*.zip
