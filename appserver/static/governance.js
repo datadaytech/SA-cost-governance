@@ -5470,7 +5470,7 @@ require([
         var now = Math.floor(Date.now() / 1000);
 
         var updateQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval status = if(status IN ("pending", "notified") AND remediation_deadline < ' + now + ', "disabled", status) ' +
+            '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
             '| outputlookup flagged_searches_lookup';
 
         runSearch(updateQuery, function(err, state) {
