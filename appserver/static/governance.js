@@ -557,10 +557,8 @@ require([
         // Determine which badges to show
         if (statusLower === 'disabled' || statusLower === 'disabled by governance') {
             badges.push('<span class="status-badge disabled" style="' + badgeStyles.disabled + '">DISABLED</span>');
-        } else if (statusLower === 'flagged' || statusLower === 'pending') {
+        } else if (statusLower === 'flagged' || statusLower === 'pending' || statusLower === 'notified') {
             badges.push('<span class="status-badge flagged" style="' + badgeStyles.flagged + '">FLAGGED</span>');
-        } else if (statusLower === 'notified' || statusLower === 'pending remediation') {
-            badges.push('<span class="status-badge notified" style="' + badgeStyles.notified + '">NOTIFIED</span>');
         } else if (statusLower === 'enabled') {
             badges.push('<span class="status-badge enabled" style="' + badgeStyles.enabled + '">ENABLED</span>');
         } else if (statusLower === 'expiring') {
@@ -797,7 +795,7 @@ require([
             ', notification_sent=0' +
             ', notification_time=0' +
             ', remediation_deadline=0' +
-            ', status="flagged"' +
+            ', status="pending"' +
             ', reason="' + escapeString(reason) + '"' +
             ', notes=""]' +
             '| table search_name, search_owner, search_app, flagged_by, flagged_time, notification_sent, notification_time, remediation_deadline, status, reason, notes' +
@@ -937,7 +935,7 @@ require([
                 ', notification_sent=0' +
                 ', notification_time=0' +
                 ', remediation_deadline=0' +
-                ', status="flagged"' +
+                ', status="pending"' +
                 ', reason="' + escapeString(s.reason || 'Manually flagged by administrator') + '"' +
                 ', notes=""]';
         });
@@ -2303,7 +2301,7 @@ require([
                     'notification_sent=0, ' +
                     'notification_time=0, ' +
                     'remediation_deadline=0, ' +
-                    'status="flagged", ' +
+                    'status="pending", ' +
                     'reason="' + escapeString(reason) + '", ' +
                     'notes="" | fields - _time] ' +
                     '| dedup search_name ' +
@@ -3389,7 +3387,7 @@ require([
                         'total': 'Total Scheduled Searches',
                         'suspicious': 'Suspicious Searches',
                         'flagged': 'Currently Flagged',
-                        'pending': 'Pending Remediation',
+                        'pending': 'Flagged',
                         'disabled': 'Auto-Disabled (30 Days)'
                     };
                     var title = titleMap[value] || value;
@@ -4765,7 +4763,7 @@ require([
                 // Also check Status column for flagged states
                 if (!isFlagged && statusColIndex >= 0 && $cells.length > statusColIndex) {
                     var statusText = $cells.eq(statusColIndex).text().trim().toLowerCase();
-                    isFlagged = (statusText === 'flagged' || statusText === 'pending remediation' || statusText === 'disabled by governance');
+                    isFlagged = (statusText === 'flagged' || statusText === 'pending' || statusText === 'notified' || statusText === 'disabled by governance');
                 }
                 // Also check if search name already has a flag emoji
                 if (!isFlagged && searchNameColIndex >= 0 && $cells.length > searchNameColIndex) {
@@ -4843,7 +4841,7 @@ require([
 
                     // Determine status flags
                     isDisabled = (currentStatusText === 'disabled' || currentStatusText === 'disabled by governance' || currentStatusText === 'auto-disabled');
-                    isNotified = (currentStatusText === 'notified' || currentStatusText === 'pending remediation');
+                    isNotified = (currentStatusText === 'notified' || currentStatusText === 'flagged');
                     isSuspiciousStatus = (currentStatusText === 'suspicious');
                 }
 
@@ -5631,7 +5629,7 @@ require([
                 'Suspicious Searches': 'suspicious',
                 'Currently Flagged': 'flagged',
                 'Expiring Soon': 'expiring',
-                'Pending Remediation': 'pending',
+                'Flagged': 'flagged',
                 'Auto-Disabled (This Period)': 'disabled',
                 'Auto-Disabled': 'disabled'
             };

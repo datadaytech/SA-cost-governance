@@ -5,7 +5,7 @@
   <view name="audit_history" label="Audit History" />
   <divider />
   <view name="governance_demo" label="Demo Preview" />
-  <view name="governance_settings" label="Settings" />
+  <view name="governance_settings" label="Governance Settings" />
   <divider />
   <a href="/manager/SA-cost-governance/saved/searches?app=SA-cost-governance" target="_blank">Manage Searches</a>
   <a href="/manager/SA-cost-governance/data/lookup-table-files" target="_blank">Lookup Files</a>

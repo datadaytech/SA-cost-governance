@@ -23,21 +23,69 @@
       <html>
         <p style="color: rgba(255,255,255,0.7);">Choose how often the governance data is refreshed. More frequent updates mean more accurate data but higher resource usage.</p>
       </html>
-      <input type="dropdown" token="cache_schedule" searchWhenChanged="false">
+      <input type="dropdown" token="cache_schedule" searchWhenChanged="true">
         <label>Refresh Frequency</label>
-        <choice value="*/5 * * * *">Every 5 minutes (High accuracy)</choice>
-        <choice value="*/15 * * * *">Every 15 minutes (Balanced)</choice>
-        <choice value="*/30 * * * *">Every 30 minutes (Low impact)</choice>
+        <choice value="*/30 * * * *">Every 30 minutes</choice>
         <choice value="0 * * * *">Hourly</choice>
-        <choice value="0 2 * * *">Daily at 2:00 AM (Recommended for low volume)</choice>
-        <choice value="0 6 * * *">Daily at 6:00 AM</choice>
-        <default>*/5 * * * *</default>
+        <choice value="3 2 * * *">Daily at 2:03 AM (Recommended)</choice>
+        <choice value="6 6 * * *">Daily at 6:06 AM</choice>
+        <choice value="custom">Custom Schedule...</choice>
+        <default>3 2 * * *</default>
+        <change>
+          <condition value="custom">
+            <set token="show_custom_schedule">true</set>
+          </condition>
+          <condition>
+            <unset token="show_custom_schedule"></unset>
+          </condition>
+        </change>
       </input>
+      <html depends="$show_custom_schedule$">
+        <div style="background: rgba(0,109,156,0.1); border: 1px solid rgba(0,109,156,0.3); border-radius: 6px; padding: 15px; margin-top: 10px;">
+          <p style="color: rgba(255,255,255,0.8); margin-bottom: 12px;"><strong>Custom Schedule</strong></p>
+          <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+            <div>
+              <label style="color: rgba(255,255,255,0.7); font-size: 12px; display: block; margin-bottom: 4px;">Time (e.g., 3:30 AM)</label>
+              <input type="text" id="custom_time_input" placeholder="3:30 AM"
+                     style="padding: 8px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: #fff; width: 120px;"/>
+            </div>
+            <div>
+              <label style="color: rgba(255,255,255,0.7); font-size: 12px; display: block; margin-bottom: 4px;">Days to Run</label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_mon" value="1" style="margin-right: 4px;"/>Mon</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_tue" value="2" style="margin-right: 4px;"/>Tue</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_wed" value="3" style="margin-right: 4px;"/>Wed</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_thu" value="4" style="margin-right: 4px;"/>Thu</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_fri" value="5" style="margin-right: 4px;"/>Fri</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_sat" value="6" style="margin-right: 4px;"/>Sat</label>
+                <label style="color: rgba(255,255,255,0.8); cursor: pointer;"><input type="checkbox" id="day_sun" value="0" style="margin-right: 4px;"/>Sun</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </html>
       <html>
-        <form class="settings-form" style="display: flex; gap: 10px; margin-top: 15px;">
-          <button class="btn btn-primary" onclick="updateCacheSchedule('$cache_schedule$')">Save Schedule</button>
-          <button class="btn" style="background: #53a051; border-color: #53a051;" onclick="runCacheNow()">Run Cache Now</button>
-        </form>
+        <div class="settings-form" style="display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="save_schedule_btn" onclick="saveSchedule()">Save Schedule</button>
+          <button class="btn" id="run_cache_btn" style="background: #53a051; border-color: #53a051;" onclick="runCacheNow()">
+            <span id="run_cache_text">Run Cache Now</span>
+            <span id="run_cache_spinner" style="display: none; margin-left: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </button>
+          <span id="cache_timer" style="display: none; color: #00d4ff; font-weight: 500; margin-left: 10px;"></span>
+          <span id="cache_expected" style="display: none; color: rgba(255,255,255,0.5); font-size: 12px;"></span>
+        </div>
+        <div id="cache_progress_container" style="display: none; margin-top: 12px;">
+          <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden;">
+            <div id="cache_progress_bar" style="background: linear-gradient(90deg, #00d4ff, #53a051); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+        <style>
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        </style>
       </html>
     </panel>
     <panel>
@@ -349,6 +397,55 @@
     </panel>
   </row>
 
+  <row>
+    <panel>
+      <title>Max SVCs per Search</title>
+      <html>
+        <p style="color: rgba(255,255,255,0.7);">Flag searches consuming more than this many SVCs per run.</p>
+      </html>
+      <input type="dropdown" token="new_svc_threshold" searchWhenChanged="true">
+        <label>SVC Threshold</label>
+        <choice value="20">20 SVCs</choice>
+        <choice value="30">30 SVCs (Recommended)</choice>
+        <choice value="40">40 SVCs</choice>
+        <choice value="50">50 SVCs</choice>
+        <choice value="custom">Custom...</choice>
+        <default>30</default>
+        <change>
+          <condition value="custom">
+            <set token="show_custom_svc">true</set>
+          </condition>
+          <condition>
+            <unset token="show_custom_svc"></unset>
+          </condition>
+        </change>
+      </input>
+      <html depends="$show_custom_svc$">
+        <div style="margin-top: 10px;">
+          <label style="color: rgba(255,255,255,0.7); font-size: 12px;">Custom SVC Value:</label>
+          <input type="text" id="custom_svc_input" placeholder="Enter SVCs"
+                 style="padding: 6px 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; color: #fff; width: 100px; margin-left: 8px;"/>
+        </div>
+      </html>
+      <html>
+        <form class="settings-form">
+          <button class="btn btn-primary" onclick="saveSvcThreshold()">Save</button>
+        </form>
+      </html>
+    </panel>
+    <panel>
+      <html>
+        <div style="background: rgba(83,160,81,0.1); border: 1px solid rgba(83,160,81,0.3); border-radius: 6px; padding: 20px; height: 100%;">
+          <h4 style="color: #53a051; margin: 0 0 12px 0;">Save All Thresholds</h4>
+          <p style="color: rgba(255,255,255,0.7); margin-bottom: 15px; font-size: 13px;">Save all threshold settings at once instead of individually.</p>
+          <button class="btn btn-primary" id="save_all_thresholds_btn" onclick="saveAllThresholds()" style="width: 100%;">
+            Save All Thresholds
+          </button>
+        </div>
+      </html>
+    </panel>
+  </row>
+
   <!-- Divider -->
   <row>
     <panel>
@@ -498,13 +595,465 @@
     </panel>
   </row>
 
+  <!-- Pattern Match Modal -->
+  <row>
+    <html>
+      <div id="pattern_modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; overflow-y: auto;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; max-width: 900px; margin: 50px auto; padding: 25px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #00d4ff; margin: 0;" id="pattern_modal_title">Pattern Matches</h3>
+            <button onclick="closePatternModal()" style="background: none; border: none; color: #fff; font-size: 24px; cursor: pointer;">×</button>
+          </div>
+          <div id="pattern_modal_content" style="color: rgba(255,255,255,0.8);">Loading...</div>
+        </div>
+      </div>
+    </html>
+  </row>
+
+  <!-- Unsaved Changes Modal -->
+  <row>
+    <html>
+      <div id="unsaved_modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10001;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 1px solid rgba(248,190,52,0.5); border-radius: 12px; max-width: 450px; margin: 150px auto; padding: 25px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+          <h3 style="color: #f8be34; margin: 0 0 15px 0;">Unsaved Changes</h3>
+          <p style="color: rgba(255,255,255,0.8); margin-bottom: 25px;">You have unsaved changes. Are you sure you want to leave?</p>
+          <div style="display: flex; gap: 15px; justify-content: center;">
+            <button class="btn" onclick="stayOnPage()" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);">Stay on Page</button>
+            <button class="btn" onclick="leaveWithoutSaving()" style="background: #dc4e41; border-color: #dc4e41;">Leave Without Saving</button>
+          </div>
+        </div>
+      </div>
+    </html>
+  </row>
+
   <!-- JavaScript -->
   <row>
     <html>
       <script>
-        function updateSetting(settingName, settingValue, description) {
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        var originalValues = {};
+        var modifiedFields = new Set();
+        var cacheTimerInterval = null;
+        var cacheStartTime = null;
+        var historicalAvgRuntime = null;
+        var pendingNavigation = null;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            captureOriginalValues();
+            setupChangeTracking();
+            loadWastefulPatterns();
+            loadHistoricalRuntime();
+          }, 2000);
+        });
+
+        function captureOriginalValues() {
+          document.querySelectorAll('input[type="text"], select').forEach(function(el) {
+            if (el.id) {
+              originalValues[el.id] = el.value;
+            }
+          });
+        }
+
+        function setupChangeTracking() {
+          document.querySelectorAll('input[type="text"]').forEach(function(el) {
+            el.addEventListener('input', function() {
+              checkFieldChanged(el);
+            });
+          });
+        }
+
+        function checkFieldChanged(el) {
+          if (!el.id) return;
+          var original = originalValues[el.id] || '';
+          if (el.value !== original) {
+            modifiedFields.add(el.id);
+            markFieldUnsaved(el, true);
+          } else {
+            modifiedFields.delete(el.id);
+            markFieldUnsaved(el, false);
+          }
+        }
+
+        function markFieldUnsaved(el, unsaved) {
+          var indicator = el.parentElement.querySelector('.unsaved-indicator');
+          if (unsaved) {
+            if (!indicator) {
+              indicator = document.createElement('span');
+              indicator.className = 'unsaved-indicator';
+              indicator.style.cssText = 'color: #f8be34; font-weight: bold; margin-left: 5px;';
+              indicator.textContent = '*';
+              indicator.title = 'Unsaved changes';
+              el.parentElement.appendChild(indicator);
+            }
+          } else {
+            if (indicator) indicator.remove();
+          }
+        }
+
+        function clearFieldUnsaved(fieldId) {
+          modifiedFields.delete(fieldId);
+          var el = document.getElementById(fieldId);
+          if (el) {
+            markFieldUnsaved(el, false);
+            originalValues[fieldId] = el.value;
+          }
+        }
+
+        // Navigation warning
+        window.addEventListener('beforeunload', function(e) {
+          if (modifiedFields.size > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+            return '';
+          }
+        });
+
+        function stayOnPage() {
+          document.getElementById('unsaved_modal').style.display = 'none';
+          pendingNavigation = null;
+        }
+
+        function leaveWithoutSaving() {
+          modifiedFields.clear();
+          document.getElementById('unsaved_modal').style.display = 'none';
+          if (pendingNavigation) {
+            window.location.href = pendingNavigation;
+          }
+        }
+
+        // ============================================
+        // HISTORICAL RUNTIME
+        // ============================================
+        function loadHistoricalRuntime() {
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            var search = new SearchManager({
+              id: 'load_history_' + Date.now(),
+              search: '| inputlookup governance_cache_history.csv | stats avg(runtime_seconds) as avg_runtime',
+              earliest_time: '-24h',
+              latest_time: 'now',
+              autostart: true
+            });
+            search.on('search:done', function() {
+              var results = search.data('results', {output_mode: 'json_rows'});
+              if (results) {
+                results.on('data', function() {
+                  var rows = results.data().rows || [];
+                  if (rows.length > 0 &amp;&amp; rows[0][0]) {
+                    historicalAvgRuntime = parseFloat(rows[0][0]);
+                  }
+                });
+              }
+            });
+          });
+        }
+
+        function saveRuntimeHistory(runtimeSeconds) {
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            new SearchManager({
+              id: 'save_history_' + Date.now(),
+              search: '| inputlookup governance_cache_history.csv | append [| makeresults | eval runtime_seconds=' + runtimeSeconds + ', run_time=now() | fields - _time] | tail 50 | outputlookup governance_cache_history.csv',
+              earliest_time: '-1h',
+              latest_time: 'now',
+              autostart: true
+            });
+          });
+        }
+
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+        function showToast(message, type) {
+          type = type || 'success';
+          var bgColor = type === 'error' ? '#dc4e41' : '#53a051';
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: ' + bgColor + '; color: white; padding: 12px 20px; border-radius: 6px; z-index: 10000; font-weight: 500; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+          toast.textContent = message;
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 3000);
+        }
+
+        // ============================================
+        // TIMER FORMATTING
+        // ============================================
+        function formatTimer(seconds) {
+          if (seconds &lt; 60) {
+            return 'Running for ' + seconds + ' second' + (seconds !== 1 ? 's' : '');
+          } else if (seconds &lt; 3600) {
+            var mins = Math.floor(seconds / 60);
+            var secs = seconds % 60;
+            return 'Running for ' + mins + ' minute' + (mins !== 1 ? 's' : '') + ' ' + secs + ' second' + (secs !== 1 ? 's' : '');
+          } else {
+            var hours = Math.floor(seconds / 3600);
+            var mins = Math.floor((seconds % 3600) / 60);
+            var secs = seconds % 60;
+            return 'Running for ' + hours + ' hour' + (hours !== 1 ? 's' : '') + ' ' + mins + ' minute' + (mins !== 1 ? 's' : '') + ' ' + secs + ' second' + (secs !== 1 ? 's' : '');
+          }
+        }
+
+        function formatExpectedTime(seconds) {
+          if (!seconds) return '(Expected: N/A)';
+          if (seconds &lt; 60) {
+            return '(Expected: ~' + Math.round(seconds) + ' sec)';
+          } else {
+            return '(Expected: ~' + Math.round(seconds / 60) + ' min)';
+          }
+        }
+
+        // ============================================
+        // RUN CACHE NOW - ENHANCED
+        // ============================================
+        function runCacheNow() {
+          var btn = document.getElementById('run_cache_btn');
+          var textEl = document.getElementById('run_cache_text');
+          var spinnerEl = document.getElementById('run_cache_spinner');
+          var timerEl = document.getElementById('cache_timer');
+          var expectedEl = document.getElementById('cache_expected');
+          var progressContainer = document.getElementById('cache_progress_container');
+          var progressBar = document.getElementById('cache_progress_bar');
+
+          // Disable button and show spinner
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+          btn.style.cursor = 'not-allowed';
+          textEl.textContent = 'Running...';
+          spinnerEl.style.display = 'inline';
+
+          // Show timer and expected time
+          timerEl.style.display = 'inline';
+          timerEl.textContent = 'Running for 0 seconds';
+          expectedEl.style.display = 'inline';
+          expectedEl.textContent = formatExpectedTime(historicalAvgRuntime);
+
+          // Show progress bar
+          progressContainer.style.display = 'block';
+          progressBar.style.width = '0%';
+
+          // Start timer
+          cacheStartTime = Date.now();
+          var elapsedSeconds = 0;
+          cacheTimerInterval = setInterval(function() {
+            elapsedSeconds = Math.floor((Date.now() - cacheStartTime) / 1000);
+            timerEl.textContent = formatTimer(elapsedSeconds);
+
+            // Update progress bar if we have historical data
+            if (historicalAvgRuntime) {
+              var progress = Math.min((elapsedSeconds / historicalAvgRuntime) * 100, 95);
+              progressBar.style.width = progress + '%';
+            } else {
+              // Indeterminate progress animation
+              var indeterminate = (elapsedSeconds * 3) % 100;
+              progressBar.style.width = indeterminate + '%';
+            }
+          }, 1000);
+
+          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
+            var cacheSearch = new SearchManager({
+              id: 'cost_cache_' + Date.now(),
+              search: '| `analyze_search_costs` | eval cache_time=now() | outputlookup governance_search_cache.csv',
+              earliest_time: '-1h',
+              latest_time: 'now',
+              preview: false,
+              cache: false,
+              autostart: true
+            });
+
+            cacheSearch.on('search:done', function(props) {
+              clearInterval(cacheTimerInterval);
+              var totalSeconds = Math.floor((Date.now() - cacheStartTime) / 1000);
+              var resultCount = props.content.resultCount || 0;
+
+              // Save runtime to history
+              saveRuntimeHistory(totalSeconds);
+
+              // Complete progress bar
+              progressBar.style.width = '100%';
+
+              // Reset button state
+              setTimeout(function() {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+                textEl.textContent = 'Run Cache Now';
+                spinnerEl.style.display = 'none';
+                timerEl.style.display = 'none';
+                expectedEl.style.display = 'none';
+                progressContainer.style.display = 'none';
+              }, 1500);
+
+              showToast('Cache refreshed successfully! ' + resultCount + ' searches in ' + formatTimer(totalSeconds).replace('Running for ', ''));
+
+              // Refresh the Last Cache Refresh panel
+              setTimeout(function() {
+                var refreshPanel = document.querySelector('[data-panel-ref="last_cache_refresh"]');
+                if (refreshPanel) refreshPanel.click();
+                // Force page refresh to update panel
+                location.reload();
+              }, 2000);
+            });
+
+            cacheSearch.on('search:error', function(err) {
+              clearInterval(cacheTimerInterval);
+              resetCacheButton();
+              showToast('Error running cache: ' + (err.message || err), 'error');
+            });
+
+            cacheSearch.on('search:fail', function(err) {
+              clearInterval(cacheTimerInterval);
+              resetCacheButton();
+              showToast('Cache failed: ' + (err.message || err), 'error');
+            });
+          });
+        }
+
+        function resetCacheButton() {
+          var btn = document.getElementById('run_cache_btn');
+          var textEl = document.getElementById('run_cache_text');
+          var spinnerEl = document.getElementById('run_cache_spinner');
+          var timerEl = document.getElementById('cache_timer');
+          var expectedEl = document.getElementById('cache_expected');
+          var progressContainer = document.getElementById('cache_progress_container');
+
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+          textEl.textContent = 'Run Cache Now';
+          spinnerEl.style.display = 'none';
+          timerEl.style.display = 'none';
+          expectedEl.style.display = 'none';
+          progressContainer.style.display = 'none';
+        }
+
+        // ============================================
+        // SCHEDULE FUNCTIONS
+        // ============================================
+        function parseCustomTime(timeStr) {
+          // Parse time like "3:30 AM", "3:30AM", "15:30", etc.
+          var match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM|am|pm)?/i);
+          if (!match) return null;
+
+          var hour = parseInt(match[1], 10);
+          var minute = parseInt(match[2] || '0', 10);
+          var period = (match[3] || '').toUpperCase();
+
+          if (period === 'PM' &amp;&amp; hour !== 12) hour += 12;
+          if (period === 'AM' &amp;&amp; hour === 12) hour = 0;
+
+          if (hour &lt; 0 || hour > 23 || minute &lt; 0 || minute > 59) return null;
+
+          return { hour: hour, minute: minute };
+        }
+
+        function buildCronExpression(time, days) {
+          // days is array of day numbers (0=Sun, 1=Mon, etc.)
+          var dayStr = days.length === 7 || days.length === 0 ? '*' : days.join(',');
+          return time.minute + ' ' + time.hour + ' * * ' + dayStr;
+        }
+
+        function saveSchedule() {
+          var btn = document.getElementById('save_schedule_btn');
+          var originalText = btn.textContent;
+
+          // Get selected schedule from dropdown
+          var scheduleDropdown = document.querySelector('[data-token-name="cache_schedule"]');
+          var schedule = null;
+
+          // Check if using Splunk token
+          require(['splunkjs/mvc'], function(mvc) {
+            var tokens = mvc.Components.get('default');
+            var selectedSchedule = tokens ? tokens.get('cache_schedule') : null;
+
+            if (selectedSchedule === 'custom') {
+              // Build custom schedule
+              var timeInput = document.getElementById('custom_time_input');
+              if (!timeInput || !timeInput.value.trim()) {
+                showToast('Please enter a time for the custom schedule', 'error');
+                return;
+              }
+
+              var parsedTime = parseCustomTime(timeInput.value.trim());
+              if (!parsedTime) {
+                showToast('Invalid time format. Use format like "3:30 AM"', 'error');
+                return;
+              }
+
+              var selectedDays = [];
+              ['day_mon', 'day_tue', 'day_wed', 'day_thu', 'day_fri', 'day_sat', 'day_sun'].forEach(function(id) {
+                var cb = document.getElementById(id);
+                if (cb &amp;&amp; cb.checked) {
+                  selectedDays.push(cb.value);
+                }
+              });
+
+              schedule = buildCronExpression(parsedTime, selectedDays);
+            } else {
+              schedule = selectedSchedule;
+            }
+
+            if (!schedule || schedule.indexOf('$') === 0) {
+              showToast('Please select a schedule', 'error');
+              return;
+            }
+
+            // Disable button and show saving state
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            var service = mvc.createService();
+            var savedSearches = service.savedSearches({owner: 'admin', app: 'SA-cost-governance'});
+
+            savedSearches.fetch(function(err, savedSearches) {
+              if (err) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                showToast('Error: ' + err, 'error');
+                return;
+              }
+
+              var cacheSearch = savedSearches.item('Governance - Populate Search Cache');
+              if (cacheSearch) {
+                cacheSearch.update({cron_schedule: schedule}, function(err) {
+                  if (err) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    showToast('Error updating schedule: ' + err, 'error');
+                  } else {
+                    // Show success state
+                    btn.textContent = 'Saved ✓';
+                    btn.style.background = '#53a051';
+                    showToast('Schedule saved: ' + schedule);
+
+                    // Save to lookup
+                    updateSetting('cache_schedule', schedule, 'Cache refresh schedule');
+
+                    setTimeout(function() {
+                      btn.disabled = false;
+                      btn.textContent = originalText;
+                      btn.style.background = '';
+                    }, 2000);
+                  }
+                });
+              } else {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                showToast('Saved search not found', 'error');
+              }
+            });
+          });
+        }
+
+        // ============================================
+        // SETTING FUNCTIONS
+        // ============================================
+        function updateSetting(settingName, settingValue, description, callback) {
           if (!settingValue || settingValue.indexOf('$') === 0) {
-            alert('Please enter a valid value');
+            showToast('Please enter a valid value', 'error');
             return;
           }
 
@@ -513,7 +1062,7 @@
             '| dedup setting_name ' +
             '| outputlookup governance_settings_lookup';
 
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
             var updateSearch = new SearchManager({
               id: 'update_setting_' + Date.now(),
               search: searchQuery,
@@ -524,147 +1073,131 @@
 
             updateSearch.on('search:done', function() {
               showToast('Setting "' + settingName + '" saved successfully');
+              if (callback) callback();
             });
 
             updateSearch.on('search:error', function(err) {
-              alert('Error updating setting: ' + err);
+              showToast('Error updating setting: ' + err, 'error');
             });
           });
         }
 
-        function updateCacheSchedule(schedule) {
-          if (!schedule || schedule.indexOf('$') === 0) {
-            alert('Please select a schedule');
-            return;
-          }
+        // ============================================
+        // SVC THRESHOLD
+        // ============================================
+        function saveSvcThreshold() {
+          require(['splunkjs/mvc'], function(mvc) {
+            var tokens = mvc.Components.get('default');
+            var selectedValue = tokens ? tokens.get('new_svc_threshold') : null;
+            var value;
 
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
-            // Update the saved search cron_schedule via REST API
-            var updateSearch = new SearchManager({
-              id: 'update_cache_schedule_' + Date.now(),
-              search: '| rest splunk_server=local /servicesNS/admin/SA-cost-governance/saved/searches/Governance%20-%20Populate%20Search%20Cache ' +
-                      '| eval new_cron="' + schedule + '" ' +
-                      '| map maxsearches=1 search="| makeresults | eval status=\\"updating\\" | outputlookup governance_settings_lookup append=true where setting_name=\\"cache_schedule_update\\""',
-              earliest_time: '-1h',
-              latest_time: 'now',
-              autostart: true
-            });
-
-            // Use splunkjs Service to directly update the saved search
-            var service = mvc.createService();
-            var savedSearches = service.savedSearches({owner: 'admin', app: 'SA-cost-governance'});
-
-            savedSearches.fetch(function(err, savedSearches) {
-              if (err) {
-                alert('Error fetching saved searches: ' + err);
+            if (selectedValue === 'custom') {
+              var customInput = document.getElementById('custom_svc_input');
+              if (!customInput || !customInput.value.trim()) {
+                showToast('Please enter a custom SVC value', 'error');
                 return;
               }
+              value = parseInt(customInput.value.trim(), 10);
+              if (isNaN(value) || value &lt;= 0) {
+                showToast('Please enter a valid positive number', 'error');
+                return;
+              }
+            } else {
+              value = selectedValue;
+            }
 
-              var cacheSearch = savedSearches.item('Governance - Populate Search Cache');
-              if (cacheSearch) {
-                cacheSearch.update({cron_schedule: schedule}, function(err) {
-                  if (err) {
-                    alert('Error updating saved search schedule: ' + err);
-                  } else {
-                    // Also save to settings lookup for reference
-                    updateSetting('cache_schedule', schedule, 'Cache refresh schedule');
-                    showToast('Cache schedule updated to: ' + schedule);
-                  }
+            updateSetting('svc_threshold', value, 'Max SVCs per search threshold');
+          });
+        }
+
+        // ============================================
+        // SAVE ALL THRESHOLDS
+        // ============================================
+        function saveAllThresholds() {
+          var btn = document.getElementById('save_all_thresholds_btn');
+          var originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Saving All...';
+
+          require(['splunkjs/mvc'], function(mvc) {
+            var tokens = mvc.Components.get('default');
+
+            var settings = [
+              { name: 'runtime_ratio_threshold', token: 'new_runtime_ratio', desc: 'Max runtime as % of schedule' },
+              { name: 'high_frequency_threshold', token: 'new_frequency_threshold', desc: 'Min seconds between runs' },
+              { name: 'long_runtime_threshold', token: 'new_runtime_threshold', desc: 'Runtime threshold in seconds' },
+              { name: 'remediation_days', token: 'new_remediation_days', desc: 'Days for remediation' },
+              { name: 'svc_threshold', token: 'new_svc_threshold', desc: 'Max SVCs per search' }
+            ];
+
+            var completed = 0;
+            var total = settings.length;
+
+            settings.forEach(function(setting) {
+              var value = tokens ? tokens.get(setting.token) : null;
+
+              // Handle custom SVC value
+              if (setting.name === 'svc_threshold' &amp;&amp; value === 'custom') {
+                var customInput = document.getElementById('custom_svc_input');
+                value = customInput ? customInput.value.trim() : null;
+              }
+
+              if (value &amp;&amp; value.indexOf('$') !== 0) {
+                var searchQuery = '| inputlookup governance_settings_lookup ' +
+                  '| append [| makeresults | eval setting_name="' + setting.name + '", setting_value="' + value + '", description="' + setting.desc + '" | fields - _time] ' +
+                  '| dedup setting_name ' +
+                  '| outputlookup governance_settings_lookup';
+
+                require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+                  var search = new SearchManager({
+                    id: 'save_threshold_' + setting.name + '_' + Date.now(),
+                    search: searchQuery,
+                    earliest_time: '-1h',
+                    latest_time: 'now',
+                    autostart: true
+                  });
+
+                  search.on('search:done', function() {
+                    completed++;
+                    if (completed >= total) {
+                      btn.textContent = 'All Saved ✓';
+                      btn.style.background = '#53a051';
+                      showToast('All thresholds saved successfully!');
+                      setTimeout(function() {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                      }, 2000);
+                    }
+                  });
                 });
               } else {
-                alert('Saved search "Governance - Populate Search Cache" not found');
-              }
-            });
-          });
-        }
-
-        function runCacheNow() {
-          // Run the analyze_search_costs macro and store the job SID for loadjob access
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
-            showToast('Running cost analysis cache (this may take a moment)...');
-
-            // Run the macro with a long TTL so results persist for loadjob
-            var cacheSearch = new SearchManager({
-              id: 'cost_cache_' + Date.now(),
-              search: '| `analyze_search_costs` | eval cache_time=now()',
-              earliest_time: '-1h',
-              latest_time: 'now',
-              preview: false,
-              cache: false,
-              autostart: true
-            });
-
-            cacheSearch.on('search:done', function(props) {
-              var resultCount = props.content.resultCount || 0;
-              var sid = cacheSearch.job.sid;
-
-              // Store the SID in a lookup for subsequent loadjob access
-              var storeSidSearch = new SearchManager({
-                id: 'store_sid_' + Date.now(),
-                search: '| makeresults | eval cache_sid="' + sid + '", cache_time=now(), result_count=' + resultCount + ' | fields - _time | outputlookup governance_cache_sid_lookup',
-                earliest_time: '-1h',
-                latest_time: 'now',
-                autostart: true
-              });
-
-              storeSidSearch.on('search:done', function() {
-                showToast('Cache refreshed! SID: ' + sid.substring(0, 20) + '... (' + resultCount + ' searches)');
-
-                // Set the job TTL to 24 hours so loadjob can access it
-                setJobTTL(sid, 86400);
-
-                setTimeout(function() { location.reload(); }, 2000);
-              });
-            });
-
-            cacheSearch.on('search:error', function(err) {
-              alert('Error running cache: ' + (err.message || err));
-            });
-
-            cacheSearch.on('search:fail', function(err) {
-              alert('Cache failed: ' + (err.message || err));
-            });
-          });
-        }
-
-        function setJobTTL(sid, ttl) {
-          // Set the job TTL via REST API so loadjob can access results later
-          require(['jquery'], function($) {
-            $.ajax({
-              url: '/en-US/splunkd/__raw/services/search/jobs/' + encodeURIComponent(sid) + '/control',
-              type: 'POST',
-              data: { action: 'setttl', ttl: ttl },
-              success: function() {
-                console.log('Job TTL set to ' + ttl + ' seconds');
-              },
-              error: function(err) {
-                console.log('Could not set job TTL:', err);
+                completed++;
               }
             });
           });
         }
 
         // ============================================
-        // WASTEFUL SPL PATTERNS FUNCTIONS
+        // WASTEFUL PATTERNS
         // ============================================
-
         function addWastefulPattern() {
           var pattern = document.getElementById('custom_pattern_input').value.trim();
           var description = document.getElementById('custom_pattern_desc').value.trim() || 'Custom pattern';
 
           if (!pattern) {
-            alert('Please enter a pattern');
+            showToast('Please enter a pattern', 'error');
             return;
           }
 
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc'], function(SearchManager, mvc) {
-            var escapedPattern = pattern.replace(/"/g, '\\"').replace(/\|/g, '\\|');
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            var escapedPattern = pattern.replace(/"/g, '\\"').replace(/\\/g, '\\\\');
             var escapedDesc = description.replace(/"/g, '\\"');
 
             var addSearch = new SearchManager({
               id: 'add_wasteful_pattern_' + Date.now(),
               search: '| inputlookup wasteful_patterns_lookup ' +
-                      '| append [| makeresults | eval pattern="' + escapedPattern + '", description="' + escapedDesc + '", added_by="' + (Splunk.util.getCurrentApp ? Splunk.util.getUsername() : 'admin') + '", added_time=now() | fields - _time] ' +
+                      '| append [| makeresults | eval pattern="' + escapedPattern + '", description="' + escapedDesc + '", added_by="admin", added_time=now() | fields - _time] ' +
                       '| dedup pattern ' +
                       '| outputlookup wasteful_patterns_lookup',
               earliest_time: '-1h',
@@ -673,14 +1206,14 @@
             });
 
             addSearch.on('search:done', function() {
-              showToast('Pattern "' + pattern + '" added successfully');
+              showToast('Pattern added! Run cache to detect matches.');
               document.getElementById('custom_pattern_input').value = '';
               document.getElementById('custom_pattern_desc').value = '';
               loadWastefulPatterns();
             });
 
             addSearch.on('search:error', function(err) {
-              alert('Error adding pattern: ' + err);
+              showToast('Error adding pattern: ' + err, 'error');
             });
           });
         }
@@ -689,13 +1222,11 @@
           if (!confirm('Remove pattern "' + pattern + '"?')) return;
 
           require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
-            var escapedPattern = pattern.replace(/"/g, '\\"').replace(/\|/g, '\\|');
+            var escapedPattern = pattern.replace(/"/g, '\\"').replace(/\\/g, '\\\\');
 
             var removeSearch = new SearchManager({
               id: 'remove_wasteful_pattern_' + Date.now(),
-              search: '| inputlookup wasteful_patterns_lookup ' +
-                      '| search pattern!="' + escapedPattern + '" ' +
-                      '| outputlookup wasteful_patterns_lookup',
+              search: '| inputlookup wasteful_patterns_lookup | where pattern!="' + escapedPattern + '" | outputlookup wasteful_patterns_lookup',
               earliest_time: '-1h',
               latest_time: 'now',
               autostart: true
@@ -709,7 +1240,8 @@
         }
 
         function loadWastefulPatterns() {
-          require(['splunkjs/mvc/searchmanager', 'splunkjs/mvc/resultslinkview'], function(SearchManager, ResultsLinkView) {
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            // First load patterns, then get match counts from cache
             var loadSearch = new SearchManager({
               id: 'load_wasteful_patterns_' + Date.now(),
               search: '| inputlookup wasteful_patterns_lookup | table pattern, description',
@@ -718,7 +1250,7 @@
               autostart: true
             });
 
-            loadSearch.on('search:done', function(props) {
+            loadSearch.on('search:done', function() {
               var results = loadSearch.data('results', {output_mode: 'json_rows'});
               if (results) {
                 results.on('data', function() {
@@ -730,40 +1262,176 @@
                     return;
                   }
 
-                  var html = '<p style="color: rgba(255,255,255,0.7); margin-bottom: 8px;"><strong>Custom Patterns</strong>:</p>';
-                  html += '<table style="width: 100%; color: rgba(255,255,255,0.8);">';
-                  rows.forEach(function(row) {
-                    var pattern = row[0];
-                    var desc = row[1];
-                    html += '<tr>' +
-                            '<td style="padding: 6px 0;"><code style="background: rgba(0,109,156,0.3); padding: 2px 8px; border-radius: 3px;">' + pattern + '</code></td>' +
-                            '<td>' + desc + '</td>' +
-                            '<td style="width: 60px; text-align: right;"><button class="btn btn-default btn-small" onclick="removeWastefulPattern(\'' + pattern.replace(/'/g, String.fromCharCode(92,39)) + '\')" style="padding: 2px 8px; font-size: 11px;">Remove</button></td>' +
-                            '</tr>';
-                  });
-                  html += '</table>';
-                  container.innerHTML = html;
+                  // Load match counts from cache
+                  loadPatternMatchCounts(rows, container);
                 });
               }
             });
           });
         }
 
+        function loadPatternMatchCounts(patterns, container) {
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            var html = '<p style="color: rgba(255,255,255,0.7); margin-bottom: 8px;"><strong>Custom Patterns</strong> <span style="font-size: 11px; color: rgba(255,255,255,0.5);">(click pattern to view matches)</span>:</p>';
+            html += '<table style="width: 100%; color: rgba(255,255,255,0.8);">';
+
+            patterns.forEach(function(row) {
+              var pattern = row[0];
+              var desc = row[1];
+              var escapedPattern = pattern.replace(/'/g, String.fromCharCode(92,39)).replace(/"/g, '&quot;');
+
+              html += '<tr style="cursor: pointer;" onclick="openPatternModal(\'' + escapedPattern + '\')">' +
+                      '<td style="padding: 8px 0;"><code style="background: rgba(0,109,156,0.3); padding: 2px 8px; border-radius: 3px;">' + escapeHtml(pattern) + '</code></td>' +
+                      '<td>' + escapeHtml(desc) + '</td>' +
+                      '<td style="width: 80px; text-align: center;"><span class="pattern-count-' + hashCode(pattern) + '" style="background: rgba(0,212,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 11px;">...</span></td>' +
+                      '<td style="width: 60px; text-align: right;"><button class="btn btn-default btn-small" onclick="event.stopPropagation(); removeWastefulPattern(\'' + escapedPattern + '\')" style="padding: 2px 8px; font-size: 11px;">Remove</button></td>' +
+                      '</tr>';
+            });
+            html += '</table>';
+            container.innerHTML = html;
+
+            // Now load match counts from cache
+            var countSearch = new SearchManager({
+              id: 'count_matches_' + Date.now(),
+              search: '| inputlookup governance_search_cache.csv | eval search_lower=lower(search) | stats count by search_lower | head 1000',
+              earliest_time: '-1h',
+              latest_time: 'now',
+              autostart: true
+            });
+
+            countSearch.on('search:done', function() {
+              patterns.forEach(function(row) {
+                var pattern = row[0].toLowerCase();
+                var countEl = document.querySelector('.pattern-count-' + hashCode(row[0]));
+                if (countEl) {
+                  // Simple count - would need more complex logic for real regex matching
+                  countEl.textContent = '? matches';
+                }
+              });
+            });
+          });
+        }
+
+        function hashCode(str) {
+          var hash = 0;
+          for (var i = 0; i &lt; str.length; i++) {
+            hash = ((hash &lt;&lt; 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+          }
+          return Math.abs(hash);
+        }
+
+        function escapeHtml(str) {
+          return str.replace(/&amp;/g, '&amp;amp;').replace(/&lt;/g, '&amp;lt;').replace(/&gt;/g, '&amp;gt;').replace(/"/g, '&amp;quot;');
+        }
+
+        function openPatternModal(pattern) {
+          document.getElementById('pattern_modal').style.display = 'block';
+          document.getElementById('pattern_modal_title').textContent = 'Searches Matching: ' + pattern;
+          document.getElementById('pattern_modal_content').innerHTML = '<p style="text-align: center;">Loading matches from cache...</p>';
+
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            var escapedPattern = pattern.replace(/"/g, '\\"').replace(/\\/g, '\\\\');
+
+            var matchSearch = new SearchManager({
+              id: 'pattern_matches_' + Date.now(),
+              search: '| inputlookup governance_search_cache.csv | where like(lower(search), "%' + escapedPattern.toLowerCase() + '%") | lookup ok_searches_lookup search_name as title OUTPUT status as ok_status | eval display_status=if(isnotnull(ok_status) AND ok_status="ok", "OK (Approved)", if(is_suspicious=1, "Suspicious", "OK")) | table title, owner, app, display_status | rename title as "Search Name", owner as "Owner", app as "App", display_status as "Status"',
+              earliest_time: '-1h',
+              latest_time: 'now',
+              autostart: true
+            });
+
+            matchSearch.on('search:done', function(props) {
+              var results = matchSearch.data('results', {output_mode: 'json_rows'});
+              if (results) {
+                results.on('data', function() {
+                  var rows = results.data().rows || [];
+                  var fields = results.data().fields || [];
+
+                  if (rows.length === 0) {
+                    document.getElementById('pattern_modal_content').innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5);">No searches match this pattern in the cache.</p>';
+                    return;
+                  }
+
+                  var html = '<p style="margin-bottom: 15px;">Found <strong>' + rows.length + '</strong> matching searches:</p>';
+                  html += '<table style="width: 100%; border-collapse: collapse;">';
+                  html += '<thead><tr style="border-bottom: 1px solid rgba(255,255,255,0.2);">';
+                  fields.forEach(function(f) {
+                    html += '<th style="padding: 8px; text-align: left; color: #00d4ff;">' + f + '</th>';
+                  });
+                  html += '<th style="padding: 8px; text-align: center; color: #00d4ff;">Action</th>';
+                  html += '</tr></thead><tbody>';
+
+                  rows.forEach(function(row) {
+                    var status = row[3] || 'OK';
+                    var statusColor = status.indexOf('Suspicious') >= 0 ? '#f8be34' : (status.indexOf('Approved') >= 0 ? '#53a051' : 'rgba(255,255,255,0.8)');
+                    var searchName = row[0];
+
+                    html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">';
+                    html += '<td style="padding: 8px;">' + escapeHtml(row[0]) + '</td>';
+                    html += '<td style="padding: 8px;">' + escapeHtml(row[1]) + '</td>';
+                    html += '<td style="padding: 8px;">' + escapeHtml(row[2]) + '</td>';
+                    html += '<td style="padding: 8px; color: ' + statusColor + ';">' + status + '</td>';
+                    html += '<td style="padding: 8px; text-align: center;">';
+                    if (status.indexOf('Approved') >= 0) {
+                      html += '<button class="btn btn-small" onclick="reflagSearch(\'' + escapeHtml(searchName).replace(/'/g, String.fromCharCode(92,39)) + '\')" style="padding: 2px 8px; font-size: 11px; background: #f8be34; border-color: #f8be34;">Re-flag</button>';
+                    }
+                    html += '</td>';
+                    html += '</tr>';
+                  });
+
+                  html += '</tbody></table>';
+                  document.getElementById('pattern_modal_content').innerHTML = html;
+                });
+              }
+            });
+
+            matchSearch.on('search:error', function(err) {
+              document.getElementById('pattern_modal_content').innerHTML = '<p style="color: #dc4e41;">Error loading matches: ' + err + '</p>';
+            });
+          });
+        }
+
+        function closePatternModal() {
+          document.getElementById('pattern_modal').style.display = 'none';
+        }
+
+        function reflagSearch(searchName) {
+          if (!confirm('Mark "' + searchName + '" as Suspicious?')) return;
+
+          require(['splunkjs/mvc/searchmanager'], function(SearchManager) {
+            var removeOk = new SearchManager({
+              id: 'reflag_' + Date.now(),
+              search: '| inputlookup ok_searches_lookup | where search_name!="' + searchName.replace(/"/g, '\\"') + '" | outputlookup ok_searches_lookup',
+              earliest_time: '-1h',
+              latest_time: 'now',
+              autostart: true
+            });
+
+            removeOk.on('search:done', function() {
+              showToast('Search marked as Suspicious');
+              closePatternModal();
+            });
+          });
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') {
+            closePatternModal();
+            document.getElementById('unsaved_modal').style.display = 'none';
+          }
+        });
+
         // Load patterns on page load
         setTimeout(loadWastefulPatterns, 2000);
-
-        function showToast(message) {
-          var toast = document.createElement('div');
-          toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #53a051; color: white; padding: 12px 20px; border-radius: 6px; z-index: 10000; font-weight: 500;';
-          toast.textContent = message;
-          document.body.appendChild(toast);
-          setTimeout(function() { toast.remove(); }, 3000);
-        }
       </script>
       <style>
         .settings-form { margin-top: 10px; }
         #cost_config_table .shared-resultstable-resultstablerow { cursor: default !important; }
         #cost_config_table .shared-resultstable-resultstablerow:hover { background: transparent !important; }
+        .unsaved-indicator { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
       </style>
     </html>
   </row>

@@ -163,12 +163,13 @@
           <query>| inputlookup governance_search_cache.csv
 | where (disabled="0" OR disabled=0) AND is_suspicious=1
 | lookup flagged_searches_lookup search_name as title OUTPUT status as flag_status, remediation_deadline
-| eval is_flagged = if(isnotnull(flag_status) AND (flag_status="pending" OR flag_status="notified"), "Yes", "No")
+| eval is_flagged = if(isnotnull(flag_status) AND (flag_status="pending" OR flag_status="notified" OR flag_status="flagged"), "Yes", "No")
 | eval governance_status = case(
-    flag_status="disabled", "Disabled by Governance",
+    flag_status="disabled", "Disabled",
     flag_status="review", "Under Review",
-    flag_status="notified", "Pending Remediation",
+    flag_status="notified", "Flagged",
     flag_status="pending", "Flagged",
+    flag_status="flagged", "Flagged",
     is_suspicious=1, "Suspicious",
     1=1, "OK")
 | eval days_remaining = case(
@@ -187,7 +188,7 @@
         <option name="rowNumbers">true</option>
         <option name="wrap">true</option>
         <format type="color" field="Status">
-          <colorPalette type="map">{"OK":#53A051,"Suspicious":#F8BE34,"Flagged":#F1813F,"Pending Remediation":#DC4E41,"Disabled by Governance":#708794,"Under Review":#6F42C1}</colorPalette>
+          <colorPalette type="map">{"OK":#53A051,"Suspicious":#F8BE34,"Flagged":#F1813F,"Disabled":#708794,"Under Review":#6F42C1}</colorPalette>
         </format>
         <format type="color" field="Runtime Ratio %">
           <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#53A051"></colorPalette>
@@ -224,7 +225,7 @@
       <input type="dropdown" token="view_filter" searchWhenChanged="true">
         <label>View</label>
         <choice value="all">All Searches</choice>
-        <choice value="flagged">Flagged Only (Pending Remediation)</choice>
+        <choice value="flagged">Flagged Only</choice>
         <choice value="expiring">Expiring Soon (≤3 Days)</choice>
         <choice value="suspicious">Suspicious Only</choice>
         <default>all</default>
@@ -257,8 +258,9 @@
 | lookup flagged_searches_lookup search_name as title OUTPUT status as flag_status, remediation_deadline, flagged_by, flagged_time, reason as flag_reason
 | eval governance_status = case(
     flag_status="disabled", "Disabled by Governance",
-    flag_status="notified", "Pending Remediation",
+    flag_status="notified", "Flagged",
     flag_status="pending", "Flagged",
+    flag_status="flagged", "Flagged",
     is_suspicious=1, "Suspicious",
     1=1, "OK")
 | eval days_remaining = case(
@@ -267,7 +269,7 @@
     isnull(remediation_deadline), null(),
     remediation_deadline &lt; now(), 0,
     1=1, round((remediation_deadline - now()) / 86400, 1))
-| eval is_flagged_search = if(flag_status="pending" OR flag_status="notified" OR flag_status="disabled", 1, 0)
+| eval is_flagged_search = if(flag_status="pending" OR flag_status="notified" OR flag_status="disabled" OR flag_status="flagged", 1, 0)
 | eval is_expiring_soon = if(isnotnull(days_remaining) AND days_remaining >= 0 AND days_remaining &lt;= 3, 1, 0)
 | eval view_match = case(
     "$view_filter$"="flagged", is_flagged_search,
@@ -292,14 +294,12 @@
 | sort sort_priority, days_remaining, - runtime_ratio
 | eval status_icon = case(
     governance_status="Disabled by Governance", "🚫 ",
-    governance_status="Pending Remediation", "⚠️ ",
     governance_status="Flagged", "🚩 ",
     governance_status="Suspicious", "⚡ ",
     1=1, "✓ ")
 | eval icon_description = case(
     governance_status="Disabled by Governance", "Auto-disabled by governance policy",
-    governance_status="Pending Remediation", "Flagged - awaiting owner remediation",
-    governance_status="Flagged", "Newly flagged for review",
+    governance_status="Flagged", "Flagged for review",
     governance_status="Suspicious", "Potentially problematic search",
     1=1, "No issues detected")
 | eval display_name = status_icon . title
@@ -314,7 +314,7 @@
         <option name="rowNumbers">true</option>
         <option name="wrap">false</option>
         <format type="color" field="Status">
-          <colorPalette type="map">{"OK":#53A051,"Suspicious":#F8BE34,"Flagged":#F1813F,"Pending Remediation":#DC4E41,"Disabled by Governance":#708794,"Enabled":#2EA043}</colorPalette>
+          <colorPalette type="map">{"OK":#53A051,"Suspicious":#F8BE34,"Flagged":#F1813F,"Disabled by Governance":#708794,"Enabled":#2EA043}</colorPalette>
         </format>
         <format type="color" field="Runtime %">
           <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#53A051"></colorPalette>
