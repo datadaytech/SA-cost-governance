@@ -4913,7 +4913,7 @@ require([
                             'data-owner="' + escapeHtml(owner) + '" ' +
                             'data-app="' + escapeHtml(app) + '" ' +
                             'data-current-status="' + escapeHtml(currentStatus) + '" ' +
-                            'data-is-suspicious="' + isSuspicious + '" ' +
+                            'data-is-suspicious="' + isSuspiciousStatus + '" ' +
                             'style="cursor: pointer; position: relative; display: inline-block;" title="Click to change status">' +
                             statusBadge +
                             '<span style="margin-left: 4px; font-size: 10px; opacity: 0.7;">▼</span>' +
