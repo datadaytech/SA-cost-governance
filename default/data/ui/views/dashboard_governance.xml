@@ -1,0 +1,351 @@
+<dashboard version="1.1" theme="dark" script="governance.js" stylesheet="governance.css">
+  <label>Dashboard Governance</label>
+  <description>Monitor, flag, and enforce policies on wasteful or problematic dashboards</description>
+
+  <init>
+    <set token="show_flagged_panel">true</set>
+  </init>
+
+  <!-- Last Action Timestamp -->
+  <row>
+    <panel>
+      <html>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+          <span style="color: rgba(255,255,255,0.6); font-size: 12px;">LAST GOVERNANCE ACTION</span>
+          <span id="lastActionTimestamp" style="color: #00d4ff; font-weight: 600; font-size: 13px;">Loading...</span>
+        </div>
+      </html>
+      <search>
+        <query>| inputlookup governance_audit_log_lookup | sort - timestamp | head 1 | eval display = strftime(timestamp, "%Y-%m-%d %H:%M:%S") . " - " . action . " by " . performed_by | table display</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+        <refresh>30s</refresh>
+        <done>
+          <set token="last_action_display">$result.display$</set>
+        </done>
+      </search>
+    </panel>
+  </row>
+
+  <!-- Summary Metrics Row -->
+  <row>
+    <panel>
+      <single>
+        <title>Total Dashboards</title>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Complex Dashboards</title>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| eval data_len = len('eai:data')
+| where data_len > 10000
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[5,15]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Private Dashboards</title>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.sharing as sharing
+| where sharing="user"
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[10,30]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>App Dashboards</title>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.sharing as sharing
+| where sharing="app"
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Global Dashboards</title>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.sharing as sharing
+| where sharing="global"
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Complex Dashboards Table -->
+  <row>
+    <panel>
+      <title>Large/Complex Dashboards - Review for Optimization</title>
+      <table id="complex_dashboards_table">
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.app as app, eai:acl.owner as owner, eai:acl.sharing as sharing
+| eval data_size_kb = round(len('eai:data') / 1024, 1)
+| eval complexity = case(
+    data_size_kb > 50, "Very High",
+    data_size_kb > 25, "High",
+    data_size_kb > 10, "Medium",
+    1=1, "Low")
+| where data_size_kb > 5
+| table label, owner, app, sharing, data_size_kb, complexity
+| rename label as "Dashboard", owner as "Owner", app as "App", sharing as "Sharing", data_size_kb as "Size (KB)", complexity as "Complexity"
+| sort - "Size (KB)"
+| head 20</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>5m</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Complexity">
+          <colorPalette type="map">{"Low":#53A051,"Medium":#F8BE34,"High":#F1813F,"Very High":#DC4E41}</colorPalette>
+        </format>
+        <format type="color" field="Size (KB)">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax" midValue="25"></scale>
+        </format>
+      </table>
+      <html>
+        <div class="action-buttons" id="dashboard-actions">
+          <button class="btn btn-primary" onclick="flagSelectedDashboard()">Flag Dashboard</button>
+          <button class="btn" onclick="emailDashboardOwner()">Email Owner</button>
+          <button class="btn" onclick="openDashboard()">Open Dashboard</button>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- All Dashboards -->
+  <row>
+    <panel>
+      <title>All Dashboards</title>
+      <input type="dropdown" token="filter_app" searchWhenChanged="true">
+        <label>App Filter</label>
+        <choice value="*">All Apps</choice>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local | search isDashboard=1 | rename eai:acl.app as app | stats count by app | fields app</query>
+        </search>
+        <fieldForLabel>app</fieldForLabel>
+        <fieldForValue>app</fieldForValue>
+        <default>*</default>
+      </input>
+      <input type="dropdown" token="filter_sharing" searchWhenChanged="true">
+        <label>Sharing</label>
+        <choice value="*">All</choice>
+        <choice value="global">Global</choice>
+        <choice value="app">App</choice>
+        <choice value="user">Private</choice>
+        <default>*</default>
+      </input>
+      <input type="text" token="filter_owner" searchWhenChanged="true">
+        <label>Owner Filter</label>
+        <default>*</default>
+      </input>
+      <table id="all_dashboards_table">
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.app as app, eai:acl.owner as owner, eai:acl.sharing as sharing
+| search app=$filter_app$ sharing=$filter_sharing$ owner=$filter_owner$
+| eval data_size_kb = round(len('eai:data') / 1024, 1)
+| eval status = case(
+    data_size_kb > 50, "Critical",
+    data_size_kb > 25, "Warning",
+    data_size_kb > 10, "Review",
+    1=1, "OK")
+| table label, owner, app, sharing, data_size_kb, status
+| rename label as "Dashboard", owner as "Owner", app as "App", sharing as "Sharing", data_size_kb as "Size (KB)", status as "Status"
+| sort - "Size (KB)"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>5m</refresh>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">false</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"OK":#53A051,"Review":#F8BE34,"Warning":#F1813F,"Critical":#DC4E41}</colorPalette>
+        </format>
+        <format type="color" field="Size (KB)">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax" midValue="25"></scale>
+        </format>
+      </table>
+      <html>
+        <div class="action-buttons" id="all-dashboards-actions">
+          <button class="btn btn-primary" onclick="flagSelectedDashboard()">Flag Selected</button>
+          <button class="btn" onclick="emailDashboardOwner()">Email Owner</button>
+          <button class="btn" onclick="openDashboard()">Open Dashboard</button>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Dashboards by App -->
+  <row>
+    <panel>
+      <title>Dashboards by App</title>
+      <chart>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.app as app
+| stats count by app
+| sort - count
+| head 15</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">300</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Dashboards by Owner</title>
+      <chart>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.owner as owner
+| stats count by owner
+| sort - count
+| head 15</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">300</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Dashboard Complexity Distribution -->
+  <row>
+    <panel>
+      <title>Dashboard Size Distribution</title>
+      <chart>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| eval data_size_kb = round(len('eai:data') / 1024, 1)
+| eval size_bucket = case(
+    data_size_kb > 50, "50+ KB (Very Large)",
+    data_size_kb > 25, "25-50 KB (Large)",
+    data_size_kb > 10, "10-25 KB (Medium)",
+    data_size_kb > 5, "5-10 KB (Small)",
+    1=1, "0-5 KB (Minimal)")
+| stats count by size_bucket
+| sort - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="height">300</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Sharing Distribution</title>
+      <chart>
+        <search>
+          <query>| rest /servicesNS/-/-/data/ui/views splunk_server=local
+| search isDashboard=1 isVisible=1
+| rename eai:acl.sharing as sharing
+| eval sharing_label = case(
+    sharing="global", "Global (All Users)",
+    sharing="app", "App Level",
+    sharing="user", "Private",
+    1=1, sharing)
+| stats count by sharing_label</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="height">300</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Governance Activity -->
+  <row>
+    <panel>
+      <title>Recent Dashboard Governance Activity</title>
+      <table>
+        <search>
+          <query>| inputlookup governance_audit_log_lookup
+| eval time = strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+| sort - timestamp
+| head 20
+| table time, action, search_name, performed_by, details
+| rename time as "Time", action as "Action", search_name as "Item", performed_by as "Performed By", details as "Details"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <refresh>1m</refresh>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">true</option>
+        <format type="color" field="Action">
+          <colorPalette type="map">{"flagged":#F8BE34,"flagged_dashboard":#F8BE34,"notification_sent":#006D9C,"disabled":#DC4E41,"unflagged":#53A051,"extended":#65A637}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+</dashboard>

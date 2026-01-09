@@ -1,0 +1,1890 @@
+/*
+ * Scheduled Search Governance Dashboard Styles
+ * Premium Dark Theme v3.0
+ * Works with Splunk's native theme="dark"
+ */
+
+/* ================================================
+   DASHBOARD BACKGROUND & BODY STYLING
+   ================================================ */
+
+/* Premium gradient background for the entire dashboard */
+.dashboard-body,
+.dashboard-view,
+body.theme-dark .dashboard-body {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1c2128 100%) !important;
+    min-height: 100vh;
+}
+
+/* Add subtle animated gradient overlay */
+.dashboard-body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Dashboard content positioning */
+.dashboard-row,
+.dashboard-panel,
+.fieldset {
+    position: relative;
+    z-index: 1;
+}
+
+/* Panel container styling with glass effect */
+.dashboard-panel {
+    background: linear-gradient(145deg, rgba(30, 35, 42, 0.9) 0%, rgba(22, 27, 34, 0.95) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    margin: 8px !important;
+    overflow: hidden;
+    transition: all 0.3s ease !important;
+}
+
+.dashboard-panel:hover {
+    border-color: rgba(0, 212, 255, 0.2) !important;
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 1px rgba(0, 212, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Single value metric panels - enhanced styling */
+#total_metric_panel,
+#suspicious_metric_panel,
+#flagged_metric_panel,
+#expiring_metric_panel,
+#disabled_metric_panel {
+    background: linear-gradient(145deg, rgba(30, 35, 42, 0.95) 0%, rgba(22, 27, 34, 0.98) 100%) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    transition: all 0.3s ease !important;
+}
+
+#total_metric_panel:hover,
+#suspicious_metric_panel:hover,
+#flagged_metric_panel:hover,
+#expiring_metric_panel:hover,
+#disabled_metric_panel:hover {
+    transform: translateY(-4px) !important;
+    box-shadow:
+        0 15px 50px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 212, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(0, 212, 255, 0.3) !important;
+}
+
+/* Metric panel accent colors */
+#total_metric_panel { border-top: 3px solid #006d9c !important; }
+#suspicious_metric_panel { border-top: 3px solid #f8be34 !important; }
+#flagged_metric_panel { border-top: 3px solid #dc4e41 !important; }
+#expiring_metric_panel { border-top: 3px solid #f1813f !important; }
+#disabled_metric_panel { border-top: 3px solid #708794 !important; }
+
+/* Single value text styling - enhanced metrics */
+.single-value .single-result,
+.viz-single-value .single-result,
+.single-value-viz .single-result {
+    font-size: 64px !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    letter-spacing: -2px !important;
+    text-shadow:
+        0 0 40px rgba(0, 212, 255, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    padding: 20px 0 !important;
+}
+
+/* Metric-specific color enhancements - using solid colors for better visibility */
+#total_metric_panel .single-result {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#suspicious_metric_panel .single-result {
+    color: #f8be34 !important;
+    -webkit-text-fill-color: #f8be34 !important;
+    text-shadow: 0 0 30px rgba(248, 190, 52, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#flagged_metric_panel .single-result {
+    color: #dc4e41 !important;
+    -webkit-text-fill-color: #dc4e41 !important;
+    text-shadow: 0 0 30px rgba(220, 78, 65, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#expiring_metric_panel .single-result {
+    color: #f1813f !important;
+    -webkit-text-fill-color: #f1813f !important;
+    text-shadow: 0 0 30px rgba(241, 129, 63, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#disabled_metric_panel .single-result {
+    color: #708794 !important;
+    -webkit-text-fill-color: #708794 !important;
+    text-shadow: 0 0 30px rgba(112, 135, 148, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Single value viz container */
+.single-value-viz,
+.viz-single-value {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    min-height: 120px !important;
+}
+
+/* Enhanced panel titles for single value metrics */
+.dashboard-panel .panel-head h2,
+.dashboard-panel .panel-head h3,
+.dashboard-panel .panel-title,
+.viz-single-value .single-value-header {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 16px 8px 16px !important;
+    margin: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Table panel titles - larger and more prominent */
+.dashboard-panel:has(.table-chrome) .panel-head h2,
+.dashboard-panel:has(.table-chrome) .panel-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    padding: 16px 20px !important;
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.08) 0%, transparent 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-bottom: 0 !important;
+}
+
+/* Dashboard header styling */
+.dashboard-header {
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, transparent 50%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+}
+
+.dashboard-header h1,
+.dashboard-header .dashboard-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 24px !important;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
+}
+
+.dashboard-header .description {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 14px !important;
+}
+
+/* Table styling enhancements - force dark backgrounds */
+.table-chrome,
+.shared-resultstable,
+.splunk-table,
+table.table-chrome,
+.dashboard-panel table {
+    background: #171b21 !important;
+    background-color: #171b21 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+/* Force table wrapper/container backgrounds */
+.panel-body,
+.dashboard-panel .panel-body,
+.table-wrapper,
+.viz-table-wrapper,
+.shared-resultstable-resultstablecontainer,
+.table-container,
+.dashboard-element .panel-body {
+    background: #171b21 !important;
+    background-color: #171b21 !important;
+}
+
+.table-chrome thead th,
+.shared-resultstable th,
+table th {
+    background: linear-gradient(180deg, #1a1f27 0%, #151920 100%) !important;
+    background-color: #1a1f27 !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+    padding: 14px 12px !important;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.table-chrome tbody,
+.shared-resultstable tbody,
+table tbody {
+    background: #171b21 !important;
+    background-color: #171b21 !important;
+}
+
+.table-chrome tbody tr,
+.shared-resultstable tbody tr,
+table tbody tr {
+    background: #1a1f27 !important;
+    background-color: #1a1f27 !important;
+    transition: all 0.2s ease !important;
+}
+
+.table-chrome tbody tr:nth-child(even),
+.shared-resultstable tbody tr:nth-child(even),
+table tbody tr:nth-child(even) {
+    background: #151920 !important;
+    background-color: #151920 !important;
+}
+
+.table-chrome tbody tr:hover,
+.shared-resultstable tbody tr:hover,
+table tbody tr:hover {
+    background: rgba(0, 109, 156, 0.35) !important;
+    background-color: rgba(0, 109, 156, 0.35) !important;
+}
+
+.table-chrome tbody td,
+.shared-resultstable tbody td,
+table tbody td {
+    padding: 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: transparent !important;
+}
+
+/* Ensure no white backgrounds leak through */
+.table-chrome *,
+.shared-resultstable *,
+.panel-body * {
+    background-color: transparent;
+}
+
+/* Table scroll wrapper */
+.shared-resultstable-resultstablecontainer,
+.results-table {
+    background: #171b21 !important;
+}
+
+/* ================================================
+   CUSTOM SCROLLBAR (subtle enhancement)
+   ================================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Action buttons container */
+.action-buttons {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.action-buttons button {
+    margin-right: 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-buttons .btn {
+    background-color: #3c444d;
+    border: 1px solid #5c6773;
+    color: #ffffff;
+}
+
+.action-buttons .btn:hover {
+    background-color: #4c545d;
+    border-color: #7c8793;
+}
+
+.action-buttons .btn-primary {
+    background-color: #006d9c;
+    border-color: #006d9c;
+    color: #ffffff;
+}
+
+.action-buttons .btn-primary:hover {
+    background-color: #0088c2;
+    border-color: #0088c2;
+}
+
+.action-buttons .btn-warning {
+    background-color: #dc4e41;
+    border-color: #dc4e41;
+    color: #ffffff;
+}
+
+.action-buttons .btn-warning:hover {
+    background-color: #e65f53;
+    border-color: #e65f53;
+}
+
+/* ============================================
+   Settings Form Buttons
+   ============================================ */
+
+/* Settings form container */
+.settings-form {
+    margin-top: 10px !important;
+    display: flex !important;
+    gap: 10px !important;
+}
+
+/* Settings form buttons - ensure visibility */
+.settings-form .btn,
+.settings-form button,
+form.settings-form .btn,
+form.settings-form button {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: #006d9c !important;
+    border: 1px solid #006d9c !important;
+    color: #ffffff !important;
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.settings-form .btn:hover,
+.settings-form button:hover,
+form.settings-form .btn:hover,
+form.settings-form button:hover {
+    background-color: #0078a8 !important;
+    border-color: #0078a8 !important;
+}
+
+.settings-form .btn-primary,
+form.settings-form .btn-primary {
+    background-color: #006d9c !important;
+    border-color: #006d9c !important;
+}
+
+.settings-form .btn-primary:hover,
+form.settings-form .btn-primary:hover {
+    background-color: #0078a8 !important;
+    border-color: #0078a8 !important;
+}
+
+/* Green "Run Cache Now" button specifically */
+.settings-form button[style*="53a051"],
+.settings-form .btn[style*="53a051"] {
+    background-color: #53a051 !important;
+    border-color: #53a051 !important;
+}
+
+.settings-form button[style*="53a051"]:hover,
+.settings-form .btn[style*="53a051"]:hover {
+    background-color: #5db85a !important;
+    border-color: #5db85a !important;
+}
+
+/* ============================================
+   Settings Page Text and Panel Fixes
+   ============================================ */
+
+/* Prevent text overflow in settings panels */
+.dashboard-panel .html,
+.dashboard-panel p,
+.dashboard-panel .panel-body {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Settings page - panel content constraints */
+.dashboard-panel div[style*="background: linear-gradient"],
+.dashboard-panel div[style*="background: rgba"] {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* Settings page - paragraph text */
+.dashboard-panel p {
+    max-width: 100% !important;
+    word-break: break-word !important;
+}
+
+/* Cost config table - no checkboxes, no hover effects */
+#cost_config_table .gov-checkbox,
+#cost_config_table .gov-select-all,
+#cost_config_table .gov-checkbox-cell,
+#cost_config_table .gov-select-header {
+    display: none !important;
+}
+
+#cost_config_table tbody tr {
+    cursor: default !important;
+}
+
+#cost_config_table tbody tr:hover {
+    background: inherit !important;
+}
+
+/* Panel styling */
+.dashboard-panel {
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   Panel Title Styling - Ensure Visibility
+   ============================================ */
+
+/* Force panel titles to be visible */
+.panel-title,
+.dashboard-panel h2,
+.dashboard-panel .panel-head,
+.dashboard-panel .panel-head h2,
+.dashboard-panel .panel-head .panel-title,
+.dashboard-panel h3.panel-title,
+.single-value h3,
+.viz-single-value h3,
+.dashboard-cell h2,
+.dashboard-cell h3 {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    padding-left: 10px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+}
+
+/* Ensure Splunk panel headers are left-aligned and visible */
+.panel-head {
+    display: block !important;
+    visibility: visible !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    min-height: 30px !important;
+}
+
+.panel-head h2,
+.panel-head h3,
+.panel-head .panel-title {
+    display: block !important;
+    visibility: visible !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    color: #ffffff !important;
+}
+
+/* Single value panel titles */
+.single-value .single-value-header,
+.viz-single-value-container h3,
+.single-value-viz h3 {
+    display: block !important;
+    visibility: visible !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    padding: 8px 10px !important;
+    margin-bottom: 5px !important;
+}
+
+/* Table panel titles */
+.table-container h2,
+.table-container h3,
+.table-container .panel-title {
+    display: block !important;
+    visibility: visible !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    padding: 10px !important;
+}
+
+/* Table row hover effect */
+.table-chrome tbody tr:hover {
+    background-color: rgba(0, 109, 156, 0.2) !important;
+    cursor: pointer;
+}
+
+/* Single value panel styling */
+.single-value {
+    padding: 20px;
+}
+
+/* Suspicious searches alert styling */
+#suspicious_searches_table {
+    border-left: 4px solid #f8be34;
+}
+
+/* Flagged searches table styling */
+#flagged_searches_table {
+    border-left: 4px solid #dc4e41;
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-ok {
+    background-color: rgba(46, 204, 113, 0.25);
+    color: #2ecc71;
+    text-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+    border: 1px solid rgba(46, 204, 113, 0.4);
+}
+
+.status-suspicious {
+    background-color: rgba(248, 190, 52, 0.3);
+    color: #f8be34;
+}
+
+.status-flagged {
+    background-color: rgba(241, 129, 63, 0.3);
+    color: #f1813f;
+}
+
+.status-disabled {
+    background-color: rgba(220, 78, 65, 0.3);
+    color: #dc4e41;
+}
+
+/* Tooltip styling */
+.tooltip-info {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip-info::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1c1c21;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+}
+
+.tooltip-info:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Filter section styling */
+.input-dropdown,
+.input-text {
+    margin-right: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .action-buttons button {
+        margin-bottom: 10px;
+    }
+}
+
+/* Custom scrollbar for tables */
+.table-chrome tbody {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Highlight selected row */
+.table-chrome tbody tr.selected {
+    background-color: rgba(0, 109, 156, 0.4) !important;
+}
+
+/* Header row count badge */
+.row-count-badge {
+    background-color: #006d9c;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 10px;
+}
+
+/* ============================================
+   Cron Schedule Modal Styles
+   ============================================ */
+
+/* Clickable cron badge in tables */
+.cron-clickable {
+    cursor: pointer;
+    padding: 4px 10px;
+    background: rgba(0, 109, 156, 0.2);
+    border: 1px solid rgba(0, 109, 156, 0.4);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #00d4ff;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.cron-clickable:hover {
+    background: rgba(0, 109, 156, 0.4);
+    border-color: #00d4ff;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
+}
+
+.cron-clickable::after {
+    content: ' \270E';
+    opacity: 0.6;
+    font-size: 10px;
+}
+
+/* Modal overlay */
+.cron-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.cron-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal container */
+.cron-modal {
+    background: linear-gradient(145deg, #2a2a35 0%, #1c1c21 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    width: 90%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 212, 255, 0.1);
+}
+
+.cron-modal-overlay.active .cron-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Modal header */
+.cron-modal-header {
+    padding: 20px 24px;
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.15) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cron-modal-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #00d4ff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cron-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cron-modal-close:hover {
+    background: rgba(220, 78, 65, 0.3);
+    color: #ff6b6b;
+}
+
+/* Modal body */
+.cron-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(90vh - 160px);
+}
+
+/* Search info section */
+.cron-search-info {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cron-search-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.cron-search-info-row:last-child {
+    margin-bottom: 0;
+}
+
+.cron-search-info-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+}
+
+.cron-search-info-value {
+    font-weight: 600;
+    font-size: 12px;
+    color: #ffffff;
+}
+
+/* Section titles */
+.cron-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Preset buttons grid */
+.cron-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.cron-preset-btn {
+    padding: 12px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.cron-preset-btn:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.cron-preset-btn.active {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+.cron-preset-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.cron-preset-cron {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+}
+
+/* Cron input fields */
+.cron-input-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+.cron-fields {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.cron-field {
+    text-align: center;
+}
+
+.cron-field label {
+    display: block;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.cron-field input {
+    width: 100%;
+    padding: 10px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+    font-family: monospace;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cron-field input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+/* Cron preview section */
+.cron-preview {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.cron-preview-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.cron-preview-value {
+    font-size: 24px;
+    font-family: monospace;
+    font-weight: 700;
+    color: #00d4ff;
+    text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    margin-bottom: 6px;
+    letter-spacing: 3px;
+}
+
+.cron-preview-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Next runs section */
+.cron-next-runs {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cron-next-runs-title {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.cron-next-run-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cron-next-run-item::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    background: #00d4ff;
+    border-radius: 50%;
+}
+
+/* Modal footer */
+.cron-modal-footer {
+    padding: 16px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cron-modal-footer .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.cron-modal-footer .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cron-modal-footer .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.cron-modal-footer .btn-primary {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: white;
+}
+
+.cron-modal-footer .btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+}
+
+/* Toast notification */
+.cron-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10001;
+}
+
+.cron-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Impact Modal Buttons */
+#impactRecommendations .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+#impactRecommendations .btn-primary {
+    background: linear-gradient(135deg, #006d9c 0%, #005580 100%);
+    color: white;
+}
+
+#impactRecommendations .btn-primary:hover {
+    box-shadow: 0 4px 15px rgba(0, 109, 156, 0.4);
+    transform: translateY(-1px);
+}
+
+#impactRecommendations .btn:not(.btn-primary):not(.btn-warning) {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#impactRecommendations .btn:not(.btn-primary):not(.btn-warning):hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#impactRecommendations .btn-warning {
+    background: linear-gradient(135deg, #dc4e41 0%, #c43d31 100%);
+    color: white;
+}
+
+#impactRecommendations .btn-warning:hover {
+    box-shadow: 0 4px 15px rgba(220, 78, 65, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Impact metrics loading */
+.impact-loading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Selected row styling */
+.row-selected {
+    background: rgba(0, 212, 255, 0.2) !important;
+    box-shadow: inset 0 0 0 2px #00d4ff;
+}
+
+.row-selected td {
+    background: transparent !important;
+}
+
+/* Flagged row styling - NO red rows, just flag indicator */
+.row-flagged {
+    /* No red background - use flag indicator only */
+}
+
+.row-flagged td {
+    background: transparent !important;
+}
+
+/* In flagged panel, don't use red row styling */
+#flagged_searches_table .row-flagged {
+    background: transparent !important;
+    border-left: 3px solid transparent !important;
+    animation: none !important;
+}
+
+@keyframes flagPulse {
+    0% {
+        background: rgba(220, 78, 65, 0.5) !important;
+        transform: scale(1.01);
+    }
+    50% {
+        background: rgba(220, 78, 65, 0.3) !important;
+    }
+    100% {
+        background: rgba(220, 78, 65, 0.15) !important;
+        transform: scale(1);
+    }
+}
+
+/* Flag success checkmark animation */
+.flag-success-indicator {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #53a051;
+    font-size: 18px;
+    animation: checkPop 0.4s ease-out;
+}
+
+@keyframes checkPop {
+    0% {
+        transform: translateY(-50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translateY(-50%) scale(1.3);
+    }
+    100% {
+        transform: translateY(-50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Smoother row transitions */
+.governance-enhanced {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.governance-enhanced:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: translateX(2px);
+}
+
+/* Selected row with glow effect */
+.row-selected {
+    background: rgba(0, 212, 255, 0.15) !important;
+    box-shadow: inset 4px 0 0 #00d4ff, 0 0 20px rgba(0, 212, 255, 0.1);
+    animation: selectGlow 0.3s ease-out;
+}
+
+@keyframes selectGlow {
+    0% {
+        box-shadow: inset 4px 0 0 #00d4ff, 0 0 40px rgba(0, 212, 255, 0.4);
+    }
+    100% {
+        box-shadow: inset 4px 0 0 #00d4ff, 0 0 20px rgba(0, 212, 255, 0.1);
+    }
+}
+
+/* Quick flag button */
+.quick-flag-btn {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.quick-flag-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+    text-shadow: 0 0 10px rgba(248, 190, 52, 0.8);
+}
+
+/* Governance enhanced rows */
+.governance-enhanced {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.governance-enhanced:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Row actions container */
+.row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Multi-select checkboxes - governance tables */
+.gov-select-header,
+.gov-checkbox-cell {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 8px !important;
+}
+
+.gov-select-all,
+.gov-checkbox {
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer !important;
+    accent-color: #00d4ff !important;
+    margin: 0 !important;
+    -webkit-appearance: checkbox !important;
+    appearance: checkbox !important;
+}
+
+/* Ensure checkbox is visible */
+input[type="checkbox"].gov-checkbox,
+input[type="checkbox"].gov-select-all {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+}
+
+/* Checkbox checked row highlight */
+tr.gov-enhanced:has(.gov-checkbox:checked) {
+    background: rgba(0, 212, 255, 0.15) !important;
+}
+
+/* Checked checkbox visual feedback - filled appearance */
+.gov-checkbox:checked,
+.gov-select-all:checked {
+    background-color: #00d4ff !important;
+    border-color: #00d4ff !important;
+    accent-color: #00d4ff !important;
+    position: relative;
+}
+
+/* Custom checkbox styling for better visibility - use native checkbox with accent color */
+.gov-checkbox,
+.gov-select-all {
+    -webkit-appearance: checkbox !important;
+    -moz-appearance: checkbox !important;
+    appearance: checkbox !important;
+    width: 20px !important;
+    height: 20px !important;
+    cursor: pointer !important;
+    accent-color: #00d4ff !important;
+    filter: brightness(1.2) !important;
+}
+
+/* Row with checked checkbox - blue highlight only */
+tr:has(.gov-checkbox:checked) {
+    background: rgba(0, 212, 255, 0.15) !important;
+    border-left: 3px solid #00d4ff !important;
+}
+
+tr:has(.gov-checkbox:checked) td {
+    background: transparent !important;
+}
+
+/* Selection count badge */
+.selection-count-badge {
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    display: none;
+}
+
+.selection-count-badge.show {
+    display: block;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Flagged Searches Panel - Better readability (no red rows) */
+#flagged_searches_table tbody tr {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-left: 3px solid transparent !important;
+}
+
+#flagged_searches_table tbody tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+#flagged_searches_table tbody tr:hover {
+    background: rgba(0, 109, 156, 0.2) !important;
+}
+
+#flagged_searches_table tbody tr td {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Tracked searches styling */
+.tracked-indicator {
+    color: #00d4ff;
+    margin-right: 6px;
+    font-size: 12px;
+}
+
+/* Extend deadline modal input */
+.extend-days-input {
+    width: 80px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 16px;
+    text-align: center;
+    margin: 0 10px;
+}
+
+.extend-days-input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+/* Flag indicator styling */
+.flag-indicator {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.flag-indicator:hover {
+    transform: scale(1.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cron-preset-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .cron-fields {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    #impactRecommendations .btn {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+/* ============================================
+   Metric Popup Styles (for single value panels)
+   ============================================ */
+
+.metric-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.metric-popup-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.metric-popup {
+    background: linear-gradient(145deg, #2a2a35 0%, #1c1c21 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 212, 255, 0.1);
+}
+
+.metric-popup-overlay.active .metric-popup {
+    transform: scale(1) translateY(0);
+}
+
+.metric-popup-header {
+    padding: 24px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-popup-value {
+    font-size: 64px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    margin-bottom: 8px;
+}
+
+.metric-popup-title {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+}
+
+.metric-popup-body {
+    padding: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.metric-popup-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.metric-popup-list li {
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.metric-popup-list li:hover {
+    background: rgba(0, 109, 156, 0.2);
+    border-left-color: #00d4ff;
+    cursor: pointer;
+    transform: translateX(4px);
+}
+
+.metric-popup-list li::after {
+    content: '→';
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.metric-popup-list li:hover::after {
+    color: #00d4ff;
+    transform: translateX(4px);
+}
+
+.metric-popup-list li .name {
+    color: white;
+    font-weight: 500;
+}
+
+.metric-popup-list li .detail {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+.metric-popup-footer {
+    padding: 16px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.metric-popup-footer .btn {
+    padding: 10px 30px;
+}
+
+/* Metric Popup Table Styles */
+.metric-popup-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.metric-popup-table th {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-popup-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+}
+
+.metric-popup-table tr:hover {
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.metric-popup-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.metric-popup-row.selected {
+    background: rgba(0, 212, 255, 0.2) !important;
+    border-left: 3px solid #00d4ff !important;
+}
+
+.metric-popup-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+.metric-popup-row.selected:hover {
+    background: rgba(0, 212, 255, 0.25) !important;
+}
+
+/* ============================================
+   Cron Impact Preview Styles
+   ============================================ */
+
+.cron-impact-section {
+    background: linear-gradient(135deg, rgba(248, 190, 52, 0.1) 0%, rgba(220, 78, 65, 0.1) 100%);
+    border: 1px solid rgba(248, 190, 52, 0.3);
+    border-radius: 10px;
+    padding: 18px;
+    margin: 20px 0;
+}
+
+.cron-impact-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f8be34;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.cron-impact-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+}
+
+.cron-impact-old,
+.cron-impact-new {
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.cron-impact-old {
+    background: rgba(220, 78, 65, 0.2);
+    border: 1px solid rgba(220, 78, 65, 0.4);
+}
+
+.cron-impact-new {
+    background: rgba(83, 160, 81, 0.2);
+    border: 1px solid rgba(83, 160, 81, 0.4);
+}
+
+.cron-impact-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.cron-impact-value {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.cron-impact-old .cron-impact-value {
+    color: #dc4e41;
+}
+
+.cron-impact-new .cron-impact-value {
+    color: #53a051;
+}
+
+.cron-impact-arrow {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cron-impact-change {
+    text-align: center;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.cron-impact-percent {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.cron-impact-percent.decrease {
+    color: #53a051;
+}
+
+.cron-impact-percent.increase {
+    color: #dc4e41;
+}
+
+.cron-impact-percent.neutral {
+    color: #f8be34;
+}
+
+.cron-impact-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 4px;
+}
+
+/* ============================================
+   Extend Deadline Modal Styles
+   ============================================ */
+
+.extend-modal-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.extend-search-list {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+    max-height: 150px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.extend-search-item {
+    padding: 8px 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    border-left: 3px solid #00d4ff;
+    margin-bottom: 8px;
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 0 4px 4px 0;
+}
+
+.extend-days-section {
+    margin: 24px 0;
+}
+
+.extend-days-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 12px;
+}
+
+.extend-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.extend-days-btn {
+    padding: 14px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.extend-days-btn:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.extend-days-btn.active {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.extend-days-btn .days-value {
+    font-size: 20px;
+    font-weight: 700;
+    display: block;
+}
+
+.extend-days-btn .days-label {
+    font-size: 10px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.extend-custom-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.extend-custom-input {
+    width: 80px;
+    padding: 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.extend-custom-input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.extend-deadline-preview {
+    margin-top: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.extend-deadline-preview-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.extend-deadline-preview-date {
+    font-size: 18px;
+    font-weight: 600;
+    color: #00d4ff;
+}
+
+/* ============================================
+   Cron Helper/Presets Improved
+   ============================================ */
+
+.cron-helper-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cron-helper-title {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.cron-helper-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.cron-helper-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.cron-helper-item .symbol {
+    font-family: monospace;
+    color: #00d4ff;
+    font-weight: 600;
+    min-width: 30px;
+}
+
+.cron-helper-item .desc {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Single value panel clickable */
+.dashboard-panel:has(.single-value) {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.dashboard-panel:has(.single-value):hover {
+    transform: scale(1.02);
+}
+
+.dashboard-panel:has(.single-value):hover .single-value {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+/* ============================================
+   Countdown Timer Styles
+   ============================================ */
+
+/* Countdown pulse animation */
+@keyframes countdownPulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Countdown cell styling */
+.countdown-cell {
+    min-width: 140px;
+    text-align: center;
+}
+
+.countdown-critical {
+    animation: countdownPulse 0.5s ease-in-out infinite;
+    text-shadow: 0 0 8px rgba(220, 78, 65, 0.5);
+}
+
+.countdown-urgent {
+    animation: countdownPulse 1s ease-in-out infinite;
+    text-shadow: 0 0 6px rgba(248, 190, 52, 0.4);
+}
+
+.countdown-overdue {
+    animation: countdownPulse 1s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(220, 78, 65, 0.6);
+}
+
+.countdown-warning {
+    text-shadow: 0 0 4px rgba(241, 129, 63, 0.3);
+}
+
+.countdown-normal {
+    text-shadow: 0 0 4px rgba(83, 160, 81, 0.3);
+}

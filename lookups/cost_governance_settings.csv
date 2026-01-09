@@ -1,2 +1,0 @@
-cost_per_gb,warning_threshold_percent,critical_threshold_percent,budget_period,notification_email,last_updated,updated_by
-100,80,95,monthly,,0,
