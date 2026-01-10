@@ -555,34 +555,49 @@ require([
         loadD3(function() {
             console.log('D3.js loaded successfully, initializing topology visualization');
 
+            // Clear loading spinner
+            $(container).empty();
+
             window.topologyViz = new TopologyVisualizer(container);
 
-            // Get search manager if available
-            var searchManager = mvc.Components.get('topology_search');
+            // Always load mock data immediately for demonstration
+            console.log('Loading mock topology data');
+            var mockData = window.topologyViz.createMockHierarchy();
+            window.topologyViz.update(mockData);
 
-            if (searchManager) {
-                // Listen for search results
-                var results = searchManager.data('results', { output_mode: 'json', count: 0 });
+            // Update health summary immediately
+            var summary = window.topologyViz.calculateHealthSummary();
+            $('#health-green').text(summary.green || 0);
+            $('#health-yellow').text(summary.yellow || 0);
+            $('#health-red').text(summary.red || 0);
 
-                results.on('data', function() {
-                    if (results.hasData()) {
-                        var data = results.data().results;
-                        window.topologyViz.update(data);
+            console.log('Health summary:', summary);
+
+            // Listen for view mode changes
+            var viewModeToken = mvc.Components.get('default');
+            if (viewModeToken) {
+                viewModeToken.on('change:view_mode', function(model, value) {
+                    if (value === 'live') {
+                        // Try to get live data from search
+                        var searchManager = mvc.Components.get('topology_search');
+                        if (searchManager) {
+                            var results = searchManager.data('results', { output_mode: 'json', count: 0 });
+                            results.on('data', function() {
+                                if (results.hasData() && results.data().results.length > 0) {
+                                    window.topologyViz.update(results.data().results);
+                                }
+                            });
+                        }
+                    } else {
+                        // Reload mock data
+                        window.topologyViz.update(window.topologyViz.createMockHierarchy());
+                        var summary = window.topologyViz.calculateHealthSummary();
+                        $('#health-green').text(summary.green || 0);
+                        $('#health-yellow').text(summary.yellow || 0);
+                        $('#health-red').text(summary.red || 0);
                     }
                 });
-            } else {
-                // Use mock data for demonstration
-                console.log('No search manager found, using mock data');
-                window.topologyViz.update(window.topologyViz.createMockHierarchy());
             }
-
-            // Update health summary
-            setTimeout(function() {
-                var summary = window.topologyViz.calculateHealthSummary();
-                $('#health-green').text(summary.green || 0);
-                $('#health-yellow').text(summary.yellow || 0);
-                $('#health-red').text(summary.red || 0);
-            }, 1000);
         });
     });
 
