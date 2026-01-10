@@ -4,7 +4,10 @@
       "Bash(while read f)",
       "Bash(do echo \"$f\")",
       "Bash(done)",
-      "Bash(gh auth status:*)"
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh pr create --base main --head feature/initial-release --title \"[v1.0.0] SA Topology Analyzer - Initial Release\" --body \"$\\(cat <<''EOF''\n## Summary\n\n- Initial release of SA Topology Analyzer Splunk app\n- Dynamic D3.js tree visualization of Splunk infrastructure hierarchy\n- Discovers Universal Forwarders from `_internal` logs\n- Discovers Indexes via REST API\n- Mock health status indicators \\(green/yellow/red\\)\n\n## Features\n\n- **Search Head → Index → Forwarder** hierarchy view\n- Interactive node details panel\n- Zoom and pan navigation\n- Health summary badges\n- Mock demo mode for immediate testing\n- Live data mode for real infrastructure\n\n## Files Changed\n\n- `default/app.conf` - App configuration\n- `default/savedsearches.conf` - SPL searches for discovery\n- `default/data/ui/views/topology.xml` - Main dashboard\n- `appserver/static/topology_viz.js` - D3.js visualization\n- `appserver/static/topology.css` - Styling\n\n## Test Plan\n\n- [ ] Install app in Splunk\n- [ ] Verify mock demo mode loads topology tree\n- [ ] Verify health badges display counts\n- [ ] Test node click for details panel\n- [ ] Test zoom and pan functionality\n\n🤖 Generated with [Claude Code]\\(https://claude.ai/code\\)\nEOF\n\\)\")",
+      "Bash(open \"http://localhost:8000/en-US/app/sa-topology/topology\")"
     ]
   }
 }

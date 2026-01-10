@@ -1,4 +1,4 @@
-<![CDATA[<form version="1.1" theme="light" script="topology_viz.js" stylesheet="topology.css">
+<form version="1.1" theme="light" script="topology_viz.js" stylesheet="topology.css">
   <label>SA Topology Analyzer</label>
   <description>Dynamic infrastructure topology visualization - Similar to ITSI Service Analyzer</description>
 
@@ -242,4 +242,3 @@
   </row>
 
 </form>
-]]>
