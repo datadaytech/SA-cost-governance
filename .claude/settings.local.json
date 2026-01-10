@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(while read f)",
+      "Bash(do echo \"$f\")",
+      "Bash(done)",
+      "Bash(gh auth status:*)"
+    ]
+  }
+}

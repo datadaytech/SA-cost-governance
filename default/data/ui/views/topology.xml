@@ -1,0 +1,245 @@
+<![CDATA[<form version="1.1" theme="light" script="topology_viz.js" stylesheet="topology.css">
+  <label>SA Topology Analyzer</label>
+  <description>Dynamic infrastructure topology visualization - Similar to ITSI Service Analyzer</description>
+
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="view_mode" searchWhenChanged="true">
+      <label>View Mode</label>
+      <choice value="live">Live Data</choice>
+      <choice value="mock">Mock Demo</choice>
+      <default>mock</default>
+    </input>
+    <input type="dropdown" token="health_filter" searchWhenChanged="true">
+      <label>Health Filter</label>
+      <choice value="*">All</choice>
+      <choice value="green">Healthy Only</choice>
+      <choice value="yellow">Warning Only</choice>
+      <choice value="red">Critical Only</choice>
+      <default>*</default>
+    </input>
+  </fieldset>
+
+  <!-- Health Summary Row -->
+  <row>
+    <panel>
+      <html>
+        <div class="topology-header">
+          <h1>Splunk Infrastructure Topology</h1>
+          <p>Real-time visualization of data flow from Universal Forwarders through Indexes to Search Heads</p>
+          <div class="health-summary">
+            <div class="health-badge green">
+              <span class="count" id="health-green">0</span>
+              <span>Healthy</span>
+            </div>
+            <div class="health-badge yellow">
+              <span class="count" id="health-yellow">0</span>
+              <span>Warning</span>
+            </div>
+            <div class="health-badge red">
+              <span class="count" id="health-red">0</span>
+              <span>Critical</span>
+            </div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Toolbar Row -->
+  <row>
+    <panel>
+      <html>
+        <div class="topology-toolbar">
+          <button class="toolbar-btn" onclick="window.topologyViz &amp;&amp; window.topologyViz.update(window.topologyViz.createMockHierarchy())">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Refresh
+          </button>
+          <button class="toolbar-btn" onclick="document.getElementById('topology-container').requestFullscreen &amp;&amp; document.getElementById('topology-container').requestFullscreen()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            Fullscreen
+          </button>
+          <button class="toolbar-btn" onclick="$('#node-details').hide()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Close Details
+          </button>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Main Topology Visualization -->
+  <row>
+    <panel>
+      <html>
+        <div id="topology-container">
+          <div class="topology-loading">
+            <div class="spinner"></div>
+            <p>Loading topology data...</p>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Search Heads Discovery -->
+  <row depends="$view_mode$ = live">
+    <panel>
+      <title>Search Heads</title>
+      <table>
+        <search id="search_heads_search">
+          <query>
+            | rest /services/server/info
+            | eval type="search_head"
+            | eval is_shc_member=if(isnotnull(shcluster_label), "yes", "no")
+            | eval health="green"
+            | table serverName, version, build, os_name, cpu_arch, numberOfCores, physicalMemoryMB, is_shc_member, health, type
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Index Discovery -->
+  <row depends="$view_mode$ = live">
+    <panel>
+      <title>Indexes</title>
+      <table>
+        <search id="indexes_search">
+          <query>
+            | rest /services/data/indexes
+            | search disabled=0
+            | eval size_gb=round(currentDBSizeMB/1024, 2)
+            | eval type="index"
+            | eval health=case(
+                currentDBSizeMB > 0 AND disabled=0, "green",
+                currentDBSizeMB = 0 AND disabled=0, "yellow",
+                1=1, "red")
+            | table title, currentDBSizeMB, size_gb, totalEventCount, homePath, coldPath, maxDataSizeMB, health, type
+            | rename title as index_name
+            | sort - totalEventCount
+            | head 20
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="count">10</option>
+        <format type="color" field="health">
+          <colorPalette type="map">{"green":#65A637,"yellow":#F8BE34,"red":#DC4E41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Universal Forwarders Discovery -->
+  <row depends="$view_mode$ = live">
+    <panel>
+      <title>Universal Forwarders</title>
+      <table>
+        <search id="forwarders_search">
+          <query>
+            index=_internal sourcetype=splunkd group=tcpin_connections
+            | stats latest(version) as version,
+                    latest(arch) as architecture,
+                    latest(os) as os,
+                    sum(kb) as total_kb,
+                    dc(sourceIp) as connection_count,
+                    latest(_time) as last_seen
+                    by hostname, guid
+            | eval type="universal_forwarder"
+            | eval last_seen_human=strftime(last_seen, "%Y-%m-%d %H:%M:%S")
+            | eval health=case(
+                last_seen > relative_time(now(), "-15m"), "green",
+                last_seen > relative_time(now(), "-1h"), "yellow",
+                1=1, "red")
+            | where health="$health_filter$" OR "$health_filter$"="*"
+            | table hostname, guid, version, architecture, os, total_kb, connection_count, last_seen_human, health, type
+            | sort - last_seen
+            | head 50
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="count">10</option>
+        <format type="color" field="health">
+          <colorPalette type="map">{"green":#65A637,"yellow":#F8BE34,"red":#DC4E41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Full Topology Data Search (for JS visualization) -->
+  <row>
+    <panel depends="$never_show$">
+      <table>
+        <search id="topology_search">
+          <query>
+            | makeresults
+            | eval search_type="topology_builder"
+            | append [
+                | rest /services/server/info
+                | eval node_type="search_head", health="green"
+                | eval node_id="sh_".serverName
+                | eval parent_id="root"
+                | table node_id, serverName, node_type, health, parent_id, version
+                | rename serverName as node_name
+            ]
+            | append [
+                | rest /services/data/indexes
+                | search disabled=0 totalEventCount>0
+                | eval node_type="index", health=if(currentDBSizeMB>0, "green", "yellow")
+                | eval node_id="idx_".title
+                | head 1
+                | eval parent_id="sh_".splunk_server
+                | table node_id, title, node_type, health, parent_id, currentDBSizeMB, totalEventCount
+                | rename title as node_name
+            ]
+            | append [
+                search index=_internal sourcetype=splunkd group=tcpin_connections earliest=-1h
+                | stats latest(_time) as last_seen, sum(kb) as total_kb by hostname, dest_idx
+                | eval node_type="forwarder"
+                | eval health=case(
+                    last_seen > relative_time(now(), "-15m"), "green",
+                    last_seen > relative_time(now(), "-1h"), "yellow",
+                    1=1, "red")
+                | eval node_id="uf_".hostname
+                | eval parent_id="idx_".dest_idx
+                | table node_id, hostname, node_type, health, parent_id, total_kb
+                | rename hostname as node_name
+            ]
+            | search node_type=*
+            | table node_id, node_name, node_type, health, parent_id, version, currentDBSizeMB, totalEventCount, total_kb
+          </query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+          <done>
+            <set token="topology_data_loaded">true</set>
+          </done>
+        </search>
+      </table>
+    </panel>
+  </row>
+
+</form>
+]]>
