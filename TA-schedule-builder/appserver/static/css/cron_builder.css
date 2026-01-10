@@ -1,0 +1,55 @@
+/**
+ * Schedule Builder TA - Additional Styles
+ * Ensures compatibility with Splunk Enterprise and Cloud
+ */
+
+/* Ensure proper rendering in both light and dark modes */
+.dashboard-body .cron-builder-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Focus states for accessibility */
+.selection-item:focus {
+    outline: 2px solid #5ba4dc;
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .quick-select {
+        display: none;
+    }
+    .cron-output {
+        background: #fff !important;
+        color: #000 !important;
+        border: 2px solid #000;
+    }
+    .cron-output h3 {
+        color: #000 !important;
+    }
+    .cron-expression input {
+        background: #fff !important;
+        color: #000 !important;
+        border: 2px solid #000 !important;
+    }
+    .cron-expression button {
+        display: none;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .selection-item {
+        width: 35px;
+        height: 28px;
+        font-size: 12px;
+    }
+    .selection-item.day-item {
+        width: 50px;
+    }
+    .quick-select button {
+        margin-bottom: 5px;
+        padding: 5px 10px;
+    }
+}

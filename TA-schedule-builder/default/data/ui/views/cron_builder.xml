@@ -1,0 +1,475 @@
+<dashboard version="1.1" script="js/cron_builder.js" stylesheet="css/cron_builder.css">
+  <label>Cron Expression Builder</label>
+  <description>Build custom cron expressions for Splunk alerts and reports with granular minute, hour, and day-of-week selection.</description>
+
+  <row>
+    <panel>
+      <html>
+        <style>
+          .cron-builder-container {
+            font-family: "Splunk Platform Sans", "Proxima Nova", Roboto, Droid, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            padding: 20px;
+            background: #fff;
+            border-radius: 4px;
+          }
+          .cron-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f7f8fa;
+            border-radius: 4px;
+            border: 1px solid #e1e6eb;
+          }
+          .cron-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+          }
+          .cron-section p.helper-text {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 13px;
+          }
+          .selection-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+          }
+          .selection-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 32px;
+            border: 1px solid #c3cbd4;
+            border-radius: 3px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            transition: all 0.15s ease;
+          }
+          .selection-item:hover {
+            border-color: #5cc05c;
+            background: #f0fff0;
+          }
+          .selection-item.selected {
+            background: #5cc05c;
+            border-color: #5cc05c;
+            color: #fff;
+            font-weight: 600;
+          }
+          .selection-item.day-item {
+            width: 60px;
+          }
+          .quick-select {
+            margin-bottom: 10px;
+          }
+          .quick-select button {
+            margin-right: 8px;
+            padding: 6px 12px;
+            border: 1px solid #c3cbd4;
+            border-radius: 3px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+          }
+          .quick-select button:hover {
+            background: #f7f8fa;
+            border-color: #5cc05c;
+          }
+          .cron-output {
+            margin-top: 20px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 4px;
+          }
+          .cron-output h3 {
+            margin: 0 0 15px 0;
+            color: #fff;
+            font-size: 16px;
+          }
+          .cron-expression {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .cron-expression input {
+            flex: 1;
+            padding: 12px 15px;
+            font-family: "Monaco", "Menlo", "Consolas", monospace;
+            font-size: 16px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 3px;
+            color: #5cc05c;
+          }
+          .cron-expression button {
+            padding: 12px 20px;
+            background: #5cc05c;
+            border: none;
+            border-radius: 3px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+          }
+          .cron-expression button:hover {
+            background: #4aa84a;
+          }
+          .cron-preview {
+            margin-top: 15px;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 3px;
+            color: #aaa;
+            font-size: 13px;
+          }
+          .cron-preview strong {
+            color: #fff;
+          }
+          .copy-success {
+            display: none;
+            margin-left: 10px;
+            color: #5cc05c;
+            font-size: 13px;
+          }
+          .copy-success.show {
+            display: inline;
+          }
+        </style>
+
+        <div class="cron-builder-container">
+          <h2 style="margin-top:0;color:#333;">Build Your Cron Expression</h2>
+          <p style="color:#666;margin-bottom:20px;">Select the minutes, hours, and days of the week for your schedule. Click values to toggle selection.</p>
+
+          <!-- Minutes Section -->
+          <div class="cron-section">
+            <h3>Minutes (0-59)</h3>
+            <p class="helper-text">Select which minute(s) of the hour to run</p>
+            <div class="quick-select">
+              <button onclick="selectAllMinutes()">Select All</button>
+              <button onclick="clearMinutes()">Clear All</button>
+              <button onclick="selectEvery5Minutes()">Every 5 min</button>
+              <button onclick="selectEvery10Minutes()">Every 10 min</button>
+              <button onclick="selectEvery15Minutes()">Every 15 min</button>
+              <button onclick="selectEvery30Minutes()">Every 30 min</button>
+            </div>
+            <div class="selection-grid" id="minutes-grid">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+
+          <!-- Hours Section -->
+          <div class="cron-section">
+            <h3>Hours (0-23)</h3>
+            <p class="helper-text">Select which hour(s) of the day to run (24-hour format)</p>
+            <div class="quick-select">
+              <button onclick="selectAllHours()">Select All</button>
+              <button onclick="clearHours()">Clear All</button>
+              <button onclick="selectBusinessHours()">Business Hours (9-17)</button>
+              <button onclick="selectOffHours()">Off Hours</button>
+            </div>
+            <div class="selection-grid" id="hours-grid">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+
+          <!-- Days of Week Section -->
+          <div class="cron-section">
+            <h3>Days of Week</h3>
+            <p class="helper-text">Select which day(s) of the week to run</p>
+            <div class="quick-select">
+              <button onclick="selectAllDays()">Select All</button>
+              <button onclick="clearDays()">Clear All</button>
+              <button onclick="selectWeekdays()">Weekdays</button>
+              <button onclick="selectWeekends()">Weekends</button>
+            </div>
+            <div class="selection-grid" id="days-grid">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+
+          <!-- Output Section -->
+          <div class="cron-output">
+            <h3>Generated Cron Expression</h3>
+            <div class="cron-expression">
+              <input type="text" id="cron-result" readonly="readonly" value="0 * * * *" />
+              <button onclick="copyCronExpression()">Copy</button>
+              <span class="copy-success" id="copy-success">Copied!</span>
+            </div>
+            <div class="cron-preview" id="cron-preview">
+              <strong>Schedule:</strong> Every minute, every hour, every day
+            </div>
+          </div>
+
+          <!-- Usage Instructions -->
+          <div style="margin-top:25px;padding:15px;background:#e8f4fd;border-radius:4px;border-left:4px solid #5ba4dc;">
+            <h4 style="margin:0 0 10px 0;color:#333;">How to Use</h4>
+            <ol style="margin:0;padding-left:20px;color:#555;font-size:13px;">
+              <li>Click on minute, hour, and day values to toggle selection</li>
+              <li>Use quick select buttons for common patterns</li>
+              <li>Copy the generated cron expression</li>
+              <li>Paste into Splunk's "Cron Expression" field when scheduling alerts or reports</li>
+            </ol>
+          </div>
+        </div>
+
+        <script>
+          // State
+          var selectedMinutes = new Set([0]);
+          var selectedHours = new Set();
+          var selectedDays = new Set();
+
+          var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+          // Initialize grids
+          function initGrids() {
+            var minutesGrid = document.getElementById('minutes-grid');
+            var hoursGrid = document.getElementById('hours-grid');
+            var daysGrid = document.getElementById('days-grid');
+
+            // Minutes 0-59
+            for (var i = 0; i < 60; i++) {
+              var div = document.createElement('div');
+              div.className = 'selection-item' + (selectedMinutes.has(i) ? ' selected' : '');
+              div.textContent = i.toString().padStart(2, '0');
+              div.dataset.value = i;
+              div.onclick = function() { toggleMinute(parseInt(this.dataset.value)); };
+              minutesGrid.appendChild(div);
+            }
+
+            // Hours 0-23
+            for (var i = 0; i < 24; i++) {
+              var div = document.createElement('div');
+              div.className = 'selection-item' + (selectedHours.has(i) ? ' selected' : '');
+              div.textContent = i.toString().padStart(2, '0');
+              div.dataset.value = i;
+              div.onclick = function() { toggleHour(parseInt(this.dataset.value)); };
+              hoursGrid.appendChild(div);
+            }
+
+            // Days 0-6
+            for (var i = 0; i < 7; i++) {
+              var div = document.createElement('div');
+              div.className = 'selection-item day-item' + (selectedDays.has(i) ? ' selected' : '');
+              div.textContent = dayNames[i];
+              div.dataset.value = i;
+              div.onclick = function() { toggleDay(parseInt(this.dataset.value)); };
+              daysGrid.appendChild(div);
+            }
+
+            updateCronExpression();
+          }
+
+          function toggleMinute(val) {
+            if (selectedMinutes.has(val)) {
+              selectedMinutes.delete(val);
+            } else {
+              selectedMinutes.add(val);
+            }
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function toggleHour(val) {
+            if (selectedHours.has(val)) {
+              selectedHours.delete(val);
+            } else {
+              selectedHours.add(val);
+            }
+            updateGrid('hours-grid', selectedHours);
+            updateCronExpression();
+          }
+
+          function toggleDay(val) {
+            if (selectedDays.has(val)) {
+              selectedDays.delete(val);
+            } else {
+              selectedDays.add(val);
+            }
+            updateGrid('days-grid', selectedDays, true);
+            updateCronExpression();
+          }
+
+          function updateGrid(gridId, selectedSet, isDays) {
+            var items = document.getElementById(gridId).getElementsByClassName('selection-item');
+            for (var i = 0; i < items.length; i++) {
+              var val = parseInt(items[i].dataset.value);
+              if (selectedSet.has(val)) {
+                items[i].classList.add('selected');
+              } else {
+                items[i].classList.remove('selected');
+              }
+            }
+          }
+
+          function updateCronExpression() {
+            var minutePart = selectedMinutes.size === 0 ? '0' :
+                            selectedMinutes.size === 60 ? '*' :
+                            Array.from(selectedMinutes).sort(function(a,b){return a-b;}).join(',');
+
+            var hourPart = selectedHours.size === 0 ? '*' :
+                          selectedHours.size === 24 ? '*' :
+                          Array.from(selectedHours).sort(function(a,b){return a-b;}).join(',');
+
+            var dayPart = selectedDays.size === 0 ? '*' :
+                         selectedDays.size === 7 ? '*' :
+                         Array.from(selectedDays).sort(function(a,b){return a-b;}).join(',');
+
+            var cron = minutePart + ' ' + hourPart + ' * * ' + dayPart;
+            document.getElementById('cron-result').value = cron;
+
+            // Update preview
+            var preview = generatePreview(minutePart, hourPart, dayPart);
+            document.getElementById('cron-preview').innerHTML = '<strong>Schedule:</strong> ' + preview;
+          }
+
+          function generatePreview(mins, hours, days) {
+            var parts = [];
+
+            // Minutes
+            if (mins === '*') {
+              parts.push('every minute');
+            } else if (mins === '0') {
+              parts.push('at minute 0');
+            } else {
+              var minArr = mins.split(',');
+              if (minArr.length <= 3) {
+                parts.push('at minute ' + mins);
+              } else {
+                parts.push('at ' + minArr.length + ' specific minutes');
+              }
+            }
+
+            // Hours
+            if (hours === '*') {
+              parts.push('every hour');
+            } else {
+              var hourArr = hours.split(',');
+              if (hourArr.length <= 3) {
+                parts.push('at hour ' + hours);
+              } else {
+                parts.push('during ' + hourArr.length + ' specific hours');
+              }
+            }
+
+            // Days
+            if (days === '*') {
+              parts.push('every day');
+            } else {
+              var dayArr = days.split(',').map(function(d) { return dayNames[parseInt(d)]; });
+              parts.push('on ' + dayArr.join(', '));
+            }
+
+            return parts.join(', ');
+          }
+
+          // Quick select functions
+          function selectAllMinutes() {
+            selectedMinutes = new Set(Array.from({length: 60}, function(_, i) { return i; }));
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function clearMinutes() {
+            selectedMinutes = new Set();
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function selectEvery5Minutes() {
+            selectedMinutes = new Set([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function selectEvery10Minutes() {
+            selectedMinutes = new Set([0, 10, 20, 30, 40, 50]);
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function selectEvery15Minutes() {
+            selectedMinutes = new Set([0, 15, 30, 45]);
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function selectEvery30Minutes() {
+            selectedMinutes = new Set([0, 30]);
+            updateGrid('minutes-grid', selectedMinutes);
+            updateCronExpression();
+          }
+
+          function selectAllHours() {
+            selectedHours = new Set(Array.from({length: 24}, function(_, i) { return i; }));
+            updateGrid('hours-grid', selectedHours);
+            updateCronExpression();
+          }
+
+          function clearHours() {
+            selectedHours = new Set();
+            updateGrid('hours-grid', selectedHours);
+            updateCronExpression();
+          }
+
+          function selectBusinessHours() {
+            selectedHours = new Set([9, 10, 11, 12, 13, 14, 15, 16, 17]);
+            updateGrid('hours-grid', selectedHours);
+            updateCronExpression();
+          }
+
+          function selectOffHours() {
+            selectedHours = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 18, 19, 20, 21, 22, 23]);
+            updateGrid('hours-grid', selectedHours);
+            updateCronExpression();
+          }
+
+          function selectAllDays() {
+            selectedDays = new Set([0, 1, 2, 3, 4, 5, 6]);
+            updateGrid('days-grid', selectedDays, true);
+            updateCronExpression();
+          }
+
+          function clearDays() {
+            selectedDays = new Set();
+            updateGrid('days-grid', selectedDays, true);
+            updateCronExpression();
+          }
+
+          function selectWeekdays() {
+            selectedDays = new Set([1, 2, 3, 4, 5]);
+            updateGrid('days-grid', selectedDays, true);
+            updateCronExpression();
+          }
+
+          function selectWeekends() {
+            selectedDays = new Set([0, 6]);
+            updateGrid('days-grid', selectedDays, true);
+            updateCronExpression();
+          }
+
+          function copyCronExpression() {
+            var input = document.getElementById('cron-result');
+            input.select();
+            document.execCommand('copy');
+
+            var successEl = document.getElementById('copy-success');
+            successEl.classList.add('show');
+            setTimeout(function() {
+              successEl.classList.remove('show');
+            }, 2000);
+          }
+
+          // Initialize on load
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGrids);
+          } else {
+            initGrids();
+          }
+        </script>
+      </html>
+    </panel>
+  </row>
+</dashboard>

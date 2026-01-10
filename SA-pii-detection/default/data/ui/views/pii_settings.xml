@@ -1,0 +1,239 @@
+<dashboard version="1.1" theme="dark" script="pii_detection.js?v=3" stylesheet="pii_detection.css">
+  <label>PII Detection Settings</label>
+  <description>Configure PII detection parameters and patterns</description>
+
+  <!-- Current Settings -->
+  <row>
+    <panel>
+      <title>Current Configuration</title>
+      <table>
+        <search>
+          <query>
+| inputlookup pii_settings_lookup
+| eval modified_time_readable=if(modified_time > 0, strftime(modified_time, "%Y-%m-%d %H:%M:%S"), "Never")
+| table setting_name, setting_value, setting_type, description, modified_by, modified_time_readable
+| rename
+    setting_name as "Setting",
+    setting_value as "Value",
+    setting_type as "Type",
+    description as "Description",
+    modified_by as "Modified By",
+    modified_time_readable as "Last Modified"
+          </query>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <drilldown>
+          <set token="selected_setting">$row.Setting$</set>
+          <set token="show_edit_modal">true</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Settings Form -->
+  <row>
+    <panel>
+      <title>Update Settings</title>
+      <html>
+        <div class="settings-form-container">
+          <form id="update_settings_form">
+            <h3>Scan Configuration</h3>
+
+            <div class="form-group">
+              <label for="scan_indexes">Scan Indexes:</label>
+              <input type="text" id="scan_indexes" class="form-control" placeholder="main,web,app,security"/>
+              <small class="form-text text-muted">Comma-separated list of indexes to scan</small>
+            </div>
+
+            <div class="form-group">
+              <label for="scan_schedule">Scan Schedule (Cron):</label>
+              <input type="text" id="scan_schedule" class="form-control" placeholder="0 2 * * *"/>
+              <small class="form-text text-muted">Cron expression for automated scans (e.g., "0 2 * * *" = daily at 2am)</small>
+            </div>
+
+            <div class="form-group">
+              <label for="retention_days">Retention Days:</label>
+              <input type="number" id="retention_days" class="form-control" value="90" min="1" max="365"/>
+              <small class="form-text text-muted">Number of days to retain PII findings</small>
+            </div>
+
+            <h3>Notification Settings</h3>
+
+            <div class="form-group">
+              <label for="alert_email">Alert Email:</label>
+              <input type="email" id="alert_email" class="form-control" placeholder="admin@example.com"/>
+              <small class="form-text text-muted">Email address for critical PII alerts</small>
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="enable_notifications"/>
+                Enable Email Notifications
+              </label>
+            </div>
+
+            <h3>Remediation Settings</h3>
+
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="auto_remediate"/>
+                Auto-Remediate (Automatically mask detected PII)
+              </label>
+              <small class="form-text text-muted">WARNING: This will automatically mask PII data when detected</small>
+            </div>
+
+            <div class="form-group">
+              <label for="remediation_method">Remediation Method:</label>
+              <select id="remediation_method" class="form-control">
+                <option value="mask">Mask (XXX-XX-1234)</option>
+                <option value="hash">Hash (SHA256)</option>
+                <option value="redact">Redact (***REDACTED***)</option>
+                <option value="tokenize">Tokenize (Replace with token)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="save_settings_btn">
+              <i class="icon-save"></i> Save Settings
+            </button>
+            <button type="button" class="btn btn-default" id="reset_settings_btn">
+              <i class="icon-refresh"></i> Reset to Defaults
+            </button>
+          </form>
+          <div id="settings_feedback" class="form-feedback"></div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- PII Detection Patterns -->
+  <row>
+    <panel>
+      <title>Custom PII Detection Patterns</title>
+      <table id="patterns_table">
+        <search>
+          <query>
+| inputlookup pii_patterns_lookup
+| eval created_time_readable=if(created_time > 0, strftime(created_time, "%Y-%m-%d %H:%M:%S"), "Never")
+| eval modified_time_readable=if(modified_time > 0, strftime(modified_time, "%Y-%m-%d %H:%M:%S"), "Never")
+| eval status=if(is_enabled=1, "Enabled", "Disabled")
+| table pattern_id, pattern_name, pii_type, regex_pattern, description, severity, status, created_by, created_time_readable
+| rename
+    pattern_id as "Pattern ID",
+    pattern_name as "Pattern Name",
+    pii_type as "PII Type",
+    regex_pattern as "Regex Pattern",
+    description as "Description",
+    severity as "Severity",
+    status as "Status",
+    created_by as "Created By",
+    created_time_readable as "Created"
+          </query>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Enabled":"#65A637","Disabled":"#999999"}</colorPalette>
+        </format>
+        <drilldown>
+          <set token="selected_pattern_id">$row.Pattern ID$</set>
+          <set token="show_pattern_modal">true</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Add Custom Pattern -->
+  <row>
+    <panel>
+      <title>Add Custom Detection Pattern</title>
+      <html>
+        <div class="pattern-form-container">
+          <form id="add_pattern_form">
+            <div class="form-group">
+              <label for="pattern_name">Pattern Name:</label>
+              <input type="text" id="pattern_name" class="form-control" placeholder="e.g., Employee ID" required=""/>
+            </div>
+
+            <div class="form-group">
+              <label for="pattern_pii_type">PII Type:</label>
+              <select id="pattern_pii_type" class="form-control" required="">
+                <option value="">Select Type</option>
+                <option value="custom">Custom</option>
+                <option value="ssn">SSN</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="pattern_regex">Regex Pattern:</label>
+              <input type="text" id="pattern_regex" class="form-control" placeholder="e.g., \bEMP-[0-9]{6}\b" required=""/>
+              <small class="form-text text-muted">Regular expression to match PII</small>
+            </div>
+
+            <div class="form-group">
+              <label for="pattern_description">Description:</label>
+              <textarea id="pattern_description" class="form-control" rows="2" placeholder="Describe what this pattern detects" required=""></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="pattern_severity">Severity:</label>
+              <select id="pattern_severity" class="form-control" required="">
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="pattern_enabled" checked=""/>
+                Enable Pattern
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="add_pattern_btn">
+              <i class="icon-plus"></i> Add Pattern
+            </button>
+          </form>
+          <div id="pattern_feedback" class="form-feedback"></div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Test Pattern Tool -->
+  <row>
+    <panel>
+      <title>Test Detection Pattern</title>
+      <html>
+        <div class="pattern-test-container">
+          <form id="test_pattern_form">
+            <div class="form-group">
+              <label for="test_regex">Regex Pattern:</label>
+              <input type="text" id="test_regex" class="form-control" placeholder="Enter regex pattern to test"/>
+            </div>
+
+            <div class="form-group">
+              <label for="test_text">Test Text:</label>
+              <textarea id="test_text" class="form-control" rows="4" placeholder="Enter sample text to test against the pattern"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-info" id="test_pattern_btn">
+              <i class="icon-beaker"></i> Test Pattern
+            </button>
+          </form>
+          <div id="test_results" class="test-results"></div>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

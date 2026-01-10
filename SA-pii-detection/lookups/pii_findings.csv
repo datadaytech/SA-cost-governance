@@ -1,0 +1,6 @@
+"finding_id",timestamp,index,sourcetype,source,host,"pii_type","event_count",severity,status
+1e45039049b32d1f2383f8e60c43259b,1768001874,testdata,"_json","/tmp/test_events.json",splunk,email,22,medium,detected
+cb5414abf6ecf42c8df7fc2ac8dd8a5b,1768001874,testdata,"_json","/tmp/test_events.json",splunk,"credit_card",15,critical,detected
+f83d328adf59dbd2aebd48024a53fe04,1768001874,testdata,"_json","/tmp/test_events.json",splunk,ssn,13,critical,detected
+f83d328adf59dbd2aebd48024a53fe04,1768001874,testdata,"_json","/tmp/test_events.json",splunk,ssn,29,critical,detected
+f83d328adf59dbd2aebd48024a53fe04,1768001874,testdata,"_json","/tmp/test_events.json",splunk,ssn,10,critical,detected

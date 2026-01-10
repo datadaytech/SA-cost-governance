@@ -1,0 +1,7 @@
+setting_name,setting_value,setting_type,description,modified_by,modified_time
+scan_indexes,"main,web,app,security",string,Comma-separated list of indexes to scan for PII,system,0
+scan_schedule,"0 2 * * *",string,Cron schedule for automated PII scans,system,0
+alert_email,admin@example.com,string,Email address for critical PII alerts,system,0
+retention_days,90,number,Number of days to retain PII findings,system,0
+auto_remediate,0,boolean,Automatically mask PII when detected,system,0
+enable_notifications,1,boolean,Enable email notifications for critical findings,system,0

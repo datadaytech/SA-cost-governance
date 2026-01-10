@@ -1,0 +1,163 @@
+<dashboard version="1.1" theme="dark">
+  <label>Cost Governance Dashboard</label>
+  <description>Overview of Splunk license usage, search costs, and resource consumption</description>
+
+  <row>
+    <panel>
+      <title>Today's License Usage</title>
+      <single>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=LicenseUsage type=Usage earliest=@d
+| stats sum(b) as bytes
+| eval GB=round(bytes/1024/1024/1024, 2)
+| fields GB</query>
+          <earliest>@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[80,95]</option>
+        <option name="unit">GB</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>License Quota</title>
+      <single>
+        <search>
+          <query>| rest /services/licenser/pools splunk_server=local
+| stats sum(effective_quota) as quota
+| eval GB=round(quota/1024/1024/1024, 0)
+| fields GB</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="unit">GB</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Active Searches</title>
+      <single>
+        <search>
+          <query>| rest /services/search/jobs splunk_server=local
+| where dispatchState="RUNNING" OR dispatchState="QUEUED"
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Scheduled Searches</title>
+      <single>
+        <search>
+          <query>| rest /servicesNS/-/-/saved/searches splunk_server=local
+| search is_scheduled=1 disabled=0
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>License Usage Trend (Last 7 Days)</title>
+      <chart>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=LicenseUsage type=Usage
+| timechart span=1d sum(b) as bytes
+| eval GB=round(bytes/1024/1024/1024, 2)
+| fields _time GB</query>
+          <earliest>-7d@d</earliest>
+          <latest>@d</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisTitleX.text">Date</option>
+        <option name="charting.axisTitleY.text">GB Ingested</option>
+        <option name="charting.chart.showDataLabels">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Usage by Index (Today)</title>
+      <chart>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=LicenseUsage type=Usage earliest=@d
+| stats sum(b) as bytes by idx
+| eval GB=round(bytes/1024/1024/1024, 2)
+| sort -GB
+| head 10
+| fields idx GB</query>
+          <earliest>@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.showPercent">true</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top 10 Heavy Searches (Last 24h)</title>
+      <table>
+        <search>
+          <query>| rest /services/search/jobs splunk_server=local
+| where runDuration > 60
+| eval scanCount_M=round(scanCount/1000000, 2)
+| sort -scanCount
+| head 10
+| table label, user, runDuration, scanCount_M, eventCount
+| rename label as "Search", user as "User", runDuration as "Duration (s)", scanCount_M as "Scans (M)", eventCount as "Events"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Search Activity by User (Last 24h)</title>
+      <chart>
+        <search>
+          <query>index=_audit action=search info=granted
+| stats count as searches by user
+| sort -searches
+| head 10</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisTitleX.text">Searches</option>
+        <option name="charting.axisTitleY.text">User</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Usage by Sourcetype (Today)</title>
+      <table>
+        <search>
+          <query>index=_internal sourcetype=splunkd component=LicenseUsage type=Usage earliest=@d
+| stats sum(b) as bytes by st
+| eval MB=round(bytes/1024/1024, 2)
+| sort -MB
+| head 15
+| fields st MB
+| rename st as "Sourcetype", MB as "MB Ingested"</query>
+          <earliest>@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

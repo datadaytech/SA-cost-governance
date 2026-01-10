@@ -1,0 +1,355 @@
+/**
+ * PII Detection Dashboard CSS
+ * Custom styling for PII detection dashboards
+ */
+
+/* Dark theme enhancements */
+body.dark-theme {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+/* Action buttons container */
+.action-buttons-container,
+.bulk-actions-container,
+.audit-actions-container {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.action-buttons-container h3,
+.bulk-actions-container h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #fff;
+    font-size: 18px;
+}
+
+.action-buttons,
+.bulk-actions-container .action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button,
+.bulk-actions-container button,
+.audit-actions-container button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #1e88e5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1565c0;
+}
+
+.btn-success {
+    background-color: #43a047;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #2e7d32;
+}
+
+.btn-warning {
+    background-color: #fb8c00;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #ef6c00;
+}
+
+.btn-danger {
+    background-color: #e53935;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c62828;
+}
+
+.btn-info {
+    background-color: #00acc1;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #00838f;
+}
+
+.btn-default {
+    background-color: #424242;
+    color: white;
+}
+
+.btn-default:hover {
+    background-color: #616161;
+}
+
+/* Feedback messages */
+.action-feedback,
+.form-feedback {
+    margin-top: 15px;
+    min-height: 40px;
+}
+
+.alert {
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.alert-success {
+    background-color: rgba(67, 160, 71, 0.2);
+    border: 1px solid #43a047;
+    color: #4caf50;
+}
+
+.alert-info {
+    background-color: rgba(30, 136, 229, 0.2);
+    border: 1px solid #1e88e5;
+    color: #2196f3;
+}
+
+.alert-warning {
+    background-color: rgba(251, 140, 0, 0.2);
+    border: 1px solid #fb8c00;
+    color: #ff9800;
+}
+
+.alert-danger,
+.alert-error {
+    background-color: rgba(229, 57, 53, 0.2);
+    border: 1px solid #e53935;
+    color: #f44336;
+}
+
+/* Forms */
+.whitelist-form-container,
+.settings-form-container,
+.pattern-form-container,
+.pattern-test-container {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #2a2a2a;
+    border: 1px solid #424242;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #1e88e5;
+    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+}
+
+.form-control::placeholder {
+    color: #757575;
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #9e9e9e;
+}
+
+select.form-control {
+    cursor: pointer;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* Table enhancements */
+table.table-chrome {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.selection-col {
+    width: 40px;
+    text-align: center;
+}
+
+.selection-col input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Modal actions */
+.modal-actions {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Test results */
+.test-results {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    min-height: 60px;
+}
+
+/* Settings sections */
+.settings-form-container h3 {
+    color: #1e88e5;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #424242;
+    font-size: 18px;
+}
+
+.settings-form-container h3:first-child {
+    margin-top: 0;
+}
+
+/* Severity badges */
+.severity-critical {
+    background-color: #d32f2f;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.severity-high {
+    background-color: #f57c00;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.severity-medium {
+    background-color: #fbc02d;
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.severity-low {
+    background-color: #388e3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Status badges */
+.status-detected {
+    background-color: #fbc02d;
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-flagged {
+    background-color: #f57c00;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-remediated {
+    background-color: #388e3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-whitelisted {
+    background-color: #0097a7;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.status-false-positive {
+    background-color: #757575;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .action-buttons,
+    .bulk-actions-container .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons button,
+    .bulk-actions-container button {
+        width: 100%;
+    }
+}
+
+/* Icons */
+.icon-search:before { content: "🔍 "; }
+.icon-download:before { content: "⬇️ "; }
+.icon-list:before { content: "📋 "; }
+.icon-gear:before { content: "⚙️ "; }
+.icon-flag:before { content: "🚩 "; }
+.icon-check:before { content: "✓ "; }
+.icon-x:before { content: "✕ "; }
+.icon-shield:before { content: "🛡️ "; }
+.icon-plus:before { content: "+ "; }
+.icon-trash:before { content: "🗑️ "; }
+.icon-pause:before { content: "⏸️ "; }
+.icon-save:before { content: "💾 "; }
+.icon-refresh:before { content: "🔄 "; }
+.icon-beaker:before { content: "🧪 "; }
+.icon-file:before { content: "📄 "; }

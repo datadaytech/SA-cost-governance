@@ -1,0 +1,153 @@
+<dashboard version="1.1" theme="light">
+  <label>Environment Diagnostics</label>
+  <description>Run and view Splunk environment diagnostic reports</description>
+
+  <row>
+    <panel>
+      <title>Diagnostic Controls</title>
+      <html>
+        <div style="padding: 20px;">
+          <h3>Run Diagnostics</h3>
+          <p>Click below to start a full diagnostic run. This will execute 12 searches sequentially and compile results.</p>
+          <p><strong>Note:</strong> Scheduled runs occur nightly at 2:00 AM. Use manual run for immediate results.</p>
+          <a href="/app/TA-splunk_diagnostic/search?s=%2FservicesNS%2Fnobody%2FTA-splunk_diagnostic%2Fsaved%2Fsearches%2FRun%20Diagnostics%20Now"
+             class="btn btn-primary" target="_blank">
+            Run Diagnostics Now
+          </a>
+        </div>
+      </html>
+    </panel>
+    <panel>
+      <title>Last Run Status</title>
+      <single>
+        <search>
+          <query>| inputlookup diagnostic_meta_lookup
+| sort - start_time
+| head 1
+| eval status_display=status." (".strftime(start_time, "%Y-%m-%d %H:%M").")"
+| table status_display</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x65a637","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Download Results</title>
+      <html>
+        <div style="padding: 20px;">
+          <h3>Export CSV</h3>
+          <p>Download the latest diagnostic results as CSV:</p>
+          <a href="/splunkd/__raw/servicesNS/nobody/TA-splunk_diagnostic/data/lookup-table-files/diagnostic_results_export.csv"
+             class="btn btn-default" target="_blank">
+            Download CSV
+          </a>
+          <br/><br/>
+          <p><small>Or query: <code>| inputlookup diagnostic_results_lookup</code></small></p>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Diagnostic Run History</title>
+      <table>
+        <search>
+          <query>| inputlookup diagnostic_meta_lookup
+| eval start_time_display=strftime(start_time, "%Y-%m-%d %H:%M:%S")
+| eval end_time_display=strftime(end_time, "%Y-%m-%d %H:%M:%S")
+| eval duration_min=round(duration_seconds/60, 1)
+| sort - start_time
+| head 10
+| table run_id, status, start_time_display, end_time_display, duration_min, search_count
+| rename run_id as "Run ID", status as "Status", start_time_display as "Start Time", end_time_display as "End Time", duration_min as "Duration (min)", search_count as "Searches"</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Results by Category</title>
+      <chart>
+        <search>
+          <query>| inputlookup diagnostic_results_lookup
+| join type=left run_id [| inputlookup diagnostic_meta_lookup | sort - start_time | head 1 | fields run_id]
+| stats count by category</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Metrics Summary</title>
+      <table>
+        <search>
+          <query>| inputlookup diagnostic_results_lookup
+| join type=left run_id [| inputlookup diagnostic_meta_lookup | sort - start_time | head 1 | fields run_id]
+| stats count as "Metric Count" by category, metric_name
+| sort category, metric_name</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Latest Diagnostic Results (Raw)</title>
+      <table>
+        <search>
+          <query>| inputlookup diagnostic_results_lookup
+| join type=left run_id [| inputlookup diagnostic_meta_lookup | sort - start_time | head 1 | fields run_id]
+| eval run_time_display=strftime(run_time, "%Y-%m-%d %H:%M:%S")
+| table category, metric_name, metric_value, details, search_name, run_time_display
+| sort category, metric_name
+| rename category as "Category", metric_name as "Metric", metric_value as "Value", details as "Details (JSON)", search_name as "Source Search", run_time_display as "Collected At"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">50</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Configuration</title>
+      <html>
+        <div style="padding: 20px; background: #f5f5f5; border-radius: 4px;">
+          <h3>Setup Instructions</h3>
+          <ol>
+            <li><strong>Enable Scheduled Searches:</strong> Navigate to Settings → Searches, Reports, and Alerts. Enable all <code>diag_*</code> searches.</li>
+            <li><strong>Configure Webhook (Optional):</strong> Edit <code>diag_99_finalize</code> and set <code>action.webhook.param.url</code> to your endpoint.</li>
+            <li><strong>Configure Email (Optional):</strong> Edit <code>diag_99_finalize</code> and set <code>action.email.to</code> with recipient addresses.</li>
+            <li><strong>Adjust Schedule:</strong> Default runs at 2:00 AM. Modify cron schedules in savedsearches.conf as needed.</li>
+            <li><strong>Adjust Lookback:</strong> Default is 7 days. Modify <code>diag_earliest</code> macro for different time range.</li>
+          </ol>
+          <h4>Required Index Access</h4>
+          <ul>
+            <li><code>_internal</code> - Scheduler, search logs, metrics</li>
+            <li><code>_audit</code> - User activity tracking</li>
+            <li><code>_cmc_summary</code> - SVC consumption data (Splunk Cloud only)</li>
+          </ul>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,3 @@
+whitelist_id,pattern,pii_type,index,sourcetype,field_name,reason,added_by,added_time,expires,is_active
+"WL-TEST-001","test@example.com",email,"*","*","*","Test whitelist entry",admin,1768003815,"",1
+"WL-TEST-002","555-12-3456",ssn,"*","*","*","Test SSN whitelist",admin,1768004914,"",1

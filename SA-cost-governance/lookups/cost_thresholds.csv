@@ -1,0 +1,5 @@
+threshold_name,threshold_type,threshold_value,action,enabled
+daily_license_warning,license_percent,80,alert,1
+daily_license_critical,license_percent,95,alert,1
+search_duration_warning,seconds,300,flag,1
+search_scan_warning,count,1000000,flag,1

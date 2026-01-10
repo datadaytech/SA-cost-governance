@@ -1,0 +1,2 @@
+audit_id,timestamp,action,finding_id,pii_type,performed_by,old_status,new_status,details,ip_address
+"AUD-TEST-001",1768004928,"whitelist_add","",ssn,admin,"","","Test audit entry",""

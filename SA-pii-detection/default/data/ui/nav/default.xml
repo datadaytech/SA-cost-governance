@@ -1,0 +1,13 @@
+<nav search_view="search" color="#1e88e5">
+  <view name="pii_overview" default="true" />
+  <view name="pii_findings" />
+  <view name="pii_whitelist" />
+  <view name="pii_settings" />
+  <view name="pii_audit_log" />
+  <collection label="Documentation">
+    <a href="https://github.com/DataDay-Technology-Solutions/apps/tree/main/SA-pii-detection">GitHub Repository</a>
+    <divider />
+    <saved name="PII Detection - Daily Scan" />
+    <saved name="PII Detection - Critical Alert" />
+  </collection>
+</nav>

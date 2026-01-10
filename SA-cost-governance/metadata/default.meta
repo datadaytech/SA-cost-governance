@@ -1,0 +1,72 @@
+# Application-level permissions
+[]
+access = read : [ admin, sc_admin ], write : [ admin, sc_admin ]
+export = system
+
+[views]
+access = read : [ admin, sc_admin ], write : [ admin, sc_admin ]
+export = none
+
+[collections]
+access = read : [ admin, sc_admin ], write : [ admin, sc_admin ]
+export = none
+
+[transforms]
+access = read : [ admin, sc_admin ], write : [ admin, sc_admin ]
+export = system
+
+# Lookup table write permissions for outputlookup to work from dashboard JavaScript
+[lookups]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+# Lookup table file permissions (CSV files)
+[lookup-table-files/flagged_searches.csv]
+access = read : [ * ], write : [ * ]
+export = system
+
+[lookup-table-files/ok_searches.csv]
+access = read : [ * ], write : [ * ]
+export = system
+
+[lookup-table-files/governance_audit_log.csv]
+access = read : [ * ], write : [ * ]
+export = system
+
+[lookup-table-files/governance_search_cache.csv]
+access = read : [ * ], write : [ * ]
+export = system
+
+[lookup-table-files/governance_action_queue.csv]
+access = read : [ * ], write : [ * ]
+export = system
+
+# Transform lookup definitions
+[transforms/flagged_searches_lookup]
+access = read : [ * ], write : [ * ]
+export = system
+
+[transforms/ok_searches_lookup]
+access = read : [ * ], write : [ * ]
+export = system
+
+[transforms/governance_audit_log_lookup]
+access = read : [ * ], write : [ * ]
+export = system
+
+[macros]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[savedsearches]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+# Specific saved search permissions for governance actions
+[savedsearches/Governance - Write State Event]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[savedsearches/Governance - Write OK Status]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system

@@ -1,0 +1,238 @@
+<dashboard version="1.1" theme="dark" script="pii_detection.js?v=5" stylesheet="pii_detection.css">
+  <label>PII Whitelist Management</label>
+  <description>Manage whitelisted PII patterns and exceptions</description>
+
+  <!-- Whitelist Statistics -->
+  <row>
+    <panel>
+      <title>Active Whitelist Entries</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where is_active=1 AND (isnull(expires) OR expires="" OR expires &gt; now())
+| stats count as active_entries
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Active Rules</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Expired Entries</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where isnotnull(expires) AND expires &lt; now()
+| stats count as expired_entries
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Expired Rules</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Total PII Types Whitelisted</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where is_active=1
+| stats dc(pii_type) as pii_types
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Unique PII Types</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Whitelist Entries by PII Type -->
+  <row>
+    <panel>
+      <title>Whitelist Distribution by PII Type</title>
+      <chart>
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where is_active=1
+| stats count by pii_type
+| sort - count
+          </query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Active Whitelist Entries Table -->
+  <row>
+    <panel>
+      <title>Active Whitelist Entries</title>
+      <table id="whitelist_table">
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where is_active=1 AND (isnull(expires) OR expires="" OR expires &gt; now())
+| eval added_time_readable=strftime(added_time, "%Y-%m-%d %H:%M:%S")
+| eval expires_readable=if(isnotnull(expires), strftime(expires, "%Y-%m-%d %H:%M:%S"), "Never")
+| eval days_until_expiry=if(isnotnull(expires), round((expires - now()) / 86400, 1), null())
+| sort - added_time
+| table whitelist_id, pii_type, pattern, index, sourcetype, field_name, reason, added_by, added_time_readable, expires_readable, days_until_expiry
+| rename
+    whitelist_id as "Whitelist ID",
+    pii_type as "PII Type",
+    pattern as "Pattern",
+    index as "Index",
+    sourcetype as "Sourcetype",
+    field_name as "Field",
+    reason as "Reason",
+    added_by as "Added By",
+    added_time_readable as "Added",
+    expires_readable as "Expires",
+    days_until_expiry as "Days Left"
+          </query>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">25</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Days Left">
+          <colorPalette type="minMidMax" maxColor="#65A637" midColor="#F7BC38" minColor="#D93F3C"></colorPalette>
+          <scale type="minMidMax" minType="number" minValue="0" midType="number" midValue="15" maxType="number" maxValue="30"></scale>
+        </format>
+        <drilldown>
+          <set token="selected_whitelist_id">$row.Whitelist ID$</set>
+          <set token="show_whitelist_modal">true</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Add Whitelist Entry Form -->
+  <row>
+    <panel>
+      <title>Add New Whitelist Entry</title>
+      <html>
+        <div class="whitelist-form-container">
+          <form id="add_whitelist_form">
+            <div class="form-group">
+              <label for="whitelist_pii_type">PII Type:</label>
+              <select id="whitelist_pii_type" class="form-control" required="">
+                <option value="">Select PII Type</option>
+                <option value="ssn">SSN</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone Number</option>
+                <option value="ip">IP Address</option>
+                <option value="bank_account">Bank Account</option>
+                <option value="passport">Passport</option>
+                <option value="drivers_license">Driver's License</option>
+                <option value="dob">Date of Birth</option>
+                <option value="mrn">Medical Record Number</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_pattern">Pattern (regex or literal):</label>
+              <input type="text" id="whitelist_pattern" class="form-control" placeholder="e.g., 000-00-0000 or test@example.com" required=""/>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_index">Index (optional):</label>
+              <input type="text" id="whitelist_index" class="form-control" placeholder="Leave empty for all indexes"/>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_sourcetype">Sourcetype (optional):</label>
+              <input type="text" id="whitelist_sourcetype" class="form-control" placeholder="Leave empty for all sourcetypes"/>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_field">Field Name (optional):</label>
+              <input type="text" id="whitelist_field" class="form-control" placeholder="e.g., user_ssn, email_address"/>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_reason">Reason:</label>
+              <textarea id="whitelist_reason" class="form-control" rows="3" placeholder="Explain why this should be whitelisted" required=""></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="whitelist_expires">Expiration (optional):</label>
+              <input type="date" id="whitelist_expires" class="form-control"/>
+              <small class="form-text text-muted">Leave empty for permanent whitelist</small>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="add_whitelist_btn" onclick="piiAddWhitelist()">
+              <i class="icon-plus"></i> Add to Whitelist
+            </button>
+          </form>
+          <div id="whitelist_feedback" class="form-feedback"></div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Expired Entries Table -->
+  <row>
+    <panel>
+      <title>Expired Whitelist Entries</title>
+      <table id="expired_whitelist_table">
+        <search>
+          <query>
+| inputlookup pii_whitelist_lookup
+| where isnotnull(expires) AND expires &lt; now()
+| eval added_time_readable=strftime(added_time, "%Y-%m-%d %H:%M:%S")
+| eval expires_readable=strftime(expires, "%Y-%m-%d %H:%M:%S")
+| eval days_since_expiry=round((now() - expires) / 86400, 1)
+| sort - expires
+| table whitelist_id, pii_type, pattern, index, sourcetype, reason, added_by, added_time_readable, expires_readable, days_since_expiry
+| rename
+    whitelist_id as "Whitelist ID",
+    pii_type as "PII Type",
+    pattern as "Pattern",
+    index as "Index",
+    sourcetype as "Sourcetype",
+    reason as "Reason",
+    added_by as "Added By",
+    added_time_readable as "Added",
+    expires_readable as "Expired On",
+    days_since_expiry as "Days Expired"
+          </query>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+        <option name="rowNumbers">true</option>
+        <drilldown>
+          <set token="selected_expired_id">$row.Whitelist ID$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Bulk Actions -->
+  <row>
+    <panel>
+      <html>
+        <div class="bulk-actions-container">
+          <h3>Bulk Actions</h3>
+          <button type="button" class="btn btn-danger" id="remove_expired_btn" onclick="piiRemoveExpired()">
+            <i class="icon-trash"></i> Remove All Expired Entries
+          </button>
+          <button class="btn btn-warning" id="deactivate_selected_btn">
+            <i class="icon-pause"></i> Deactivate Selected
+          </button>
+          <button class="btn btn-default" id="export_whitelist_btn">
+            <i class="icon-download"></i> Export Whitelist
+          </button>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>
