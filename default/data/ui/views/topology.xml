@@ -1,8 +1,8 @@
-<form version="1.1" theme="light" script="topology_viz.js" stylesheet="topology.css">
+<form version="1.1" theme="light">
   <label>SA Topology Analyzer</label>
   <description>Dynamic infrastructure topology visualization - Similar to ITSI Service Analyzer</description>
 
-  <fieldset submitButton="true" autoRun="true">
+  <fieldset submitButton="false" autoRun="true">
     <input type="time" token="time_range" searchWhenChanged="true">
       <label>Time Range</label>
       <default>
@@ -16,20 +16,107 @@
       <choice value="mock">Mock Demo</choice>
       <default>mock</default>
     </input>
-    <input type="dropdown" token="health_filter" searchWhenChanged="true">
-      <label>Health Filter</label>
-      <choice value="*">All</choice>
-      <choice value="green">Healthy Only</choice>
-      <choice value="yellow">Warning Only</choice>
-      <choice value="red">Critical Only</choice>
-      <default>*</default>
-    </input>
   </fieldset>
 
   <!-- Health Summary Row -->
   <row>
     <panel>
       <html>
+        <style>
+          .topology-header {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+          }
+          .topology-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #333;
+          }
+          .topology-header p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+          }
+          .health-summary {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+          }
+          .health-badge {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+          }
+          .health-badge .count {
+            font-size: 24px;
+            margin-right: 10px;
+            font-weight: 700;
+          }
+          .health-badge.green {
+            background: rgba(101, 166, 55, 0.15);
+            color: #65A637;
+            border: 2px solid #65A637;
+          }
+          .health-badge.yellow {
+            background: rgba(248, 190, 52, 0.15);
+            color: #D9A400;
+            border: 2px solid #F8BE34;
+          }
+          .health-badge.red {
+            background: rgba(220, 78, 65, 0.15);
+            color: #DC4E41;
+            border: 2px solid #DC4E41;
+          }
+          #topology-container {
+            width: 100%;
+            min-height: 600px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            position: relative;
+          }
+          .node text {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+          }
+          .link {
+            fill: none;
+            stroke: #B5B5B5;
+            stroke-width: 2px;
+          }
+          .legend text {
+            font-size: 12px;
+            fill: #333;
+          }
+          #node-details {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 15px;
+            min-width: 250px;
+            display: none;
+            z-index: 1000;
+          }
+          #node-details h3 {
+            margin: 0 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #65A637;
+          }
+          #node-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+          }
+          #node-details .label { color: #666; }
+          #node-details .value { font-weight: 600; }
+        </style>
+
         <div class="topology-header">
           <h1>Splunk Infrastructure Topology</h1>
           <p>Real-time visualization of data flow from Universal Forwarders through Indexes to Search Heads</p>
@@ -52,192 +139,236 @@
     </panel>
   </row>
 
-  <!-- Toolbar Row -->
-  <row>
-    <panel>
-      <html>
-        <div class="topology-toolbar">
-          <button class="toolbar-btn" onclick="window.topologyViz &amp;&amp; window.topologyViz.update(window.topologyViz.createMockHierarchy())">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-            Refresh
-          </button>
-          <button class="toolbar-btn" onclick="document.getElementById('topology-container').requestFullscreen &amp;&amp; document.getElementById('topology-container').requestFullscreen()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-            </svg>
-            Fullscreen
-          </button>
-          <button class="toolbar-btn" onclick="$('#node-details').hide()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            Close Details
-          </button>
-        </div>
-      </html>
-    </panel>
-  </row>
-
   <!-- Main Topology Visualization -->
   <row>
     <panel>
       <html>
-        <div id="topology-container">
-          <div class="topology-loading">
-            <div class="spinner"></div>
-            <p>Loading topology data...</p>
-          </div>
-        </div>
+        <div id="topology-container"></div>
+        <div id="node-details"></div>
+
+        <script src="/static/app/sa-topology/d3.v7.min.js"></script>
+        <script>
+          (function() {
+            // Wait for D3 to load
+            var checkD3 = setInterval(function() {
+              if (typeof d3 !== 'undefined') {
+                clearInterval(checkD3);
+                initTopology();
+              }
+            }, 100);
+
+            function initTopology() {
+              console.log('Initializing topology with D3 version:', d3.version);
+
+              // Mock data
+              var mockData = {
+                id: 'root',
+                name: 'Splunk Infrastructure',
+                type: 'root',
+                health: 'green',
+                children: [
+                  {
+                    id: 'sh_1',
+                    name: 'search-head-01',
+                    type: 'search_head',
+                    health: 'green',
+                    children: [
+                      {
+                        id: 'idx_main',
+                        name: 'main',
+                        type: 'index',
+                        health: 'green',
+                        children: [
+                          { id: 'uf_1', name: 'web-server-01', type: 'forwarder', health: 'green', children: [] },
+                          { id: 'uf_2', name: 'web-server-02', type: 'forwarder', health: 'green', children: [] },
+                          { id: 'uf_3', name: 'app-server-01', type: 'forwarder', health: 'yellow', children: [] }
+                        ]
+                      },
+                      {
+                        id: 'idx_internal',
+                        name: '_internal',
+                        type: 'index',
+                        health: 'green',
+                        children: [
+                          { id: 'uf_4', name: 'firewall-01', type: 'forwarder', health: 'green', children: [] },
+                          { id: 'uf_5', name: 'ids-sensor-01', type: 'forwarder', health: 'red', children: [] }
+                        ]
+                      },
+                      {
+                        id: 'idx_metrics',
+                        name: '_metrics',
+                        type: 'index',
+                        health: 'yellow',
+                        children: [
+                          { id: 'uf_6', name: 'monitor-01', type: 'forwarder', health: 'green', children: [] }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    id: 'sh_2',
+                    name: 'search-head-02',
+                    type: 'search_head',
+                    health: 'green',
+                    children: [
+                      {
+                        id: 'idx_audit',
+                        name: '_audit',
+                        type: 'index',
+                        health: 'green',
+                        children: [
+                          { id: 'uf_7', name: 'dc-01', type: 'forwarder', health: 'green', children: [] },
+                          { id: 'uf_8', name: 'dc-02', type: 'forwarder', health: 'green', children: [] }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              };
+
+              // Colors
+              var colors = {
+                green: '#65A637',
+                yellow: '#F8BE34',
+                red: '#DC4E41',
+                unknown: '#708794'
+              };
+
+              // Calculate health counts
+              var healthCounts = { green: 0, yellow: 0, red: 0 };
+              function countHealth(node) {
+                if (node.health) healthCounts[node.health] = (healthCounts[node.health] || 0) + 1;
+                if (node.children) node.children.forEach(countHealth);
+              }
+              countHealth(mockData);
+
+              document.getElementById('health-green').textContent = healthCounts.green;
+              document.getElementById('health-yellow').textContent = healthCounts.yellow;
+              document.getElementById('health-red').textContent = healthCounts.red;
+
+              // Setup SVG
+              var container = document.getElementById('topology-container');
+              var width = container.offsetWidth || 1000;
+              var height = 600;
+
+              var svg = d3.select('#topology-container')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+              var g = svg.append('g')
+                .attr('transform', 'translate(50, 50)');
+
+              // Create tree layout
+              var treeLayout = d3.tree()
+                .size([width - 100, height - 150]);
+
+              var root = d3.hierarchy(mockData);
+              treeLayout(root);
+
+              // Draw links
+              g.selectAll('.link')
+                .data(root.links())
+                .enter()
+                .append('path')
+                .attr('class', 'link')
+                .attr('d', function(d) {
+                  return 'M' + d.source.x + ',' + d.source.y +
+                         'C' + d.source.x + ',' + (d.source.y + d.target.y) / 2 +
+                         ' ' + d.target.x + ',' + (d.source.y + d.target.y) / 2 +
+                         ' ' + d.target.x + ',' + d.target.y;
+                });
+
+              // Draw nodes
+              var nodes = g.selectAll('.node')
+                .data(root.descendants())
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+                .style('cursor', 'pointer')
+                .on('click', function(event, d) {
+                  showDetails(d.data);
+                });
+
+              // Node circles
+              nodes.append('circle')
+                .attr('r', 25)
+                .attr('fill', function(d) { return colors[d.data.health] || colors.unknown; })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 3)
+                .style('filter', 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))');
+
+              // Node type labels
+              nodes.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', 4)
+                .attr('fill', '#fff')
+                .attr('font-weight', 'bold')
+                .attr('font-size', '12px')
+                .text(function(d) {
+                  var abbrev = { root: 'R', search_head: 'SH', index: 'IX', forwarder: 'UF' };
+                  return abbrev[d.data.type] || '?';
+                });
+
+              // Node name labels
+              nodes.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('y', 40)
+                .attr('fill', '#333')
+                .attr('font-size', '10px')
+                .text(function(d) {
+                  var name = d.data.name;
+                  return name.length > 15 ? name.substring(0, 13) + '...' : name;
+                });
+
+              // Add legend
+              var legend = svg.append('g')
+                .attr('class', 'legend')
+                .attr('transform', 'translate(20, 20)');
+
+              var legendData = [
+                { label: 'Healthy', color: colors.green },
+                { label: 'Warning', color: colors.yellow },
+                { label: 'Critical', color: colors.red }
+              ];
+
+              legendData.forEach(function(item, i) {
+                var lg = legend.append('g')
+                  .attr('transform', 'translate(0, ' + (i * 25) + ')');
+                lg.append('circle')
+                  .attr('r', 8)
+                  .attr('fill', item.color);
+                lg.append('text')
+                  .attr('x', 15)
+                  .attr('y', 4)
+                  .text(item.label);
+              });
+
+              // Show details function
+              function showDetails(data) {
+                var panel = document.getElementById('node-details');
+                panel.innerHTML = '<h3>' + data.name + '</h3>' +
+                  '<div class="detail-row"><span class="label">Type:</span><span class="value">' + data.type + '</span></div>' +
+                  '<div class="detail-row"><span class="label">Health:</span><span class="value" style="color:' + colors[data.health] + '">' + data.health.toUpperCase() + '</span></div>' +
+                  '<div class="detail-row"><span class="label">Children:</span><span class="value">' + (data.children ? data.children.length : 0) + '</span></div>';
+                panel.style.display = 'block';
+              }
+
+              // Add zoom
+              var zoom = d3.zoom()
+                .scaleExtent([0.5, 3])
+                .on('zoom', function(event) {
+                  g.attr('transform', event.transform);
+                });
+
+              svg.call(zoom);
+
+              console.log('Topology visualization complete');
+            }
+          })();
+        </script>
       </html>
-    </panel>
-  </row>
-
-  <!-- Search Heads Discovery -->
-  <row depends="$view_mode$ = live">
-    <panel>
-      <title>Search Heads</title>
-      <table>
-        <search id="search_heads_search">
-          <query>
-            | rest /services/server/info
-            | eval type="search_head"
-            | eval is_shc_member=if(isnotnull(shcluster_label), "yes", "no")
-            | eval health="green"
-            | table serverName, version, build, os_name, cpu_arch, numberOfCores, physicalMemoryMB, is_shc_member, health, type
-          </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="count">10</option>
-      </table>
-    </panel>
-  </row>
-
-  <!-- Index Discovery -->
-  <row depends="$view_mode$ = live">
-    <panel>
-      <title>Indexes</title>
-      <table>
-        <search id="indexes_search">
-          <query>
-            | rest /services/data/indexes
-            | search disabled=0
-            | eval size_gb=round(currentDBSizeMB/1024, 2)
-            | eval type="index"
-            | eval health=case(
-                currentDBSizeMB > 0 AND disabled=0, "green",
-                currentDBSizeMB = 0 AND disabled=0, "yellow",
-                1=1, "red")
-            | table title, currentDBSizeMB, size_gb, totalEventCount, homePath, coldPath, maxDataSizeMB, health, type
-            | rename title as index_name
-            | sort - totalEventCount
-            | head 20
-          </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="count">10</option>
-        <format type="color" field="health">
-          <colorPalette type="map">{"green":#65A637,"yellow":#F8BE34,"red":#DC4E41}</colorPalette>
-        </format>
-      </table>
-    </panel>
-  </row>
-
-  <!-- Universal Forwarders Discovery -->
-  <row depends="$view_mode$ = live">
-    <panel>
-      <title>Universal Forwarders</title>
-      <table>
-        <search id="forwarders_search">
-          <query>
-            index=_internal sourcetype=splunkd group=tcpin_connections
-            | stats latest(version) as version,
-                    latest(arch) as architecture,
-                    latest(os) as os,
-                    sum(kb) as total_kb,
-                    dc(sourceIp) as connection_count,
-                    latest(_time) as last_seen
-                    by hostname, guid
-            | eval type="universal_forwarder"
-            | eval last_seen_human=strftime(last_seen, "%Y-%m-%d %H:%M:%S")
-            | eval health=case(
-                last_seen > relative_time(now(), "-15m"), "green",
-                last_seen > relative_time(now(), "-1h"), "yellow",
-                1=1, "red")
-            | where health="$health_filter$" OR "$health_filter$"="*"
-            | table hostname, guid, version, architecture, os, total_kb, connection_count, last_seen_human, health, type
-            | sort - last_seen
-            | head 50
-          </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-        </search>
-        <option name="drilldown">none</option>
-        <option name="refresh.display">progressbar</option>
-        <option name="count">10</option>
-        <format type="color" field="health">
-          <colorPalette type="map">{"green":#65A637,"yellow":#F8BE34,"red":#DC4E41}</colorPalette>
-        </format>
-      </table>
-    </panel>
-  </row>
-
-  <!-- Full Topology Data Search (for JS visualization) -->
-  <row>
-    <panel depends="$never_show$">
-      <table>
-        <search id="topology_search">
-          <query>
-            | makeresults
-            | eval search_type="topology_builder"
-            | append [
-                | rest /services/server/info
-                | eval node_type="search_head", health="green"
-                | eval node_id="sh_".serverName
-                | eval parent_id="root"
-                | table node_id, serverName, node_type, health, parent_id, version
-                | rename serverName as node_name
-            ]
-            | append [
-                | rest /services/data/indexes
-                | search disabled=0 totalEventCount>0
-                | eval node_type="index", health=if(currentDBSizeMB>0, "green", "yellow")
-                | eval node_id="idx_".title
-                | head 1
-                | eval parent_id="sh_".splunk_server
-                | table node_id, title, node_type, health, parent_id, currentDBSizeMB, totalEventCount
-                | rename title as node_name
-            ]
-            | append [
-                search index=_internal sourcetype=splunkd group=tcpin_connections earliest=-1h
-                | stats latest(_time) as last_seen, sum(kb) as total_kb by hostname, dest_idx
-                | eval node_type="forwarder"
-                | eval health=case(
-                    last_seen > relative_time(now(), "-15m"), "green",
-                    last_seen > relative_time(now(), "-1h"), "yellow",
-                    1=1, "red")
-                | eval node_id="uf_".hostname
-                | eval parent_id="idx_".dest_idx
-                | table node_id, hostname, node_type, health, parent_id, total_kb
-                | rename hostname as node_name
-            ]
-            | search node_type=*
-            | table node_id, node_name, node_type, health, parent_id, version, currentDBSizeMB, totalEventCount, total_kb
-          </query>
-          <earliest>$time_range.earliest$</earliest>
-          <latest>$time_range.latest$</latest>
-          <done>
-            <set token="topology_data_loaded">true</set>
-          </done>
-        </search>
-      </table>
     </panel>
   </row>
 
