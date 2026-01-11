@@ -2629,14 +2629,12 @@ require([
             var currentStatusLower = currentStatus.toLowerCase();
             var isUnflagged = currentStatusLower === 'ok' || currentStatusLower === 'suspicious';
 
-            // Check if already flagged (pending, notified, disabled, review states)
+            // Check if already flagged (pending, notified, review states) - disabled CAN be re-flagged
             var isAlreadyFlagged = currentStatusLower === 'flagged' ||
                                    currentStatusLower === 'pending' ||
                                    currentStatusLower === 'notified' ||
-                                   currentStatusLower === 'disabled' ||
                                    currentStatusLower === 'review' ||
-                                   currentStatusLower.indexOf('pending') > -1 ||
-                                   currentStatusLower.indexOf('disabled') > -1;
+                                   currentStatusLower.indexOf('pending') > -1;
 
             // Close menu
             $('.status-dropdown-menu').remove();
