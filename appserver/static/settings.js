@@ -1,6 +1,7 @@
 /**
  * SA Topology Analyzer - Settings Page JavaScript
  * Handles settings management, KV Store operations, and scheduled search configuration
+ * Includes fallback to CSV lookups when KV Store is unavailable
  */
 
 require([
@@ -15,6 +16,8 @@ require([
     console.log('SA Topology Settings: Initializing...');
 
     var appName = 'sa-topology';
+    var kvStoreAvailable = null; // Will be set after checking
+    var storageMode = 'unknown'; // 'kvstore' or 'csv'
 
     // KV Store REST API helper
     var KVStore = {
@@ -92,67 +95,194 @@ require([
                     callback(xhr.responseText || 'Error deleting data');
                 }
             });
+        },
+
+        // Check if KV Store is available
+        checkAvailability: function(callback) {
+            $.ajax({
+                url: '/splunkd/__raw/services/server/info?output_mode=json',
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    var status = 'failed';
+                    try {
+                        status = data.entry[0].content.kvStoreStatus;
+                    } catch (e) {
+                        console.warn('Could not parse KV Store status');
+                    }
+                    callback(null, status === 'ready');
+                },
+                error: function(xhr) {
+                    callback(null, false);
+                }
+            });
         }
     };
 
-    // Load settings from KV Store
+    // CSV-based storage helper (fallback when KV Store unavailable)
+    var CSVStorage = {
+        // Get a setting from CSV lookup via SPL search
+        get: function(key, callback) {
+            var search = new SearchManager({
+                id: 'csvGet_' + key + '_' + Date.now(),
+                search: '| inputlookup sa_topology_settings_csv | search setting_key="' + key + '"',
+                earliest_time: '-24h@h',
+                latest_time: 'now',
+                autostart: true
+            });
+
+            search.data('results').on('data', function(results) {
+                if (results.hasData()) {
+                    var rows = results.data().rows;
+                    var fields = results.data().fields;
+                    if (rows && rows.length > 0) {
+                        var valueIdx = fields.indexOf('setting_value');
+                        if (valueIdx >= 0) {
+                            callback(null, { setting_value: rows[0][valueIdx] });
+                            return;
+                        }
+                    }
+                }
+                callback(null, null);
+            });
+
+            search.on('search:error', function(err) {
+                callback(err);
+            });
+        },
+
+        // Set a setting in CSV lookup via SPL search
+        set: function(key, value, callback) {
+            var valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+            var timestamp = new Date().toISOString();
+            var username = Splunk.util.getConfigValue('USERNAME') || 'unknown';
+
+            // Use outputlookup append=t to add/update
+            var search = new SearchManager({
+                id: 'csvSet_' + key + '_' + Date.now(),
+                search: '| makeresults | eval setting_key="' + key + '", setting_value="' + valueStr.replace(/"/g, '\\"') + '", updated_by="' + username + '", updated_time="' + timestamp + '" | outputlookup append=t sa_topology_settings_csv',
+                earliest_time: '-24h@h',
+                latest_time: 'now',
+                autostart: true
+            });
+
+            search.on('search:done', function() {
+                callback(null, true);
+            });
+
+            search.on('search:error', function(err) {
+                callback(err);
+            });
+        }
+    };
+
+    // Unified storage interface that uses KV Store or CSV based on availability
+    var Storage = {
+        get: function(key, callback) {
+            if (storageMode === 'kvstore') {
+                KVStore.get('sa_topology_settings', key, callback);
+            } else {
+                CSVStorage.get(key, callback);
+            }
+        },
+
+        set: function(key, value, callback) {
+            if (storageMode === 'kvstore') {
+                KVStore.set('sa_topology_settings', key, value, callback);
+            } else {
+                CSVStorage.set(key, value, callback);
+            }
+        }
+    };
+
+    // Load settings using the unified Storage interface
     function loadSettings() {
-        console.log('SA Topology Settings: Loading settings...');
+        console.log('SA Topology Settings: Loading settings using', storageMode, 'storage...');
+
+        // Helper to parse setting value
+        function parseValue(data) {
+            if (!data || !data.setting_value) return null;
+            try {
+                return JSON.parse(data.setting_value);
+            } catch (e) {
+                return data.setting_value; // Return raw value if not JSON
+            }
+        }
 
         // Load schedule settings
-        KVStore.get('sa_topology_settings', 'schedule_enabled', function(err, data) {
-            if (!err && data && data.setting_value) {
-                var enabled = JSON.parse(data.setting_value);
-                $('#enable-scheduled').prop('checked', enabled);
-                $('#schedule-status').text(enabled ? 'Enabled' : 'Disabled');
+        Storage.get('schedule_enabled', function(err, data) {
+            if (!err && data) {
+                var enabled = parseValue(data);
+                if (enabled !== null) {
+                    $('#enable-scheduled').prop('checked', enabled === true || enabled === 'true');
+                    $('#schedule-status').text(enabled ? 'Enabled' : 'Disabled');
+                }
             }
         });
 
-        KVStore.get('sa_topology_settings', 'schedule_hour', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#schedule-hour').val(JSON.parse(data.setting_value));
+        Storage.get('schedule_hour', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#schedule-hour').val(val);
             }
         });
 
-        KVStore.get('sa_topology_settings', 'schedule_minute', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#schedule-minute').val(JSON.parse(data.setting_value));
+        Storage.get('schedule_minute', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#schedule-minute').val(val);
             }
         });
 
-        KVStore.get('sa_topology_settings', 'discovery_range', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#discovery-range').val(JSON.parse(data.setting_value));
+        Storage.get('discovery_range', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#discovery-range').val(val);
             }
         });
 
-        KVStore.get('sa_topology_settings', 'default_view_mode', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#default-view-mode').val(JSON.parse(data.setting_value));
+        Storage.get('default_view_mode', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#default-view-mode').val(val);
             }
         });
 
-        KVStore.get('sa_topology_settings', 'warning_threshold', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#warning-threshold').val(JSON.parse(data.setting_value));
+        Storage.get('warning_threshold', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#warning-threshold').val(val);
             }
         });
 
-        KVStore.get('sa_topology_settings', 'critical_threshold', function(err, data) {
-            if (!err && data && data.setting_value) {
-                $('#critical-threshold').val(JSON.parse(data.setting_value));
+        Storage.get('critical_threshold', function(err, data) {
+            if (!err && data) {
+                var val = parseValue(data);
+                if (val !== null) $('#critical-threshold').val(val);
             }
         });
     }
 
+    // Get lookup name based on storage mode
+    function getNodesLookup() {
+        return storageMode === 'kvstore' ? 'sa_topology_nodes_lookup' : 'sa_topology_nodes_csv';
+    }
+
+    function getConnectionsLookup() {
+        return storageMode === 'kvstore' ? 'sa_topology_connections_lookup' : 'sa_topology_connections_csv';
+    }
+
     // Load discovery status
     function loadDiscoveryStatus() {
-        console.log('SA Topology Settings: Loading discovery status...');
+        console.log('SA Topology Settings: Loading discovery status using', storageMode, 'storage...');
+
+        var nodesLookup = getNodesLookup();
+        var connectionsLookup = getConnectionsLookup();
 
         // Get node count
         var nodeCountSearch = new SearchManager({
             id: 'nodeCountSearch_' + Date.now(),
-            search: '| inputlookup sa_topology_nodes_lookup | stats count',
+            search: '| inputlookup ' + nodesLookup + ' | stats count',
             earliest_time: '-24h@h',
             latest_time: 'now',
             autostart: true
@@ -179,7 +309,7 @@ require([
         // Get connection count
         var connCountSearch = new SearchManager({
             id: 'connCountSearch_' + Date.now(),
-            search: '| inputlookup sa_topology_connections_lookup | stats count',
+            search: '| inputlookup ' + connectionsLookup + ' | stats count',
             earliest_time: '-24h@h',
             latest_time: 'now',
             autostart: true
@@ -197,7 +327,7 @@ require([
         // Get last discovery time from nodes
         var lastSeenSearch = new SearchManager({
             id: 'lastSeenSearch_' + Date.now(),
-            search: '| inputlookup sa_topology_nodes_lookup | stats max(last_seen) as last_seen | eval last_seen_human=strftime(last_seen, "%Y-%m-%d %H:%M:%S")',
+            search: '| inputlookup ' + nodesLookup + ' | stats max(last_seen) as last_seen | eval last_seen_human=strftime(last_seen, "%Y-%m-%d %H:%M:%S")',
             earliest_time: '-24h@h',
             latest_time: 'now',
             autostart: true
@@ -253,7 +383,7 @@ require([
         var errors = [];
 
         settings.forEach(function(setting) {
-            KVStore.set('sa_topology_settings', setting.key, setting.value, function(err) {
+            Storage.set(setting.key, setting.value, function(err) {
                 saved++;
                 if (err) errors.push(err);
 
@@ -331,7 +461,7 @@ require([
         var errors = [];
 
         settings.forEach(function(setting) {
-            KVStore.set('sa_topology_settings', setting.key, setting.value, function(err) {
+            Storage.set(setting.key, setting.value, function(err) {
                 saved++;
                 if (err) errors.push(err);
 
@@ -439,13 +569,64 @@ require([
         }, 4000);
     }
 
+    // Update UI to show storage mode indicator
+    function updateStorageModeIndicator() {
+        var $indicator = $('#storage-mode-indicator');
+        if ($indicator.length === 0) {
+            // Create indicator if it doesn't exist
+            $indicator = $('<div id="storage-mode-indicator" class="storage-indicator"></div>');
+            $('.settings-hero').append($indicator);
+        }
+
+        if (storageMode === 'kvstore') {
+            $indicator.html('<span class="indicator-dot success"></span> KV Store Active')
+                .removeClass('warning').addClass('success');
+        } else {
+            $indicator.html('<span class="indicator-dot warning"></span> CSV Fallback Mode')
+                .removeClass('success').addClass('warning');
+        }
+    }
+
+    // Initialize storage detection and load settings
+    function initializeStorage(callback) {
+        console.log('SA Topology Settings: Checking KV Store availability...');
+
+        KVStore.checkAvailability(function(err, available) {
+            kvStoreAvailable = available;
+            storageMode = available ? 'kvstore' : 'csv';
+
+            console.log('SA Topology Settings: Storage mode:', storageMode);
+            updateStorageModeIndicator();
+
+            if (callback) callback();
+        });
+    }
+
     // Initialize
     $(document).ready(function() {
         console.log('SA Topology Settings: DOM ready');
 
-        // Load current settings
-        loadSettings();
-        loadDiscoveryStatus();
+        // First detect storage availability, then load settings
+        initializeStorage(function() {
+            // Load current settings after storage mode is determined
+            loadSettings();
+            loadDiscoveryStatus();
+
+            // Load saved view mode into segmented control
+            Storage.get('default_view_mode', function(err, data) {
+                if (!err && data && data.setting_value) {
+                    var savedMode;
+                    try {
+                        savedMode = JSON.parse(data.setting_value);
+                    } catch (e) {
+                        savedMode = data.setting_value;
+                    }
+                    $('#view-mode-control .segment').removeClass('active');
+                    $('#view-mode-control .segment[data-value="' + savedMode + '"]').addClass('active');
+                    $('#view-mode-control').data('selectedValue', savedMode);
+                }
+            });
+        });
 
         // Toggle switch handler
         $('#enable-scheduled').on('change', function() {
@@ -473,16 +654,6 @@ require([
             $('#view-mode-control').data('selectedValue', value);
         });
 
-        // Load saved view mode into segmented control
-        KVStore.get('sa_topology_settings', 'default_view_mode', function(err, data) {
-            if (!err && data && data.setting_value) {
-                var savedMode = JSON.parse(data.setting_value);
-                $('#view-mode-control .segment').removeClass('active');
-                $('#view-mode-control .segment[data-value="' + savedMode + '"]').addClass('active');
-                $('#view-mode-control').data('selectedValue', savedMode);
-            }
-        });
-
         // Button handlers
         $('#save-schedule-btn').on('click', saveScheduleSettings);
         $('#run-now-btn').on('click', runDiscoveryNow);
@@ -491,7 +662,7 @@ require([
             var viewMode = $('#view-mode-control').data('selectedValue') || 'cached';
 
             // Save view mode first
-            KVStore.set('sa_topology_settings', 'default_view_mode', viewMode, function(err) {
+            Storage.set('default_view_mode', viewMode, function(err) {
                 if (err) {
                     console.warn('Could not save view mode:', err);
                 }

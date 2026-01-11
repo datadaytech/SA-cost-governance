@@ -91,8 +91,21 @@
 /* ============================================
    RESET & BASE STYLES
    ============================================ */
+
+/* Force dark theme on all Splunk wrappers */
+body,
+html,
+.main-section-body,
+.dashboard-body,
+.dashboard-view,
+.shared-page {
+    background: #0a0a0f !important;
+    background-color: #0a0a0f !important;
+    color: #f4f4f5 !important;
+}
+
 .dashboard-body {
-    background: var(--bg-base) !important;
+    background: #0a0a0f !important;
     min-height: 100vh;
 }
 
@@ -110,6 +123,23 @@
 .panel-head h3,
 .panel-title {
     display: none !important;
+}
+
+/* Ensure all text uses proper contrast colors */
+.settings-page,
+.settings-page * {
+    color: #f4f4f5;
+}
+
+.settings-page .setting-description,
+.settings-page .metric-label,
+.settings-page .step-description,
+.settings-page p {
+    color: #a1a1aa;
+}
+
+.settings-page .text-muted {
+    color: #71717a;
 }
 
 /* ============================================
@@ -573,8 +603,10 @@
 
 .premium-select {
     appearance: none;
-    background: var(--bg-base);
-    border: 1px solid var(--border-default);
+    background: #12121a !important;
+    background-color: #12121a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f4f4f5 !important;
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
     font-size: 14px;
@@ -585,8 +617,8 @@
 }
 
 .premium-select:hover {
-    border-color: var(--border-strong);
-    background: var(--bg-elevated);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: #1a1a24 !important;
 }
 
 .premium-select:focus {
@@ -596,8 +628,9 @@
 }
 
 .premium-select option {
-    background: var(--bg-surface);
-    color: var(--text-primary);
+    background: #12121a !important;
+    background-color: #12121a !important;
+    color: #f4f4f5 !important;
     padding: var(--space-2);
 }
 
@@ -616,8 +649,10 @@
 
 .time-picker .time-select {
     appearance: none;
-    background: transparent;
+    background: #1a1a24 !important;
+    background-color: #1a1a24 !important;
     border: none;
+    color: #f4f4f5 !important;
     padding: var(--space-2) var(--space-3);
     font-size: 14px;
     font-weight: 500;
@@ -630,12 +665,17 @@
 }
 
 .time-picker .time-select:hover {
-    background: var(--bg-interactive);
+    background: #2a2a38 !important;
 }
 
 .time-picker .time-select:focus {
     outline: none;
-    background: var(--bg-interactive);
+    background: #2a2a38 !important;
+}
+
+.time-picker .time-select option {
+    background: #12121a !important;
+    color: #f4f4f5 !important;
 }
 
 .time-picker .time-separator {
@@ -1186,3 +1226,48 @@
 .mb-6 { margin-bottom: var(--space-6); }
 
 .hidden { display: none !important; }
+
+/* ============================================
+   STORAGE MODE INDICATOR
+   ============================================ */
+.storage-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-top: var(--space-4);
+    transition: all var(--transition-normal);
+}
+
+.storage-indicator.success {
+    background: var(--status-success-bg);
+    color: var(--status-success);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.storage-indicator.warning {
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.indicator-dot.success {
+    background: var(--status-success);
+    box-shadow: 0 0 8px var(--status-success);
+}
+
+.indicator-dot.warning {
+    background: var(--status-warning);
+    box-shadow: 0 0 8px var(--status-warning);
+}
