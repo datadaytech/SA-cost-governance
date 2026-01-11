@@ -1517,80 +1517,89 @@ require([
             return;
         }
 
-        var extensionSeconds = extensionDays * 24 * 60 * 60;
         var isReducing = extensionDays < 0;
-
-        // If reducing time, check if any search would have deadline in the past
-        if (isReducing) {
-            var now = Math.floor(Date.now() / 1000);
-            var searchesWithExpiredDeadline = searches.filter(function(s) {
-                // If we have deadline info, check if reduction would expire it
-                if (s.deadlineEpoch) {
-                    return (s.deadlineEpoch + extensionSeconds) <= now;
-                }
-                // If no deadline info, we'll check after the query
-                return false;
-            });
-
-            if (searchesWithExpiredDeadline.length > 0) {
-                var searchNames = searchesWithExpiredDeadline.map(function(s) { return s.searchName; }).join(', ');
-                var disablePrompt = searchesWithExpiredDeadline.length === 1
-                    ? "Reducing by " + Math.abs(extensionDays) + " days would set '" + searchesWithExpiredDeadline[0].searchName + "' deadline to the past.\n\nDo you want to disable this search instead?"
-                    : "Reducing by " + Math.abs(extensionDays) + " days would set " + searchesWithExpiredDeadline.length + " searches' deadlines to the past.\n\nDo you want to disable these searches instead?";
-
-                if (confirm(disablePrompt)) {
-                    // Disable these searches instead
-                    disableSearchesFromExtendModal(searchesWithExpiredDeadline);
-                    return;
-                } else {
-                    // User cancelled - abort the reduction
-                    return;
-                }
-            }
-        }
-
-        // Build condition for multiple searches
-        var conditions = searches.map(function(s) {
-            console.log("performExtendDeadline: building condition for search:", s);
-            return 'search_name="' + escapeString(s.searchName) + '"';
-        }).join(' OR ');
-
-        console.log("performExtendDeadline: conditions=" + conditions);
-
-        // For negative values, we still add (which effectively subtracts)
-        var searchQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval remediation_deadline = if(' + conditions + ', remediation_deadline + ' + extensionSeconds + ', remediation_deadline)' +
-            '| outputlookup flagged_searches_lookup';
-
-        console.log("performExtendDeadline: executing query:", searchQuery);
-
         var actionVerb = isReducing ? "Reducing" : "Extending";
         showToast(actionVerb + " deadline...");
         $('#extendModalOverlay').removeClass('active');
 
-        runSearch(searchQuery, function(err, results) {
-            console.log("performExtendDeadline: callback - err=" + err);
-            if (err) {
-                alert("Error " + actionVerb.toLowerCase() + " deadline: " + err);
-            } else {
-                // After update, check if any deadlines are now in the past (for searches without prior deadline info)
-                if (isReducing) {
-                    checkAndPromptForExpiredDeadlines(searches, extensionDays);
-                }
+        // Use REST API to update each search's deadline
+        var successCount = 0;
+        var failCount = 0;
+        var totalCount = searches.length;
 
-                searches.forEach(function(s) {
+        // Get locale prefix for REST calls
+        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+
+        // Get CSRF token from cookie for Splunk web proxy
+        var csrfToken = '';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+
+        searches.forEach(function(s, idx) {
+            var searchName = s.searchName;
+            if (!searchName) {
+                console.error("performExtendDeadline: searchName is missing!", s);
+                failCount++;
+                checkComplete();
+                return;
+            }
+
+            console.log("performExtendDeadline: extending deadline for:", searchName, "by", extensionDays, "days");
+
+            // Dispatch saved search with run_as_owner=1 to bypass outputlookup permission issues
+            var savedSearchName = encodeURIComponent('Governance - Extend Deadline');
+
+            $.ajax({
+                url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+                type: 'POST',
+                headers: {
+                    'X-Splunk-Form-Key': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: {
+                    'dispatch.now': 'true',
+                    'args.search_name': searchName,
+                    'args.extension_days': extensionDays.toString()
+                },
+                success: function(response) {
+                    console.log("performExtendDeadline: saved search dispatch success for", searchName, response);
+                    successCount++;
+
                     var logMsg = isReducing
                         ? "Deadline reduced by " + Math.abs(extensionDays) + " days"
                         : "Deadline extended by " + extensionDays + " days";
-                    logAction(isReducing ? "reduced" : "extended", s.searchName, logMsg);
-                });
-                var msg = searches.length === 1
-                    ? "Deadline for '" + searches[0].searchName + "' " + (isReducing ? "reduced" : "extended") + " by " + Math.abs(extensionDays) + " days."
-                    : "Deadlines for " + searches.length + " searches " + (isReducing ? "reduced" : "extended") + " by " + Math.abs(extensionDays) + " days.";
-                showToast("✓ " + msg);
+                    logAction(isReducing ? "reduced" : "extended", searchName, logMsg);
+
+                    checkComplete();
+                },
+                error: function(xhr, status, error) {
+                    console.error("performExtendDeadline: saved search dispatch error for", searchName, xhr.status, xhr.responseText, error);
+                    failCount++;
+                    checkComplete();
+                }
+            });
+        });
+
+        function checkComplete() {
+            if (successCount + failCount === totalCount) {
+                if (failCount > 0) {
+                    showToast("⚠ " + successCount + " updated, " + failCount + " failed");
+                } else {
+                    var msg = searches.length === 1
+                        ? "Deadline for '" + searches[0].searchName + "' " + (isReducing ? "reduced" : "extended") + " by " + Math.abs(extensionDays) + " days."
+                        : "Deadlines for " + searches.length + " searches " + (isReducing ? "reduced" : "extended") + " by " + Math.abs(extensionDays) + " days.";
+                    showToast("✓ " + msg);
+                }
                 refreshDashboard();
             }
-        });
+        }
     }
 
     // Disable searches from the extend modal when deadline would go to past
@@ -2463,7 +2472,7 @@ require([
 
         $(document).on('input change', '#extendCustomDays', function() {
             var val = parseInt($(this).val());
-            if (val > 0) {
+            if (!isNaN(val) && val !== 0) {
                 $('.extend-days-btn').removeClass('active');
                 currentExtendDays = val;
                 updateExtendPreview();
@@ -5789,21 +5798,45 @@ require([
         }
     });
 
-    // Function to extend deadline
+    // Function to extend deadline - uses REST API for reliable updates
     function extendDeadline(searchName, owner, app, extendDays) {
         var now = Math.floor(Date.now() / 1000);
 
-        // Get current deadline from lookup and add extension
-        var updateQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval remediation_deadline = if(search_name="' + escapeString(searchName) + '", remediation_deadline + (' + extendDays + ' * 86400), remediation_deadline) ' +
-            '| outputlookup flagged_searches_lookup';
-
         showToast('Extending deadline by ' + extendDays + ' days...');
 
-        runSearch(updateQuery, function(err, results) {
-            if (err) {
-                showToast('Error extending deadline: ' + err);
-            } else {
+        // Get locale prefix for REST calls
+        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+
+        // Get CSRF token from cookie for Splunk web proxy
+        var csrfToken = '';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+
+        // Dispatch saved search with run_as_owner=1 to bypass outputlookup permission issues
+        var savedSearchName = encodeURIComponent('Governance - Extend Deadline');
+
+        $.ajax({
+            url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+            type: 'POST',
+            headers: {
+                'X-Splunk-Form-Key': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            data: {
+                'dispatch.now': 'true',
+                'args.search_name': searchName,
+                'args.extension_days': extendDays.toString()
+            },
+            success: function(response) {
+                console.log("extendDeadline: saved search dispatch success", response);
+
                 // Calculate new deadline for display
                 var newDeadlineEpoch = now + (extendDays * 86400);
                 var newDeadlineDate = new Date(newDeadlineEpoch * 1000).toLocaleDateString();
@@ -5823,6 +5856,10 @@ require([
 
                 // Refresh dashboard
                 refreshDashboard();
+            },
+            error: function(xhr, status, error) {
+                console.error("extendDeadline: saved search dispatch error", xhr.status, xhr.responseText, error);
+                showToast('Error extending deadline: ' + error);
             }
         });
     }
