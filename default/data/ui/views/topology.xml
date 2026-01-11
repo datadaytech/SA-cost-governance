@@ -12,9 +12,10 @@
     </input>
     <input type="dropdown" token="view_mode" searchWhenChanged="true">
       <label>View Mode</label>
-      <choice value="live">Live Data</choice>
+      <choice value="cached">Cached (Fastest)</choice>
+      <choice value="live">Live Discovery</choice>
       <choice value="mock">Mock Demo</choice>
-      <default>mock</default>
+      <default>cached</default>
     </input>
   </fieldset>
 

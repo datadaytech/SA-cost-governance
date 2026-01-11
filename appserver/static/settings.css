@@ -1,0 +1,418 @@
+/**
+ * SA Topology Analyzer - Settings Page Styles
+ */
+
+.settings-container {
+    padding: 20px 0;
+}
+
+.settings-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 8px 0;
+}
+
+.settings-header p {
+    color: #6c757d;
+    font-size: 14px;
+    margin: 0;
+}
+
+.settings-section {
+    padding: 20px;
+}
+
+.setting-description {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    border-left: 4px solid #65A637;
+}
+
+.setting-description p {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.setting-description p:last-child {
+    margin-bottom: 0;
+}
+
+.setting-description code {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #d63384;
+}
+
+.setting-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.setting-row:last-of-type {
+    border-bottom: none;
+}
+
+.setting-label {
+    flex: 1;
+    padding-right: 24px;
+}
+
+.setting-label label {
+    display: block;
+    font-weight: 600;
+    color: #212529;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.setting-help {
+    display: block;
+    color: #6c757d;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.setting-control.inline-inputs {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.setting-control.inline-inputs label {
+    font-size: 13px;
+    color: #495057;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 26px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #65A637;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+.toggle-label {
+    font-size: 13px;
+    color: #495057;
+    min-width: 60px;
+}
+
+/* Schedule Inputs */
+.schedule-input {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #495057;
+    background: white;
+    cursor: pointer;
+}
+
+.schedule-input:focus {
+    outline: none;
+    border-color: #65A637;
+    box-shadow: 0 0 0 3px rgba(101, 166, 55, 0.15);
+}
+
+.schedule-input.wide {
+    min-width: 250px;
+}
+
+.schedule-input.small {
+    min-width: 100px;
+}
+
+.schedule-separator {
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.schedule-info {
+    font-size: 13px;
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+/* Buttons */
+.setting-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #65A637;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a9430;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+/* Status Grid */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.status-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.status-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.status-icon.success {
+    color: #65A637;
+}
+
+.status-icon.warning {
+    color: #ffc107;
+}
+
+.status-icon.error {
+    color: #dc3545;
+}
+
+.status-info {
+    text-align: center;
+}
+
+.status-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.status-value {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 500;
+}
+
+.status-value-large {
+    font-size: 28px;
+    font-weight: 700;
+    color: #65A637;
+}
+
+/* Help Section */
+.help-section {
+    background: #f8f9fa;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.help-card {
+    display: flex;
+    gap: 16px;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.help-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: #65A637;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.help-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+}
+
+.help-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+.help-content code {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #d63384;
+}
+
+/* Runtime Table */
+.estimated-runtime {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.estimated-runtime h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+}
+
+.runtime-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.runtime-table th,
+.runtime-table td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 13px;
+}
+
+.runtime-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.runtime-table td {
+    color: #6c757d;
+}
+
+.runtime-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .help-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .setting-row {
+        flex-direction: column;
+    }
+
+    .setting-label {
+        padding-right: 0;
+        margin-bottom: 12px;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .help-grid {
+        grid-template-columns: 1fr;
+    }
+}
