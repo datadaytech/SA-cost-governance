@@ -1986,20 +1986,8 @@ require([
                             '<span class="cron-search-info-value" id="cronModalApp">-</span>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="cron-section-title">Quick Presets <span style="font-size: 10px; color: rgba(255,255,255,0.5); font-weight: normal;">(with scheduler-friendly offsets)</span></div>' +
-                    '<div class="cron-preset-grid">' +
-                        '<div class="cron-preset-btn" data-cron="3-59/5 * * * *"><div class="cron-preset-label">Every 5 Min</div><div class="cron-preset-cron">3-59/5 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="7,22,37,52 * * * *"><div class="cron-preset-label">Every 15 Min</div><div class="cron-preset-cron">7,22,37,52 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="11,41 * * * *"><div class="cron-preset-label">Every 30 Min</div><div class="cron-preset-cron">11,41 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="3 * * * *"><div class="cron-preset-label">Hourly</div><div class="cron-preset-cron">3 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="7 */2 * * *"><div class="cron-preset-label">Every 2 Hours</div><div class="cron-preset-cron">7 */2 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="13 */4 * * *"><div class="cron-preset-label">Every 4 Hours</div><div class="cron-preset-cron">13 */4 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="17 */6 * * *"><div class="cron-preset-label">Every 6 Hours</div><div class="cron-preset-cron">17 */6 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="23 */12 * * *"><div class="cron-preset-label">Twice Daily</div><div class="cron-preset-cron">23 */12 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="19 0 * * *"><div class="cron-preset-label">Daily ~Midnight</div><div class="cron-preset-cron">19 0 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="11 6 * * *"><div class="cron-preset-label">Daily ~6 AM</div><div class="cron-preset-cron">11 6 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="29 0 * * 0"><div class="cron-preset-label">Weekly</div><div class="cron-preset-cron">29 0 * * 0</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="37 0 1 * *"><div class="cron-preset-label">Monthly</div><div class="cron-preset-cron">37 0 1 * *</div></div>' +
+                    '<div class="cron-section-title">Quick Presets <span style="font-size: 10px; color: rgba(255,255,255,0.5); font-weight: normal;">(randomized offsets for load distribution)</span></div>' +
+                    '<div class="cron-preset-grid" id="cronPresetGrid">' +
                     '</div>' +
                     '<div class="cron-section-title">Custom Schedule</div>' +
                     '<div class="cron-input-section">' +
@@ -4219,8 +4207,8 @@ require([
         if (freq >= 24) return Math.round(freq) + 'x/day';
         if (freq >= 2) return Math.round(freq) + 'x/day';
         if (freq >= 1) return Math.round(freq) + 'x/day';
-        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';  // ~1x/week or more
-        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';  // ~1x/month or more
+        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';
+        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';
         return '<1x/month';
     }
 
@@ -4532,70 +4520,46 @@ require([
         return text;
     }
 
-    // Generate randomized cron presets to distribute scheduler load
+    // Generate randomized cron presets for load distribution
     function generateRandomizedPresets() {
-        // Random minute offset for interval-based schedules (0-4 for /5, etc.)
-        var offset5 = Math.floor(Math.random() * 5);
-        var offset15 = Math.floor(Math.random() * 15);
-        var offset30 = Math.floor(Math.random() * 30);
+        // Random minute offsets (0-59)
+        var r = function(max) { return Math.floor(Math.random() * max); };
 
-        // Random minute for hourly+ schedules (0-59)
-        var randomMin = function() { return Math.floor(Math.random() * 60); };
+        // For every N minutes, randomize the starting offset
+        var m5 = r(5);  // 0-4 for every 5 min
+        var m15 = r(15); // 0-14 for every 15 min
+        var m30 = r(30); // 0-29 for every 30 min
+        var mHour = r(60); // 0-59 for hourly+
 
-        // Random day of week (0-6, Sun-Sat)
-        var randomDayOfWeek = Math.floor(Math.random() * 7);
-
-        // Random day of month (1-28 to be safe for all months)
-        var randomDayOfMonth = Math.floor(Math.random() * 28) + 1;
-
-        // Build the 15-min intervals with offset
-        var m15_1 = offset15;
-        var m15_2 = (offset15 + 15) % 60;
-        var m15_3 = (offset15 + 30) % 60;
-        var m15_4 = (offset15 + 45) % 60;
-        var mins15 = [m15_1, m15_2, m15_3, m15_4].sort(function(a, b) { return a - b; }).join(',');
-
-        // Build the 30-min intervals with offset
-        var m30_1 = offset30;
-        var m30_2 = (offset30 + 30) % 60;
-        var mins30 = [m30_1, m30_2].sort(function(a, b) { return a - b; }).join(',');
-
-        // Generate random minutes for each preset
-        var minHourly = randomMin();
-        var min2Hour = randomMin();
-        var min4Hour = randomMin();
-        var min6Hour = randomMin();
-        var min12Hour = randomMin();
-        var minMidnight = randomMin();
-        var min6AM = randomMin();
-        var minWeekly = randomMin();
-        var minMonthly = randomMin();
+        // Generate the 15-min intervals with random offset
+        var min15 = [m15, (m15 + 15) % 60, (m15 + 30) % 60, (m15 + 45) % 60].sort(function(a,b){return a-b}).join(',');
+        // Generate the 30-min intervals with random offset
+        var min30 = [m30, (m30 + 30) % 60].sort(function(a,b){return a-b}).join(',');
 
         var presets = [
-            { label: 'Every 5 Min', cron: offset5 + '-59/5 * * * *' },
-            { label: 'Every 15 Min', cron: mins15 + ' * * * *' },
-            { label: 'Every 30 Min', cron: mins30 + ' * * * *' },
-            { label: 'Hourly', cron: minHourly + ' * * * *' },
-            { label: 'Every 2 Hours', cron: min2Hour + ' */2 * * *' },
-            { label: 'Every 4 Hours', cron: min4Hour + ' */4 * * *' },
-            { label: 'Every 6 Hours', cron: min6Hour + ' */6 * * *' },
-            { label: 'Twice Daily', cron: min12Hour + ' */12 * * *' },
-            { label: 'Daily ~Midnight', cron: minMidnight + ' 0 * * *' },
-            { label: 'Daily ~6 AM', cron: min6AM + ' 6 * * *' },
-            { label: 'Weekly', cron: minWeekly + ' 0 * * ' + randomDayOfWeek },
-            { label: 'Monthly', cron: minMonthly + ' 0 ' + randomDayOfMonth + ' * *' }
+            { label: 'Every 5 Min', cron: m5 + '-59/5 * * * *' },
+            { label: 'Every 15 Min', cron: min15 + ' * * * *' },
+            { label: 'Every 30 Min', cron: min30 + ' * * * *' },
+            { label: 'Hourly', cron: r(60) + ' * * * *' },
+            { label: 'Every 2 Hours', cron: r(60) + ' */2 * * *' },
+            { label: 'Every 4 Hours', cron: r(60) + ' */4 * * *' },
+            { label: 'Every 6 Hours', cron: r(60) + ' */6 * * *' },
+            { label: 'Twice Daily', cron: r(60) + ' */12 * * *' },
+            { label: 'Daily ~Midnight', cron: r(60) + ' 0 * * *' },
+            { label: 'Daily ~6 AM', cron: r(60) + ' 6 * * *' },
+            { label: 'Weekly', cron: r(60) + ' 0 * * ' + r(7) },
+            { label: 'Monthly', cron: r(60) + ' 0 ' + (r(28) + 1) + ' * *' }
         ];
 
         var html = '';
-        for (var i = 0; i < presets.length; i++) {
-            var p = presets[i];
+        presets.forEach(function(p) {
             html += '<div class="cron-preset-btn" data-cron="' + p.cron + '">' +
-                    '<div class="cron-preset-label">' + p.label + '</div>' +
-                    '<div class="cron-preset-cron">' + p.cron + '</div>' +
-                    '</div>';
-        }
+                '<div class="cron-preset-label">' + p.label + '</div>' +
+                '<div class="cron-preset-cron">' + p.cron + '</div>' +
+                '</div>';
+        });
 
-        return html;
+        $('#cronPresetGrid').html(html);
     }
 
     function openCronModal(searchName, cronSchedule, owner, app) {
@@ -4615,8 +4579,8 @@ require([
             $('#cronDayWeek').val(parts[4]);
         }
 
-        // Regenerate randomized presets each time the modal opens
-        $('.cron-preset-grid').html(generateRandomizedPresets());
+        // Generate new randomized presets each time modal opens
+        generateRandomizedPresets();
 
         $('.cron-preset-btn').removeClass('active');
         updateCronPreview();
@@ -5873,14 +5837,6 @@ require([
                     : 'Deadline extended by ' + extendDays + ' days';
                 showToast('✓ ' + msg);
                 logAction(isReducing ? 'reduced' : 'extended', searchName, msg);
-
-                // If reducing deadline (negative days), immediately trigger auto-disable check
-                // This ensures searches that hit 0 days remaining are disabled right away
-                if (isReducing) {
-                    console.log("Deadline reduced, triggering immediate auto-disable check...");
-                    setTimeout(checkAutoDisable, 1000); // Wait 1 second for lookup to update
-                }
-
                 refreshDashboard();
             },
             error: function(xhr, status, error) {
@@ -6178,119 +6134,15 @@ require([
     // ============================================
 
     function checkAutoDisable() {
-        // Get locale prefix for REST calls
-        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
-        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+        var now = Math.floor(Date.now() / 1000);
 
-        // Get CSRF token from cookie
-        var csrfToken = '';
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
-                csrfToken = cookie.split('=')[1];
-                break;
-            }
-        }
+        var updateQuery = '| inputlookup flagged_searches_lookup ' +
+            '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
+            '| outputlookup flagged_searches_lookup';
 
-        // Dispatch saved search with run_as_owner=1 to auto-disable overdue searches
-        var savedSearchName = encodeURIComponent('Governance - Auto Disable Overdue');
-
-        $.ajax({
-            url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
-            type: 'POST',
-            headers: {
-                'X-Splunk-Form-Key': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            data: {
-                'dispatch.now': 'true'
-            },
-            success: function(response) {
-                console.log("Auto-disable check completed", response);
-                // Check if any searches were disabled by querying the lookup
-                checkForNewlyDisabledSearches();
-            },
-            error: function(xhr, status, error) {
-                console.error("Auto-disable check error:", xhr.status, error);
-            }
-        });
-    }
-
-    // Check if any searches were auto-disabled and need their actual Splunk search disabled
-    function checkForNewlyDisabledSearches() {
-        // Get locale prefix and CSRF token
-        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
-        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
-        var csrfToken = '';
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i].trim();
-            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
-                csrfToken = cookie.split('=')[1];
-                break;
-            }
-        }
-
-        // Query for all auto-disabled searches - we'll try to disable each one
-        // If already disabled, the API call succeeds with no change
-        var checkQuery = '| inputlookup flagged_searches_lookup | search status="disabled" notes="*AUTO-DISABLED*" | table search_name, search_app';
-
-        runSearch(checkQuery, function(err, results) {
-            if (!err && results && results.length > 0) {
-                console.log("Found " + results.length + " auto-disabled search(es), ensuring actual saved searches are disabled...");
-
-                // Disable each saved search via REST API
-                var processedCount = 0;
-                var actuallyDisabled = 0;
-                results.forEach(function(row) {
-                    var searchName = row.search_name;
-                    var searchApp = row.search_app || 'search';
-
-                    // First check if the search is already disabled
-                    $.ajax({
-                        url: localePrefix + '/splunkd/__raw/servicesNS/-/-/saved/searches/' + encodeURIComponent(searchName) + '?output_mode=json',
-                        type: 'GET',
-                        headers: {
-                            'X-Splunk-Form-Key': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        success: function(response) {
-                            var content = ((response.entry || [])[0] || {}).content || {};
-                            if (content.disabled === false || content.disabled === "0") {
-                                // Need to disable this search
-                                $.ajax({
-                                    url: localePrefix + '/splunkd/__raw/servicesNS/nobody/' + encodeURIComponent(searchApp) + '/saved/searches/' + encodeURIComponent(searchName),
-                                    type: 'POST',
-                                    headers: {
-                                        'X-Splunk-Form-Key': csrfToken,
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    },
-                                    data: { 'disabled': '1' },
-                                    success: function() {
-                                        actuallyDisabled++;
-                                        console.log("Disabled saved search: " + searchName);
-                                    },
-                                    error: function(xhr, status, error) {
-                                        console.error("Failed to disable saved search " + searchName + ":", error);
-                                    },
-                                    complete: function() {
-                                        processedCount++;
-                                        if (processedCount === results.length && actuallyDisabled > 0) {
-                                            showToast('🔴 ' + actuallyDisabled + ' search(es) auto-disabled (deadline reached)');
-                                            refreshDashboard();
-                                        }
-                                    }
-                                });
-                            } else {
-                                processedCount++;
-                            }
-                        },
-                        error: function() {
-                            processedCount++;
-                        }
-                    });
-                });
+        runSearch(updateQuery, function(err, state) {
+            if (!err) {
+                console.log("Auto-disable check completed");
             }
         });
     }
@@ -6606,9 +6458,9 @@ require([
             setTimeout(setupMetricPanelClickHandlers, 2000);
         });
 
-        // Check auto-disable - run on load and every 30 seconds for responsive deadline enforcement
+        // Check auto-disable
         setTimeout(checkAutoDisable, 5000);
-        setInterval(checkAutoDisable, 30000); // Every 30 seconds
+        setInterval(checkAutoDisable, 300000); // Every 5 min
 
         console.log("SA-cost-governance: Initialization complete");
     });
