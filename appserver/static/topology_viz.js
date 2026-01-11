@@ -277,8 +277,9 @@ require([
     });
 
     // Live topology discovery using Splunk REST APIs and searches
+    // Enhanced version with full dependency mapping (UF→HF→IDX→SH)
     function discoverLiveTopology(callback) {
-        console.log('SA Topology: Discovering live topology...');
+        console.log('SA Topology: Discovering live topology with full dependency mapping...');
 
         var liveData = {
             tiers: [
@@ -291,24 +292,136 @@ require([
             connections: []
         };
 
-        var discoveryComplete = { serverInfo: false, peers: false, forwarders: false };
+        // Track discovered components and their relationships
+        var nodeMap = {}; // hostname -> node object
+        var connectionMap = {}; // "source:target" -> connection object
+        var discoveryComplete = {
+            serverInfo: false,
+            peers: false,
+            forwarderConnections: false,
+            shcMembers: false
+        };
+
+        // Helper to normalize hostname (remove port, lowercase)
+        function normalizeHostname(hostname) {
+            if (!hostname) return '';
+            return hostname.split(':')[0].toLowerCase().trim();
+        }
+
+        // Helper to generate unique node ID
+        function getNodeId(hostname, type) {
+            var normalized = normalizeHostname(hostname);
+            return type + '_' + normalized.replace(/[^a-z0-9]/g, '_');
+        }
+
+        // Helper to add a node if it doesn't exist
+        function addNode(hostname, type, tier, extraProps) {
+            var normalized = normalizeHostname(hostname);
+            var nodeId = getNodeId(hostname, type);
+
+            if (nodeMap[nodeId]) {
+                // Update existing node with any new properties
+                if (extraProps) {
+                    Object.assign(nodeMap[nodeId], extraProps);
+                }
+                return nodeMap[nodeId];
+            }
+
+            var node = {
+                id: nodeId,
+                name: normalized,
+                type: type,
+                tier: tier,
+                health: 'green',
+                role: extraProps && extraProps.role ? extraProps.role : type.replace(/_/g, ' '),
+                throughputKB: 0,
+                connections: { inbound: [], outbound: [] }
+            };
+
+            if (extraProps) {
+                Object.assign(node, extraProps);
+            }
+
+            nodeMap[nodeId] = node;
+            liveData.nodes.push(node);
+            return node;
+        }
+
+        // Helper to add a connection if it doesn't exist
+        function addConnection(sourceId, targetId, type, throughputKB) {
+            var key = sourceId + ':' + targetId;
+            if (connectionMap[key]) {
+                // Update throughput
+                connectionMap[key].throughputKB = (connectionMap[key].throughputKB || 0) + (throughputKB || 0);
+                return connectionMap[key];
+            }
+
+            var conn = {
+                source: sourceId,
+                target: targetId,
+                type: type || 'data',
+                throughputKB: throughputKB || 0
+            };
+
+            connectionMap[key] = conn;
+            liveData.connections.push(conn);
+
+            // Update node connection tracking
+            if (nodeMap[sourceId]) {
+                nodeMap[sourceId].connections.outbound.push(targetId);
+            }
+            if (nodeMap[targetId]) {
+                nodeMap[targetId].connections.inbound.push(sourceId);
+            }
+
+            return conn;
+        }
 
         function checkComplete() {
-            if (discoveryComplete.serverInfo && discoveryComplete.peers && discoveryComplete.forwarders) {
-                // Generate KPIs for all discovered nodes
+            if (discoveryComplete.serverInfo && discoveryComplete.peers &&
+                discoveryComplete.forwarderConnections && discoveryComplete.shcMembers) {
+
+                // Post-process: Calculate health based on throughput and connections
                 liveData.nodes.forEach(function(node) {
+                    // Determine health based on connection activity
+                    if (node.type === 'universal_forwarder' || node.type === 'heavy_forwarder') {
+                        if (node.throughputKB === 0) {
+                            node.health = 'yellow'; // No recent data
+                            node.role = (node.role || '') + ' (No recent data)';
+                        } else if (node.throughputKB < 1) {
+                            node.health = 'yellow'; // Very low throughput
+                        }
+                    }
+
+                    // Generate KPIs with real throughput data
                     node.kpis = generateNodeKPIs(node);
                     node.healthScore = calculateHealthScore(node.kpis);
                 });
-                console.log('SA Topology: Live discovery complete', liveData);
+
+                // Calculate total throughput statistics
+                var totalThroughput = 0;
+                liveData.connections.forEach(function(conn) {
+                    totalThroughput += conn.throughputKB || 0;
+                });
+                console.log('SA Topology: Total discovered throughput:', Math.round(totalThroughput), 'KB');
+
+                console.log('SA Topology: Live discovery complete -',
+                    liveData.nodes.length, 'nodes,',
+                    liveData.connections.length, 'connections');
+                console.log('SA Topology: Node breakdown:',
+                    liveData.nodes.filter(function(n) { return n.type === 'search_head' || n.type === 'search_head_cluster'; }).length, 'SH,',
+                    liveData.nodes.filter(function(n) { return n.type === 'indexer'; }).length, 'IDX,',
+                    liveData.nodes.filter(function(n) { return n.type === 'heavy_forwarder'; }).length, 'HF,',
+                    liveData.nodes.filter(function(n) { return n.type === 'universal_forwarder'; }).length, 'UF');
+
                 callback(liveData);
             }
         }
 
-        // 1. Discover current server (Search Head)
+        // 1. Discover current server info and roles
         var serverInfoSearch = new SearchManager({
             id: 'serverInfoSearch_' + Date.now(),
-            search: '| rest /services/server/info | head 1 | table serverName, version, server_roles, guid',
+            search: '| rest /services/server/info | head 1 | table serverName, version, server_roles, guid, cpu_arch, os_name',
             earliest_time: '-1m',
             latest_time: 'now',
             autostart: true
@@ -318,32 +431,82 @@ require([
             if (results.hasData()) {
                 var rows = results.data().rows;
                 if (rows && rows.length > 0) {
-                    var serverName = rows[0][0] || 'search-head';
+                    var serverName = rows[0][0] || 'splunk-server';
                     var version = rows[0][1] || '';
                     var roles = rows[0][2] || '';
+                    var osName = rows[0][5] || '';
 
-                    // Determine if this is a search head
-                    var isSearchHead = roles.indexOf('search_head') > -1 || roles.indexOf('indexer') > -1;
+                    // Determine server type from roles
+                    var isSearchHead = roles.indexOf('search_head') > -1;
+                    var isIndexer = roles.indexOf('indexer') > -1;
+                    var isSHCMember = roles.indexOf('shc_member') > -1;
 
-                    liveData.nodes.push({
-                        id: 'sh_current',
-                        name: serverName,
-                        type: 'search_head',
-                        tier: 0,
-                        health: 'green',
-                        role: 'Current Instance',
-                        version: version
-                    });
+                    // Add as appropriate type
+                    if (isSHCMember) {
+                        addNode(serverName, 'search_head_cluster', 0, {
+                            role: 'SHC Member (Current)',
+                            version: version,
+                            cluster: 'shc1',
+                            osName: osName
+                        });
+                    } else if (isSearchHead) {
+                        addNode(serverName, 'search_head', 0, {
+                            role: 'Search Head (Current)',
+                            version: version,
+                            osName: osName
+                        });
+                    }
+
+                    // If also an indexer (standalone), add indexer node
+                    if (isIndexer && !isSearchHead) {
+                        addNode(serverName, 'indexer', 1, {
+                            role: 'Indexer (Current)',
+                            version: version,
+                            osName: osName
+                        });
+                    }
                 }
             }
             discoveryComplete.serverInfo = true;
             checkComplete();
         });
 
-        // 2. Discover distributed search peers (Indexers)
+        // 2. Discover SHC members
+        var shcSearch = new SearchManager({
+            id: 'shcSearch_' + Date.now(),
+            search: '| rest /services/shcluster/member/members splunk_server=local | table label, status, site, guid | head 10',
+            earliest_time: '-1m',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        shcSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                var captainFound = false;
+
+                rows.forEach(function(row) {
+                    var memberName = row[0] || '';
+                    var status = row[1] || 'Up';
+
+                    if (memberName) {
+                        var node = addNode(memberName, 'search_head_cluster', 0, {
+                            role: captainFound ? 'SHC Member' : 'SHC Captain',
+                            cluster: 'shc1',
+                            health: status === 'Up' ? 'green' : 'yellow'
+                        });
+                        captainFound = true;
+                    }
+                });
+            }
+            discoveryComplete.shcMembers = true;
+            checkComplete();
+        });
+
+        // 3. Discover distributed search peers (Indexers)
         var peersSearch = new SearchManager({
             id: 'peersSearch_' + Date.now(),
-            search: '| rest /services/search/distributed/peers | table peerName, status, version, guid | head 20',
+            search: '| rest /services/search/distributed/peers | table peerName, status, version, guid, cluster_label, site | head 30',
             earliest_time: '-1m',
             latest_time: 'now',
             autostart: true
@@ -352,44 +515,43 @@ require([
         peersSearch.data('results').on('data', function(results) {
             if (results.hasData()) {
                 var rows = results.data().rows;
-                rows.forEach(function(row, i) {
-                    var peerName = row[0] || 'indexer-' + (i + 1);
+                rows.forEach(function(row) {
+                    var peerName = row[0] || '';
                     var status = row[1] || 'Up';
+                    var version = row[2] || '';
+                    var clusterLabel = row[4] || '';
+                    var site = row[5] || '';
 
-                    var nodeId = 'idx_' + (i + 1);
-                    liveData.nodes.push({
-                        id: nodeId,
-                        name: peerName,
-                        type: 'indexer',
-                        tier: 1,
-                        health: status === 'Up' ? 'green' : 'yellow',
-                        cluster: 'idxc1',
-                        role: 'Peer Node'
-                    });
+                    if (peerName) {
+                        var idxNode = addNode(peerName, 'indexer', 1, {
+                            role: clusterLabel ? 'Cluster Peer (' + site + ')' : 'Peer Node',
+                            health: status === 'Up' ? 'green' : (status === 'Down' ? 'red' : 'yellow'),
+                            cluster: clusterLabel || 'idxc1',
+                            version: version
+                        });
 
-                    // Connect search head to indexer
-                    liveData.connections.push({
-                        source: 'sh_current',
-                        target: nodeId,
-                        type: 'search'
-                    });
+                        // Connect all search heads to this indexer
+                        liveData.nodes.forEach(function(shNode) {
+                            if (shNode.type === 'search_head' || shNode.type === 'search_head_cluster') {
+                                addConnection(shNode.id, idxNode.id, 'search', 0);
+                            }
+                        });
+                    }
                 });
             }
 
-            // If no indexers found, this might be a standalone - add self as indexer
+            // If no indexers found, might be standalone - check if current server is also indexer
             if (liveData.nodes.filter(function(n) { return n.type === 'indexer'; }).length === 0) {
-                liveData.nodes.push({
-                    id: 'idx_local',
-                    name: 'local-indexer',
-                    type: 'indexer',
-                    tier: 1,
-                    health: 'green',
-                    role: 'Local Indexing'
+                var localIdx = addNode('local-indexer', 'indexer', 1, {
+                    role: 'Local Indexing',
+                    health: 'green'
                 });
-                liveData.connections.push({
-                    source: 'sh_current',
-                    target: 'idx_local',
-                    type: 'search'
+
+                // Connect search heads to local indexer
+                liveData.nodes.forEach(function(shNode) {
+                    if (shNode.type === 'search_head' || shNode.type === 'search_head_cluster') {
+                        addConnection(shNode.id, localIdx.id, 'search', 0);
+                    }
                 });
             }
 
@@ -397,10 +559,25 @@ require([
             checkComplete();
         });
 
-        // 3. Discover forwarders from tcpin_connections
+        // 4. Discover forwarder connections with full dependency mapping
+        // This query maps each forwarder to its actual receiver with throughput
         var forwardersSearch = new SearchManager({
             id: 'forwardersSearch_' + Date.now(),
-            search: 'index=_internal sourcetype=splunkd group=tcpin_connections earliest=-1h | stats latest(fwdType) as fwdType, latest(version) as version, sum(kb) as kb by hostname | head 20',
+            search: [
+                'index=_internal sourcetype=splunkd group=tcpin_connections',
+                '| stats latest(fwdType) as fwdType, latest(version) as version,',
+                '       latest(arch) as arch, latest(os) as os,',
+                '       latest(connectionType) as connType,',
+                '       sum(kb) as totalKB, avg(tcp_KBps) as avgKBps,',
+                '       latest(ack) as ack, dc(splunk_server) as receiverCount',
+                '  by hostname, sourceIp',
+                '| eval receiverHost = splunk_server',
+                '| join type=left hostname [',
+                '    search index=_internal sourcetype=splunkd group=tcpin_connections',
+                '    | stats latest(splunk_server) as lastReceiver, values(splunk_server) as allReceivers by hostname',
+                ']',
+                '| head 50'
+            ].join(' '),
             earliest_time: '-1h',
             latest_time: 'now',
             autostart: true
@@ -409,74 +586,205 @@ require([
         forwardersSearch.data('results').on('data', function(results) {
             if (results.hasData()) {
                 var rows = results.data().rows;
-                var hfCount = 0;
-                var ufCount = 0;
-                var indexerIds = liveData.nodes.filter(function(n) { return n.type === 'indexer'; }).map(function(n) { return n.id; });
-                var firstIndexer = indexerIds[0] || 'idx_local';
+                var fields = results.data().fields;
+
+                // Create field index map
+                var fieldMap = {};
+                fields.forEach(function(f, i) { fieldMap[f] = i; });
 
                 rows.forEach(function(row) {
-                    var hostname = row[0] || 'forwarder';
-                    var fwdType = row[1] || 'uf';
-                    var version = row[2] || '';
+                    var hostname = row[fieldMap.hostname] || '';
+                    var sourceIp = row[fieldMap.sourceIp] || '';
+                    var fwdType = row[fieldMap.fwdType] || 'uf';
+                    var version = row[fieldMap.version] || '';
+                    var arch = row[fieldMap.arch] || '';
+                    var os = row[fieldMap.os] || '';
+                    var totalKB = parseFloat(row[fieldMap.totalKB]) || 0;
+                    var avgKBps = parseFloat(row[fieldMap.avgKBps]) || 0;
+                    var lastReceiver = row[fieldMap.lastReceiver] || '';
+                    var allReceivers = row[fieldMap.allReceivers] || '';
 
-                    if (fwdType === 'full' || fwdType === 'heavy') {
-                        hfCount++;
-                        var hfId = 'hf_' + hfCount;
-                        liveData.nodes.push({
-                            id: hfId,
-                            name: hostname,
-                            type: 'heavy_forwarder',
-                            tier: 2,
-                            health: 'green',
-                            role: 'Heavy Forwarder'
-                        });
-                        // Connect HF to indexer
-                        liveData.connections.push({
-                            source: hfId,
-                            target: firstIndexer
-                        });
-                    } else {
-                        ufCount++;
-                        var ufId = 'uf_' + ufCount;
-                        liveData.nodes.push({
-                            id: ufId,
-                            name: hostname,
-                            type: 'universal_forwarder',
-                            tier: 3,
-                            health: 'green',
-                            role: 'Universal Forwarder'
+                    if (!hostname) return;
+
+                    // Determine forwarder type and tier
+                    var isHeavy = fwdType === 'full' || fwdType === 'heavy';
+                    var nodeType = isHeavy ? 'heavy_forwarder' : 'universal_forwarder';
+                    var tier = isHeavy ? 2 : 3;
+
+                    // Add the forwarder node
+                    var fwdNode = addNode(hostname, nodeType, tier, {
+                        role: isHeavy ? 'Heavy Forwarder' : 'Universal Forwarder',
+                        version: version,
+                        arch: arch,
+                        os: os,
+                        sourceIp: sourceIp,
+                        throughputKB: totalKB,
+                        avgKBps: avgKBps,
+                        health: totalKB > 0 ? 'green' : 'yellow'
+                    });
+
+                    // Parse receivers and create connections
+                    var receivers = [];
+                    if (allReceivers) {
+                        // allReceivers might be a multi-value field
+                        if (Array.isArray(allReceivers)) {
+                            receivers = allReceivers;
+                        } else if (typeof allReceivers === 'string') {
+                            receivers = allReceivers.split(/[,\s]+/).filter(function(r) { return r.trim(); });
+                        }
+                    }
+                    if (receivers.length === 0 && lastReceiver) {
+                        receivers = [lastReceiver];
+                    }
+
+                    // Connect forwarder to its receivers
+                    receivers.forEach(function(receiverHost) {
+                        receiverHost = normalizeHostname(receiverHost);
+                        if (!receiverHost) return;
+
+                        // Find the receiver - could be indexer or heavy forwarder
+                        var receiverNode = null;
+
+                        // First check if it's a known indexer
+                        liveData.nodes.forEach(function(n) {
+                            if (n.type === 'indexer' && normalizeHostname(n.name) === receiverHost) {
+                                receiverNode = n;
+                            }
                         });
 
-                        // Connect UF to HF if exists, otherwise to indexer
-                        var hfIds = liveData.nodes.filter(function(n) { return n.type === 'heavy_forwarder'; }).map(function(n) { return n.id; });
-                        if (hfIds.length > 0) {
-                            liveData.connections.push({
-                                source: ufId,
-                                target: hfIds[ufCount % hfIds.length]
+                        // If not found, check if it's a heavy forwarder
+                        if (!receiverNode) {
+                            liveData.nodes.forEach(function(n) {
+                                if (n.type === 'heavy_forwarder' && normalizeHostname(n.name) === receiverHost) {
+                                    receiverNode = n;
+                                }
                             });
-                        } else {
-                            liveData.connections.push({
-                                source: ufId,
-                                target: firstIndexer
+                        }
+
+                        // If still not found, might be an indexer we haven't discovered yet
+                        if (!receiverNode) {
+                            // Check if the receiver hostname matches any search peers
+                            var isKnownPeer = liveData.nodes.some(function(n) {
+                                return n.type === 'indexer' && normalizeHostname(n.name).indexOf(receiverHost) > -1;
                             });
+
+                            if (!isKnownPeer && receiverHost) {
+                                // This might be an intermediate HF that receives from UFs
+                                // Or an indexer we haven't discovered through distributed peers
+                                receiverNode = addNode(receiverHost, 'indexer', 1, {
+                                    role: 'Indexer (Discovered)',
+                                    health: 'green'
+                                });
+
+                                // Connect search heads to newly discovered indexer
+                                liveData.nodes.forEach(function(shNode) {
+                                    if (shNode.type === 'search_head' || shNode.type === 'search_head_cluster') {
+                                        addConnection(shNode.id, receiverNode.id, 'search', 0);
+                                    }
+                                });
+                            }
+                        }
+
+                        if (receiverNode) {
+                            // Create data flow connection with throughput
+                            var perReceiverKB = totalKB / receivers.length;
+                            addConnection(fwdNode.id, receiverNode.id, 'data', perReceiverKB);
+                        }
+                    });
+
+                    // If no receivers found, connect to any available indexer
+                    if (receivers.length === 0) {
+                        var indexers = liveData.nodes.filter(function(n) { return n.type === 'indexer'; });
+                        if (indexers.length > 0) {
+                            addConnection(fwdNode.id, indexers[0].id, 'data', totalKB);
                         }
                     }
                 });
             }
 
-            // If no forwarders found, show placeholder message
+            // If no forwarders found, show informational message
             if (liveData.nodes.filter(function(n) { return n.tier >= 2; }).length === 0) {
                 console.log('SA Topology: No forwarders discovered - this appears to be a standalone instance');
             }
 
-            discoveryComplete.forwarders = true;
+            discoveryComplete.forwarderConnections = true;
             checkComplete();
         });
 
-        // Handle search errors
-        serverInfoSearch.on('search:error', function() { discoveryComplete.serverInfo = true; checkComplete(); });
-        peersSearch.on('search:error', function() { discoveryComplete.peers = true; checkComplete(); });
-        forwardersSearch.on('search:error', function() { discoveryComplete.forwarders = true; checkComplete(); });
+        // 5. Secondary query to discover UF->HF->IDX multi-hop paths
+        var multiHopSearch = new SearchManager({
+            id: 'multiHopSearch_' + Date.now(),
+            search: [
+                'index=_internal sourcetype=splunkd group=tcpin_connections fwdType=uf',
+                '| stats latest(splunk_server) as intermediate_receiver by hostname',
+                '| join type=left intermediate_receiver [',
+                '    search index=_internal sourcetype=splunkd group=tcpin_connections fwdType=full OR fwdType=heavy',
+                '    | stats latest(splunk_server) as final_receiver by hostname',
+                '    | rename hostname as intermediate_receiver',
+                ']',
+                '| where isnotnull(final_receiver)',
+                '| table hostname, intermediate_receiver, final_receiver',
+                '| head 30'
+            ].join(' '),
+            earliest_time: '-1h',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        multiHopSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                console.log('SA Topology: Discovered', rows.length, 'multi-hop forwarding paths (UF→HF→IDX)');
+
+                rows.forEach(function(row) {
+                    var ufHost = row[0] || '';
+                    var hfHost = row[1] || '';
+                    var idxHost = row[2] || '';
+
+                    if (ufHost && hfHost && idxHost) {
+                        // Ensure nodes exist
+                        var ufNode = addNode(ufHost, 'universal_forwarder', 3, {
+                            role: 'Universal Forwarder'
+                        });
+                        var hfNode = addNode(hfHost, 'heavy_forwarder', 2, {
+                            role: 'Heavy Forwarder (Aggregator)'
+                        });
+                        var idxNode = addNode(idxHost, 'indexer', 1, {
+                            role: 'Indexer'
+                        });
+
+                        // Create the multi-hop path connections
+                        addConnection(ufNode.id, hfNode.id, 'data', 0);
+                        addConnection(hfNode.id, idxNode.id, 'data', 0);
+                    }
+                });
+            }
+        });
+
+        // Handle search errors gracefully
+        serverInfoSearch.on('search:error', function(err) {
+            console.warn('SA Topology: Server info search error:', err);
+            discoveryComplete.serverInfo = true;
+            checkComplete();
+        });
+        shcSearch.on('search:error', function(err) {
+            console.log('SA Topology: SHC search error (might not be a cluster):', err);
+            discoveryComplete.shcMembers = true;
+            checkComplete();
+        });
+        peersSearch.on('search:error', function(err) {
+            console.warn('SA Topology: Peers search error:', err);
+            discoveryComplete.peers = true;
+            checkComplete();
+        });
+        forwardersSearch.on('search:error', function(err) {
+            console.warn('SA Topology: Forwarders search error:', err);
+            discoveryComplete.forwarderConnections = true;
+            checkComplete();
+        });
+        multiHopSearch.on('search:error', function(err) {
+            console.log('SA Topology: Multi-hop search completed (may have no results)');
+        });
     }
 
     // Main rendering function
@@ -601,8 +909,11 @@ require([
         drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
         drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
 
-        // Draw connections
+        // Draw connections with throughput-based styling
         var linksGroup = g.append('g').attr('class', 'links');
+
+        // Calculate max throughput for scaling
+        var maxThroughput = d3.max(data.connections, function(c) { return c.throughputKB || 0; }) || 1;
 
         data.connections.forEach(function(conn) {
             var source = nodePositions[conn.source];
@@ -610,13 +921,26 @@ require([
             if (!source || !target) return;
 
             var isSearchConn = conn.type === 'search';
+            var throughputKB = conn.throughputKB || 0;
 
-            linksGroup.append('path')
+            // Scale stroke width based on throughput (1-6 pixels for data, 1 for search)
+            var strokeWidth = isSearchConn ? 1 : Math.max(1.5, Math.min(6, 1.5 + (throughputKB / maxThroughput) * 4.5));
+
+            // Color based on throughput (green for high, orange for medium, gray for low/none)
+            var strokeColor = isSearchConn ? '#6495ED' :
+                              (throughputKB > maxThroughput * 0.7 ? '#65A637' :
+                               throughputKB > maxThroughput * 0.3 ? '#F8BE34' : '#4a5568');
+
+            var path = linksGroup.append('path')
                 .attr('fill', 'none')
-                .attr('stroke', isSearchConn ? '#6495ED' : '#4a5568')
-                .attr('stroke-width', isSearchConn ? 1 : 2)
+                .attr('stroke', strokeColor)
+                .attr('stroke-width', strokeWidth)
                 .attr('stroke-dasharray', isSearchConn ? '4,4' : 'none')
-                .attr('opacity', isSearchConn ? 0.4 : 0.7)
+                .attr('opacity', isSearchConn ? 0.4 : 0.8)
+                .attr('class', 'connection-path')
+                .attr('data-source', conn.source)
+                .attr('data-target', conn.target)
+                .attr('data-throughput', throughputKB)
                 .attr('d', function() {
                     var midY = (source.y + target.y) / 2;
                     return 'M' + source.x + ',' + source.y +
@@ -624,6 +948,25 @@ require([
                            ' ' + target.x + ',' + midY +
                            ' ' + target.x + ',' + target.y;
                 });
+
+            // Add throughput label for significant connections
+            if (!isSearchConn && throughputKB > 10) {
+                var midX = (source.x + target.x) / 2;
+                var midY = (source.y + target.y) / 2;
+                var throughputLabel = throughputKB >= 1024 ?
+                    (throughputKB / 1024).toFixed(1) + ' MB' :
+                    Math.round(throughputKB) + ' KB';
+
+                linksGroup.append('text')
+                    .attr('x', midX)
+                    .attr('y', midY - 5)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#8892b0')
+                    .attr('font-size', '8px')
+                    .attr('font-family', 'Arial, sans-serif')
+                    .attr('opacity', 0.8)
+                    .text(throughputLabel);
+            }
         });
 
         // Draw nodes
@@ -948,6 +1291,111 @@ require([
             });
 
             $body.append($kpiList);
+
+            // Add connections section if node has connection data
+            if (node.connections && (node.connections.inbound.length > 0 || node.connections.outbound.length > 0)) {
+                var $connSection = $('<div class="connections-section"></div>').css({
+                    marginTop: '16px',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #2d3748'
+                });
+
+                $connSection.append($('<h3></h3>').text('Data Flow Connections').css({
+                    color: '#e2e8f0',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '12px'
+                }));
+
+                // Inbound connections
+                if (node.connections.inbound.length > 0) {
+                    var $inbound = $('<div class="inbound-connections"></div>').css({
+                        marginBottom: '12px'
+                    });
+                    $inbound.append($('<div></div>').text('Receiving data from (' + node.connections.inbound.length + '):').css({
+                        color: '#65A637',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        marginBottom: '4px'
+                    }));
+
+                    var inboundList = node.connections.inbound.map(function(id) {
+                        // Find node name by ID
+                        var sourceNode = data.nodes.find(function(n) { return n.id === id; });
+                        return sourceNode ? sourceNode.name : id;
+                    }).slice(0, 5).join(', ');
+                    if (node.connections.inbound.length > 5) {
+                        inboundList += ' +' + (node.connections.inbound.length - 5) + ' more';
+                    }
+
+                    $inbound.append($('<div></div>').text(inboundList).css({
+                        color: '#8892b0',
+                        fontSize: '11px',
+                        paddingLeft: '8px'
+                    }));
+                    $connSection.append($inbound);
+                }
+
+                // Outbound connections
+                if (node.connections.outbound.length > 0) {
+                    var $outbound = $('<div class="outbound-connections"></div>');
+                    $outbound.append($('<div></div>').text('Sending data to (' + node.connections.outbound.length + '):').css({
+                        color: '#6495ED',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        marginBottom: '4px'
+                    }));
+
+                    var outboundList = node.connections.outbound.map(function(id) {
+                        var targetNode = data.nodes.find(function(n) { return n.id === id; });
+                        return targetNode ? targetNode.name : id;
+                    }).slice(0, 5).join(', ');
+                    if (node.connections.outbound.length > 5) {
+                        outboundList += ' +' + (node.connections.outbound.length - 5) + ' more';
+                    }
+
+                    $outbound.append($('<div></div>').text(outboundList).css({
+                        color: '#8892b0',
+                        fontSize: '11px',
+                        paddingLeft: '8px'
+                    }));
+                    $connSection.append($outbound);
+                }
+
+                // Show throughput if available
+                if (node.throughputKB && node.throughputKB > 0) {
+                    var throughputDisplay = node.throughputKB >= 1024 ?
+                        (node.throughputKB / 1024).toFixed(2) + ' MB' :
+                        Math.round(node.throughputKB) + ' KB';
+
+                    var $throughput = $('<div class="throughput-info"></div>').css({
+                        marginTop: '8px',
+                        padding: '8px',
+                        background: 'rgba(101, 166, 55, 0.1)',
+                        borderRadius: '4px'
+                    });
+                    $throughput.append($('<span></span>').text('Total Throughput (last hour): ').css({
+                        color: '#8892b0',
+                        fontSize: '11px'
+                    }));
+                    $throughput.append($('<span></span>').text(throughputDisplay).css({
+                        color: '#65A637',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                    }));
+
+                    if (node.avgKBps) {
+                        $throughput.append($('<span></span>').text(' (' + node.avgKBps.toFixed(1) + ' KB/s avg)').css({
+                            color: '#8892b0',
+                            fontSize: '11px'
+                        }));
+                    }
+
+                    $connSection.append($throughput);
+                }
+
+                $body.append($connSection);
+            }
 
             // Modal footer
             var $footer = $('<div class="modal-footer"></div>').css({

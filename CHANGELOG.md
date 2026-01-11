@@ -5,6 +5,32 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.8] - 2025-01-10
+
+### Added
+- **Comprehensive Live Dependency Mapping**: Full data flow chain discovery (UF→HF→IDX→SH)
+- **Throughput Visualization**: Connection lines scale by data volume (KB/MB)
+- **Multi-hop Path Detection**: Discovers UF→HF→IDX forwarding chains
+- **Connection Details in Modal**: Shows inbound/outbound connections per node
+- **Real-time Throughput Metrics**: Displays total KB transferred and avg KB/s
+- **Search Head Cluster Discovery**: Auto-discovers SHC members and captain
+- **Indexer Cluster Discovery**: Identifies cluster peers with site information
+
+### Enhanced
+- **tcpin_connections Analysis**: Extracts actual receiver relationships from logs
+- **Visual Connection Styling**:
+  - Line thickness indicates data volume
+  - Color coding: green (high), yellow (medium), gray (low throughput)
+  - Throughput labels on significant connections
+- **Node Deduplication**: Proper handling of duplicate hostnames across queries
+- **Error Handling**: Graceful fallback when cluster APIs unavailable
+
+### Technical Details
+- 5 parallel SearchManager queries for comprehensive discovery
+- Normalized hostname handling (removes ports, case-insensitive)
+- Connection tracking with inbound/outbound relationship maps
+- Multi-value field parsing for receiver lists
+
 ## [v1.0.7] - 2025-01-10
 
 ### Added
