@@ -187,9 +187,9 @@
         <label>App</label>
         <choice value="*">All Apps</choice>
         <search>
-          <query>| inputlookup governance_search_cache.csv | stats count by app | fields app</query>
+          <query>| rest /servicesNS/-/-/saved/searches splunk_server=local | search is_scheduled=1 | rename eai:acl.app as app | stats count by app | sort - count | eval app_label = app . " (" . count . ")" | fields app, app_label</query>
         </search>
-        <fieldForLabel>app</fieldForLabel>
+        <fieldForLabel>app_label</fieldForLabel>
         <fieldForValue>app</fieldForValue>
         <default>*</default>
       </input>
