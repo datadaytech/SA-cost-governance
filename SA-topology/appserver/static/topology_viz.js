@@ -787,6 +787,147 @@ require([
         });
     }
 
+    // Load topology from KV Store cache (fastest option)
+    function loadCachedTopology(callback) {
+        console.log('SA Topology: Loading cached topology from KV Store...');
+
+        var cachedData = {
+            tiers: [
+                { id: 'tier_sh', name: 'Search Tier', level: 0 },
+                { id: 'tier_idx', name: 'Indexing Tier', level: 1 },
+                { id: 'tier_hf', name: 'Forwarding Tier', level: 2 },
+                { id: 'tier_uf', name: 'Collection Tier', level: 3 }
+            ],
+            nodes: [],
+            connections: []
+        };
+
+        var loadComplete = { nodes: false, connections: false };
+
+        function checkComplete() {
+            if (loadComplete.nodes && loadComplete.connections) {
+                // Generate KPIs for nodes
+                cachedData.nodes.forEach(function(node) {
+                    node.kpis = generateNodeKPIs(node);
+                    node.healthScore = calculateHealthScore(node.kpis);
+                    node.connections = node.connections || { inbound: [], outbound: [] };
+                });
+
+                // Build connection tracking on nodes
+                cachedData.connections.forEach(function(conn) {
+                    var sourceNode = cachedData.nodes.find(function(n) { return n.id === conn.source; });
+                    var targetNode = cachedData.nodes.find(function(n) { return n.id === conn.target; });
+                    if (sourceNode) {
+                        sourceNode.connections.outbound.push(conn.target);
+                    }
+                    if (targetNode) {
+                        targetNode.connections.inbound.push(conn.source);
+                    }
+                });
+
+                console.log('SA Topology: Cached topology loaded -', cachedData.nodes.length, 'nodes,', cachedData.connections.length, 'connections');
+                callback(cachedData);
+            }
+        }
+
+        // Load nodes from KV Store
+        var nodesSearch = new SearchManager({
+            id: 'cachedNodesSearch_' + Date.now(),
+            search: '| inputlookup sa_topology_nodes_lookup | table node_id, hostname, node_type, tier, health, role, cluster, version, os, arch, source_ip, throughput_kb, avg_kbps, last_seen',
+            earliest_time: '-24h@h',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        nodesSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                var fields = results.data().fields;
+
+                // Create field index map
+                var fieldMap = {};
+                fields.forEach(function(f, i) { fieldMap[f] = i; });
+
+                rows.forEach(function(row) {
+                    var node = {
+                        id: row[fieldMap.node_id] || '',
+                        name: row[fieldMap.hostname] || '',
+                        type: row[fieldMap.node_type] || 'unknown',
+                        tier: parseInt(row[fieldMap.tier]) || 3,
+                        health: row[fieldMap.health] || 'green',
+                        role: row[fieldMap.role] || '',
+                        cluster: row[fieldMap.cluster] || '',
+                        version: row[fieldMap.version] || '',
+                        os: row[fieldMap.os] || '',
+                        arch: row[fieldMap.arch] || '',
+                        sourceIp: row[fieldMap.source_ip] || '',
+                        throughputKB: parseFloat(row[fieldMap.throughput_kb]) || 0,
+                        avgKBps: parseFloat(row[fieldMap.avg_kbps]) || 0,
+                        connections: { inbound: [], outbound: [] }
+                    };
+
+                    if (node.id) {
+                        cachedData.nodes.push(node);
+                    }
+                });
+
+                console.log('SA Topology: Loaded', cachedData.nodes.length, 'nodes from cache');
+            }
+
+            loadComplete.nodes = true;
+            checkComplete();
+        });
+
+        nodesSearch.on('search:error', function(err) {
+            console.warn('SA Topology: Error loading cached nodes:', err);
+            loadComplete.nodes = true;
+            checkComplete();
+        });
+
+        // Load connections from KV Store
+        var connSearch = new SearchManager({
+            id: 'cachedConnSearch_' + Date.now(),
+            search: '| inputlookup sa_topology_connections_lookup | table connection_id, source_node, target_node, connection_type, throughput_kb',
+            earliest_time: '-24h@h',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        connSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                var fields = results.data().fields;
+
+                var fieldMap = {};
+                fields.forEach(function(f, i) { fieldMap[f] = i; });
+
+                rows.forEach(function(row) {
+                    var conn = {
+                        source: row[fieldMap.source_node] || '',
+                        target: row[fieldMap.target_node] || '',
+                        type: row[fieldMap.connection_type] || 'data',
+                        throughputKB: parseFloat(row[fieldMap.throughput_kb]) || 0
+                    };
+
+                    if (conn.source && conn.target) {
+                        cachedData.connections.push(conn);
+                    }
+                });
+
+                console.log('SA Topology: Loaded', cachedData.connections.length, 'connections from cache');
+            }
+
+            loadComplete.connections = true;
+            checkComplete();
+        });
+
+        connSearch.on('search:error', function(err) {
+            console.warn('SA Topology: Error loading cached connections:', err);
+            loadComplete.connections = true;
+            checkComplete();
+        });
+    }
+
     // Main rendering function
     function renderTopology(data, $container) {
         console.log('SA Topology: Rendering topology with', data.nodes.length, 'nodes');
@@ -1537,34 +1678,53 @@ require([
             return;
         }
 
-        // Check view mode from token
-        var currentViewMode = tokens.get('view_mode') || 'mock';
-        console.log('SA Topology: View mode is', currentViewMode);
+        // Helper function to load and render based on view mode
+        function loadViewMode(mode) {
+            console.log('SA Topology: Loading view mode:', mode);
 
-        if (currentViewMode === 'live') {
-            // Show loading state
-            $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Discovering live topology...</div>');
+            if (mode === 'cached') {
+                // Show loading state for cached
+                $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Loading cached topology...</div>');
 
-            // Discover and render live topology
-            discoverLiveTopology(function(liveData) {
-                renderTopology(liveData, $container);
-            });
-        } else {
-            // Render mock data
-            renderTopology(mockData, $container);
-        }
+                loadCachedTopology(function(cachedData) {
+                    if (cachedData.nodes.length === 0) {
+                        // No cached data - show helpful message
+                        $container.html('<div style="text-align:center;padding:60px;color:#8892b0;font-size:14px;">' +
+                            '<div style="font-size:48px;margin-bottom:20px;">&#128268;</div>' +
+                            '<h3 style="color:#e2e8f0;margin-bottom:12px;">No Cached Topology Data</h3>' +
+                            '<p style="margin-bottom:20px;">The topology discovery search has not run yet.</p>' +
+                            '<p style="margin-bottom:8px;">Options:</p>' +
+                            '<ul style="list-style:none;padding:0;">' +
+                            '<li style="margin-bottom:8px;">1. Go to <strong>Settings</strong> and click <strong>Run Discovery Now</strong></li>' +
+                            '<li style="margin-bottom:8px;">2. Wait for the scheduled run (default: 2:03 AM daily)</li>' +
+                            '<li style="margin-bottom:8px;">3. Switch to <strong>Live Discovery</strong> mode above</li>' +
+                            '</ul></div>');
+                    } else {
+                        renderTopology(cachedData, $container);
+                    }
+                });
+            } else if (mode === 'live') {
+                // Show loading state for live discovery
+                $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Discovering live topology...<br><span style="font-size:12px;">(This may take 10-30 seconds)</span></div>');
 
-        // Listen for view mode changes
-        tokens.on('change:view_mode', function(model, value) {
-            console.log('SA Topology: View mode changed to', value);
-            if (value === 'live') {
-                $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Discovering live topology...</div>');
                 discoverLiveTopology(function(liveData) {
                     renderTopology(liveData, $container);
                 });
             } else {
+                // Mock demo mode
                 renderTopology(mockData, $container);
             }
+        }
+
+        // Check view mode from token (default to cached now)
+        var currentViewMode = tokens.get('view_mode') || 'cached';
+        console.log('SA Topology: Initial view mode is', currentViewMode);
+        loadViewMode(currentViewMode);
+
+        // Listen for view mode changes
+        tokens.on('change:view_mode', function(model, value) {
+            console.log('SA Topology: View mode changed to', value);
+            loadViewMode(value);
         });
     });
 });

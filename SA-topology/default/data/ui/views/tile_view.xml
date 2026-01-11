@@ -1,0 +1,111 @@
+<form version="1.1" theme="light" script="tile_view.js" stylesheet="tile_view.css">
+  <label>Service Analyzer Review</label>
+  <description>ITSI-style tile view - Services and KPIs sorted by severity (worst first)</description>
+
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="view_mode" searchWhenChanged="true">
+      <label>View Mode</label>
+      <choice value="live">Live Data</choice>
+      <choice value="mock">Mock Demo</choice>
+      <default>mock</default>
+    </input>
+    <input type="dropdown" token="min_severity" searchWhenChanged="true">
+      <label>Minimum Severity</label>
+      <choice value="all">All Severities</choice>
+      <choice value="critical">Critical Only</choice>
+      <choice value="high">High and Above</choice>
+      <choice value="medium">Medium and Above</choice>
+      <choice value="low">Low and Above</choice>
+      <default>all</default>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <html>
+        <div class="tile-view-header">
+          <div class="header-left">
+            <h1>Service Analyzer Review</h1>
+            <p>Services and KPIs sorted by severity - Click any tile for details</p>
+          </div>
+          <div class="header-right">
+            <div class="severity-summary">
+              <div class="severity-pill critical">
+                <span class="count" id="count-critical">0</span>
+                <span class="label">Critical</span>
+              </div>
+              <div class="severity-pill high">
+                <span class="count" id="count-high">0</span>
+                <span class="label">High</span>
+              </div>
+              <div class="severity-pill medium">
+                <span class="count" id="count-medium">0</span>
+                <span class="label">Medium</span>
+              </div>
+              <div class="severity-pill low">
+                <span class="count" id="count-low">0</span>
+                <span class="label">Low</span>
+              </div>
+              <div class="severity-pill normal">
+                <span class="count" id="count-normal">0</span>
+                <span class="label">Normal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <html>
+        <div class="tile-section">
+          <div class="section-header">
+            <h2>Top 20 Services</h2>
+            <div class="section-controls">
+              <select id="service-sort-select">
+                <option value="severity">Sort by Severity</option>
+                <option value="name">Sort by Name</option>
+                <option value="score">Sort by Health Score</option>
+              </select>
+            </div>
+          </div>
+          <div id="services-container" class="tiles-grid">
+            <div class="loading-indicator">Loading services...</div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <html>
+        <div class="tile-section">
+          <div class="section-header">
+            <h2>Top 20 KPIs</h2>
+            <div class="section-controls">
+              <select id="kpi-sort-select">
+                <option value="severity">Sort by Severity</option>
+                <option value="name">Sort by Name</option>
+                <option value="value">Sort by Value</option>
+              </select>
+            </div>
+          </div>
+          <div id="kpis-container" class="tiles-grid">
+            <div class="loading-indicator">Loading KPIs...</div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+</form>

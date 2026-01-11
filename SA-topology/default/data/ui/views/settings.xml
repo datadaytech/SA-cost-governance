@@ -1,0 +1,317 @@
+<form version="1.1" theme="light" script="settings.js" stylesheet="settings.css">
+  <label>Settings</label>
+  <description>Configure SA Topology Analyzer scheduled discovery and preferences</description>
+
+  <fieldset submitButton="false" autoRun="true">
+  </fieldset>
+
+  <row>
+    <panel>
+      <html>
+        <div class="settings-container">
+          <div class="settings-header">
+            <h1>SA Topology Analyzer Settings</h1>
+            <p>Configure how topology data is discovered and cached for visualization</p>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Scheduled Discovery Section -->
+  <row>
+    <panel>
+      <title>Scheduled Discovery</title>
+      <html>
+        <div class="settings-section">
+          <div class="setting-description">
+            <p>The topology discovery search runs on a schedule to analyze <code>_internal</code> logs and build a map of all connected components (Universal Forwarders, Heavy Forwarders, Indexers, and Search Heads).</p>
+            <p>Results are stored in the KV Store for instant loading in the visualization.</p>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="enable-scheduled">Enable Scheduled Discovery</label>
+              <span class="setting-help">When enabled, topology is automatically refreshed on the configured schedule</span>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="enable-scheduled" checked="checked" />
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label" id="schedule-status">Enabled</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="schedule-time">Discovery Schedule</label>
+              <span class="setting-help">Time when the discovery search runs (24-hour format). Recommended: off-peak hours (2:00 AM - 4:00 AM)</span>
+            </div>
+            <div class="setting-control">
+              <select id="schedule-hour" class="schedule-input">
+                <option value="0">00:00</option>
+                <option value="1">01:00</option>
+                <option value="2" selected="selected">02:00</option>
+                <option value="3">03:00</option>
+                <option value="4">04:00</option>
+                <option value="5">05:00</option>
+                <option value="6">06:00</option>
+                <option value="7">07:00</option>
+                <option value="8">08:00</option>
+                <option value="9">09:00</option>
+                <option value="10">10:00</option>
+                <option value="11">11:00</option>
+                <option value="12">12:00</option>
+                <option value="13">13:00</option>
+                <option value="14">14:00</option>
+                <option value="15">15:00</option>
+                <option value="16">16:00</option>
+                <option value="17">17:00</option>
+                <option value="18">18:00</option>
+                <option value="19">19:00</option>
+                <option value="20">20:00</option>
+                <option value="21">21:00</option>
+                <option value="22">22:00</option>
+                <option value="23">23:00</option>
+              </select>
+              <span class="schedule-separator">:</span>
+              <select id="schedule-minute" class="schedule-input">
+                <option value="0">00</option>
+                <option value="3" selected="selected">03</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+              </select>
+              <span class="schedule-info">Daily</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <label>Discovery Time Range</label>
+              <span class="setting-help">How far back to look for topology data. Longer ranges find more forwarders but take longer to run.</span>
+            </div>
+            <div class="setting-control">
+              <select id="discovery-range" class="schedule-input wide">
+                <option value="-1h">Last 1 hour (fastest)</option>
+                <option value="-4h">Last 4 hours</option>
+                <option value="-12h">Last 12 hours</option>
+                <option value="-24h" selected="selected">Last 24 hours (recommended)</option>
+                <option value="-7d">Last 7 days (most complete)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-actions">
+            <button class="btn btn-primary" id="save-schedule-btn">Save Schedule Settings</button>
+            <button class="btn btn-secondary" id="run-now-btn">Run Discovery Now</button>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Discovery Status Section -->
+  <row>
+    <panel>
+      <title>Discovery Status</title>
+      <html>
+        <div class="settings-section">
+          <div class="status-grid">
+            <div class="status-card">
+              <div class="status-icon" id="status-icon">&#8987;</div>
+              <div class="status-info">
+                <div class="status-label">Last Discovery</div>
+                <div class="status-value" id="last-discovery-time">Loading...</div>
+              </div>
+            </div>
+            <div class="status-card">
+              <div class="status-value-large" id="node-count">-</div>
+              <div class="status-label">Nodes Discovered</div>
+            </div>
+            <div class="status-card">
+              <div class="status-value-large" id="connection-count">-</div>
+              <div class="status-label">Connections Mapped</div>
+            </div>
+            <div class="status-card">
+              <div class="status-value-large" id="next-run">-</div>
+              <div class="status-label">Next Scheduled Run</div>
+            </div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Node Breakdown -->
+  <row>
+    <panel>
+      <title>Discovered Nodes by Type</title>
+      <table>
+        <search>
+          <query>| inputlookup sa_topology_nodes_lookup
+| stats count by node_type
+| eval node_type=case(
+    node_type=="search_head", "Search Heads",
+    node_type=="search_head_cluster", "SHC Members",
+    node_type=="indexer", "Indexers",
+    node_type=="heavy_forwarder", "Heavy Forwarders",
+    node_type=="universal_forwarder", "Universal Forwarders",
+    1=1, node_type)
+| rename node_type as "Node Type", count as "Count"
+| sort - Count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Connection Types</title>
+      <table>
+        <search>
+          <query>| inputlookup sa_topology_connections_lookup
+| stats count, sum(throughput_kb) as total_kb by connection_type
+| eval connection_type=case(
+    connection_type=="data", "Data Flow",
+    connection_type=="search", "Search Queries",
+    1=1, connection_type)
+| eval total_mb=round(total_kb/1024, 2)
+| table connection_type, count, total_mb
+| rename connection_type as "Connection Type", count as "Count", total_mb as "Total MB"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Advanced Settings Section -->
+  <row>
+    <panel>
+      <title>Advanced Settings</title>
+      <html>
+        <div class="settings-section">
+          <div class="setting-row">
+            <div class="setting-label">
+              <label>Default View Mode</label>
+              <span class="setting-help">Choose whether the topology view loads cached data or runs live queries by default</span>
+            </div>
+            <div class="setting-control">
+              <select id="default-view-mode" class="schedule-input wide">
+                <option value="cached" selected="selected">Cached (KV Store) - Fastest</option>
+                <option value="live">Live Discovery - Real-time</option>
+                <option value="mock">Mock Demo Data</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <label>Health Check Thresholds</label>
+              <span class="setting-help">Define when nodes are considered warning or critical based on last seen time</span>
+            </div>
+            <div class="setting-control inline-inputs">
+              <label>Warning after:</label>
+              <select id="warning-threshold" class="schedule-input small">
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60" selected="selected">1 hour</option>
+                <option value="120">2 hours</option>
+              </select>
+              <label>Critical after:</label>
+              <select id="critical-threshold" class="schedule-input small">
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="240" selected="selected">4 hours</option>
+                <option value="480">8 hours</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-actions">
+            <button class="btn btn-primary" id="save-advanced-btn">Save Advanced Settings</button>
+            <button class="btn btn-danger" id="clear-cache-btn">Clear KV Store Cache</button>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Help Section -->
+  <row>
+    <panel>
+      <title>How It Works</title>
+      <html>
+        <div class="settings-section help-section">
+          <div class="help-grid">
+            <div class="help-card">
+              <div class="help-number">1</div>
+              <div class="help-content">
+                <h4>Scheduled Discovery</h4>
+                <p>At the configured time (default 2:03 AM), a search runs against <code>_internal</code> logs to discover all Splunk components that have communicated in the past 24 hours.</p>
+              </div>
+            </div>
+            <div class="help-card">
+              <div class="help-number">2</div>
+              <div class="help-content">
+                <h4>KV Store Caching</h4>
+                <p>Discovered nodes and connections are stored in the KV Store, providing instant access without needing to run expensive searches every time you view the topology.</p>
+              </div>
+            </div>
+            <div class="help-card">
+              <div class="help-number">3</div>
+              <div class="help-content">
+                <h4>Fast Visualization</h4>
+                <p>When you open the topology view, it reads from the KV Store cache, loading the full infrastructure map in under a second - no waiting for searches.</p>
+              </div>
+            </div>
+            <div class="help-card">
+              <div class="help-number">4</div>
+              <div class="help-content">
+                <h4>Live Mode Option</h4>
+                <p>You can still switch to "Live Data" mode for real-time discovery, but the cached mode is recommended for large environments.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="estimated-runtime">
+            <h4>Estimated Discovery Runtime</h4>
+            <table class="runtime-table">
+              <tr>
+                <th>Environment Size</th>
+                <th>Forwarders</th>
+                <th>Est. Runtime</th>
+              </tr>
+              <tr>
+                <td>Small</td>
+                <td>&lt; 100</td>
+                <td>1-3 minutes</td>
+              </tr>
+              <tr>
+                <td>Medium</td>
+                <td>100 - 500</td>
+                <td>3-5 minutes</td>
+              </tr>
+              <tr>
+                <td>Large</td>
+                <td>500 - 2,000</td>
+                <td>5-10 minutes</td>
+              </tr>
+              <tr>
+                <td>Enterprise</td>
+                <td>2,000+</td>
+                <td>10-20 minutes</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+</form>

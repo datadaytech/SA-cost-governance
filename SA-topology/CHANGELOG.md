@@ -5,6 +5,45 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.10] - 2025-01-10
+
+### Added
+- **Settings Page**: New configuration page accessible from navigation
+  - Schedule time configuration for topology discovery (cron-based)
+  - Enable/disable scheduled discovery toggle
+  - Discovery time range selector (1h to 7 days)
+  - Run Discovery Now button for immediate execution
+  - Clear KV Store Cache option
+  - Health check threshold configuration
+  - Default view mode selector
+
+- **KV Store Caching**: Fast topology loading using Splunk KV Store
+  - `sa_topology_nodes` collection for node data
+  - `sa_topology_connections` collection for connection data
+  - `sa_topology_settings` collection for user preferences
+  - Sub-second load times for cached topology
+
+- **Scheduled Discovery Searches**: Daily automatic topology discovery
+  - "SA Topology - Scheduled Discovery - Nodes" (default: 2:03 AM)
+  - "SA Topology - Scheduled Discovery - Connections" (default: 2:05 AM)
+  - Automatic KV Store population via `outputlookup`
+
+- **Cached View Mode**: New fastest-loading option in topology view
+  - Reads pre-computed topology from KV Store
+  - Helpful message when cache is empty
+  - Links to Settings page for manual discovery
+
+### Changed
+- Default view mode changed from "Mock" to "Cached (Fastest)"
+- Navigation updated: Added "Settings" link
+- View mode dropdown: Cached (Fastest) | Live Discovery | Mock Demo
+
+### Technical Details
+- KV Store collections defined in `collections.conf`
+- Lookups defined in `transforms.conf`
+- Settings page uses REST API to update saved search schedules
+- Discovery searches use multi-tier approach with REST APIs and internal logs
+
 ## [v1.0.9] - 2025-01-10
 
 ### Added
