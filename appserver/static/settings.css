@@ -221,8 +221,8 @@ html,
 }
 
 .metric-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-lg);
     padding: var(--space-6);
     position: relative;
@@ -241,8 +241,8 @@ html,
 }
 
 .metric-card:hover {
-    background: var(--bg-elevated);
-    border-color: var(--border-default);
+    background: #1a1a24 !important;
+    border-color: rgba(255, 255, 255, 0.12);
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
@@ -291,7 +291,7 @@ html,
 .metric-value {
     font-size: 32px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
     line-height: 1;
     margin-bottom: var(--space-2);
     font-variant-numeric: tabular-nums;
@@ -303,7 +303,7 @@ html,
 
 .metric-label {
     font-size: 13px;
-    color: var(--text-tertiary);
+    color: #71717a !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
@@ -333,8 +333,8 @@ html,
    SETTINGS SECTIONS
    ============================================ */
 .settings-section {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
+    background: #12121a !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-xl);
     margin-bottom: var(--space-6);
     overflow: hidden;
@@ -345,8 +345,8 @@ html,
     align-items: center;
     justify-content: space-between;
     padding: var(--space-6);
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-elevated);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: #1a1a24 !important;
 }
 
 .section-title-group {
@@ -383,7 +383,7 @@ html,
 .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
     margin: 0;
 }
 
@@ -435,7 +435,7 @@ html,
 .setting-label {
     font-size: 15px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
     margin-bottom: var(--space-1);
     display: flex;
     align-items: center;
@@ -465,7 +465,7 @@ html,
 
 .setting-description {
     font-size: 13px;
-    color: var(--text-tertiary);
+    color: #71717a !important;
     line-height: 1.5;
     max-width: 400px;
 }
@@ -549,8 +549,8 @@ html,
    ============================================ */
 .segmented-control {
     display: inline-flex;
-    background: var(--bg-base);
-    border: 1px solid var(--border-default);
+    background: #0a0a0f !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
     padding: 3px;
     gap: 2px;
@@ -560,8 +560,8 @@ html,
     padding: var(--space-2) var(--space-4);
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-tertiary);
-    background: transparent;
+    color: #71717a !important;
+    background: transparent !important;
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -570,13 +570,13 @@ html,
 }
 
 .segment:hover {
-    color: var(--text-secondary);
-    background: var(--bg-interactive);
+    color: #a1a1aa !important;
+    background: #2a2a38 !important;
 }
 
 .segment.active {
-    background: var(--brand-primary);
-    color: white;
+    background: #10b981 !important;
+    color: white !important;
     box-shadow: var(--shadow-sm);
 }
 
@@ -797,7 +797,7 @@ html,
     align-items: center;
     gap: var(--space-3);
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #a1a1aa !important;
 }
 
 .quick-actions-label .icon {
@@ -843,13 +843,13 @@ html,
 .info-callout .title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
     margin-bottom: var(--space-1);
 }
 
 .info-callout .description {
     font-size: 13px;
-    color: var(--text-secondary);
+    color: #a1a1aa !important;
     line-height: 1.5;
 }
 
@@ -875,14 +875,14 @@ html,
 .workflow-step {
     position: relative;
     padding: var(--space-5);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
+    background: #1a1a24 !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-lg);
     transition: all var(--duration-normal) var(--ease-out);
 }
 
 .workflow-step:hover {
-    border-color: var(--border-default);
+    border-color: rgba(255, 255, 255, 0.1);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -919,13 +919,13 @@ html,
 .step-title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
     margin-bottom: var(--space-2);
 }
 
 .step-description {
     font-size: 13px;
-    color: var(--text-tertiary);
+    color: #71717a !important;
     line-height: 1.5;
 }
 
@@ -933,8 +933,8 @@ html,
    RUNTIME TABLE
    ============================================ */
 .runtime-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
+    background: #1a1a24 !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-lg);
     overflow: hidden;
 }
@@ -944,18 +944,19 @@ html,
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5);
-    background: var(--bg-overlay);
-    border-bottom: 1px solid var(--border-subtle);
+    background: #22222e !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .runtime-header .icon {
     font-size: 18px;
+    color: #f4f4f5;
 }
 
 .runtime-header .title {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f4f4f5 !important;
 }
 
 .runtime-table {
