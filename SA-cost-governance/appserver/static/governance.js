@@ -5457,11 +5457,16 @@ require([
                                 'data-owner="' + escapeHtml(owner) + '" ' +
                                 'data-app="' + escapeHtml(app) + '" ' +
                                 'data-days="' + daysNum + '" ' +
-                                'style="color: ' + daysColor + '; font-weight: 600; font-family: monospace; cursor: pointer;" ' +
-                                'title="Click to extend deadline">' +
-                                timerIcon + ' ' + daysNum.toFixed(1) + 'd ' +
-                                '<span class="extend-icon" style="opacity: 0; margin-left: 4px; transition: opacity 0.2s;">📅</span>' +
-                                '</span>';
+                                'style="color: ' + daysColor + '; font-weight: 600; font-family: monospace;" ' +
+                                'title="Days remaining until deadline">' +
+                                timerIcon + ' ' + daysNum.toFixed(1) + 'd' +
+                                '</span>' +
+                                '<span class="extend-icon-btn" ' +
+                                    'data-search="' + escapeHtml(searchName) + '" ' +
+                                    'data-owner="' + escapeHtml(owner) + '" ' +
+                                    'data-app="' + escapeHtml(app) + '" ' +
+                                    'style="margin-left: 8px; cursor: pointer; font-size: 14px;" ' +
+                                    'title="Click to adjust deadline">📅</span>';
                         }
 
                         if (daysLeftHtml) {
@@ -5647,29 +5652,155 @@ require([
         $(this).css('opacity', '0.7');
     });
 
-    // Hover effect for days left countdown - show 📅 extend icon
-    $(document).on('mouseenter', '.days-left-countdown', function() {
-        $(this).find('.extend-icon').css('opacity', '1');
-    });
-
-    $(document).on('mouseleave', '.days-left-countdown', function() {
-        $(this).find('.extend-icon').css('opacity', '0');
-    });
-
-    // === US-08: Click handler for extend deadline ===
-    $(document).on('click', '.days-left-countdown', function(e) {
+    // === US-08: Calendar icon click shows popup input ===
+    $(document).on('click', '.extend-icon-btn', function(e) {
         e.preventDefault();
         e.stopPropagation();
 
-        var $this = $(this);
-        var searchName = $this.data('search');
-        var owner = $this.data('owner') || 'unknown';
-        var app = $this.data('app') || 'unknown';
-        var currentDays = parseFloat($this.data('days')) || 0;
+        var $icon = $(this);
+        var searchName = $icon.data('search');
+        var owner = $icon.data('owner') || 'unknown';
+        var app = $icon.data('app') || 'unknown';
 
-        // Show extend modal
-        showExtendDeadlineModal(searchName, owner, app, currentDays);
+        // Remove any existing popup
+        $('.extend-popup').remove();
+
+        // Create popup next to the icon
+        var popupHtml = '<div class="extend-popup" style="' +
+            'position: absolute; z-index: 9999; ' +
+            'background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); ' +
+            'border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; ' +
+            'padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); ' +
+            'min-width: 180px;">' +
+            '<div style="color: #00d4ff; font-size: 11px; margin-bottom: 8px; font-weight: 600;">ADJUST DEADLINE</div>' +
+            '<div style="display: flex; align-items: center; gap: 8px;">' +
+            '<input type="number" class="extend-popup-input" placeholder="±days" ' +
+                'data-search="' + escapeHtml(searchName) + '" ' +
+                'data-owner="' + escapeHtml(owner) + '" ' +
+                'data-app="' + escapeHtml(app) + '" ' +
+                'style="width: 70px; padding: 6px 8px; font-size: 13px; ' +
+                'background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); ' +
+                'border-radius: 4px; color: #fff; text-align: center;">' +
+            '<button class="extend-popup-apply" style="' +
+                'background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%); ' +
+                'color: #000; border: none; padding: 6px 12px; border-radius: 4px; ' +
+                'cursor: pointer; font-weight: 600; font-size: 12px;">Apply</button>' +
+            '</div>' +
+            '<div style="color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 6px;">+ to add, - to reduce</div>' +
+            '</div>';
+
+        var $popup = $(popupHtml);
+        $('body').append($popup);
+
+        // Position popup near the icon
+        var iconOffset = $icon.offset();
+        $popup.css({
+            top: iconOffset.top + 20,
+            left: iconOffset.left - 80
+        });
+
+        // Focus the input
+        $popup.find('.extend-popup-input').focus();
     });
+
+    // Apply button click
+    $(document).on('click', '.extend-popup-apply', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $input = $(this).siblings('.extend-popup-input');
+        applyExtendFromPopup($input);
+    });
+
+    // Enter key in popup input
+    $(document).on('keypress', '.extend-popup-input', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            applyExtendFromPopup($(this));
+        }
+    });
+
+    // Prevent clicks inside popup from closing it
+    $(document).on('click', '.extend-popup', function(e) {
+        e.stopPropagation();
+    });
+
+    // Close popup when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.extend-popup, .extend-icon-btn').length) {
+            $('.extend-popup').remove();
+        }
+    });
+
+    // Function to apply extend from popup
+    function applyExtendFromPopup($input) {
+        var extendDays = parseInt($input.val());
+        if (isNaN(extendDays) || extendDays === 0) {
+            showToast('Please enter a non-zero number of days');
+            return;
+        }
+
+        var searchName = $input.data('search');
+        var owner = $input.data('owner') || 'unknown';
+        var app = $input.data('app') || 'unknown';
+
+        // Close popup
+        $('.extend-popup').remove();
+
+        // Apply the extension
+        extendDeadlineInline(searchName, owner, app, extendDays);
+    }
+
+    // Inline extend deadline function - dispatches saved search with floor at 0
+    function extendDeadlineInline(searchName, owner, app, extendDays) {
+        var isReducing = extendDays < 0;
+        var actionVerb = isReducing ? 'Reducing' : 'Extending';
+        showToast(actionVerb + ' deadline by ' + Math.abs(extendDays) + ' days...');
+
+        // Get locale prefix for REST calls
+        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+
+        // Get CSRF token from cookie
+        var csrfToken = '';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+
+        // Dispatch saved search with run_as_owner=1
+        var savedSearchName = encodeURIComponent('Governance - Extend Deadline');
+
+        $.ajax({
+            url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+            type: 'POST',
+            headers: {
+                'X-Splunk-Form-Key': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            data: {
+                'dispatch.now': 'true',
+                'args.search_name': searchName,
+                'args.extension_days': extendDays.toString()
+            },
+            success: function(response) {
+                console.log("extendDeadlineInline: success", response);
+                var msg = isReducing
+                    ? 'Deadline reduced by ' + Math.abs(extendDays) + ' days'
+                    : 'Deadline extended by ' + extendDays + ' days';
+                showToast('✓ ' + msg);
+                logAction(isReducing ? 'reduced' : 'extended', searchName, msg);
+                refreshDashboard();
+            },
+            error: function(xhr, status, error) {
+                console.error("extendDeadlineInline: error", xhr.status, xhr.responseText, error);
+                showToast('Error: ' + error);
+            }
+        });
+    }
 
     // Extend deadline modal function
     function showExtendDeadlineModal(searchName, owner, app, currentDays) {
