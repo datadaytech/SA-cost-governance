@@ -4259,15 +4259,20 @@ require([
     }
 
     function formatFrequency(freq) {
-        // freq is runs per day
-        if (freq >= 1440) return Math.round(freq) + 'x/day';
-        if (freq >= 48) return Math.round(freq) + 'x/day';
-        if (freq >= 24) return Math.round(freq) + 'x/day';
-        if (freq >= 2) return Math.round(freq) + 'x/day';
-        if (freq >= 1) return Math.round(freq) + 'x/day';
-        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';
-        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';
-        return '<1x/month';
+        // freq is runs per day - return labels matching cache's frequency_label
+        // frequency_seconds = 86400 / freq
+        var freqSeconds = freq > 0 ? Math.round(86400 / freq) : 86400;
+
+        if (freqSeconds <= 60) return 'Every 1 min';
+        if (freqSeconds <= 120) return 'Every 2 min';
+        if (freqSeconds <= 300) return 'Every 5 min';
+        if (freqSeconds <= 600) return 'Every 10 min';
+        if (freqSeconds <= 900) return 'Every 15 min';
+        if (freqSeconds <= 1800) return 'Every 30 min';
+        if (freqSeconds <= 3600) return 'Hourly';
+        if (freqSeconds <= 14400) return 'Every Few Hours';
+        if (freqSeconds <= 86400) return 'Daily';
+        return 'Custom';
     }
 
     function describeCron(minute, hour, dayMonth, month, dayWeek) {
