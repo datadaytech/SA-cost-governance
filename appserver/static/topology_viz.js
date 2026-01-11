@@ -200,22 +200,62 @@ require([
             { id: 'tier_uf', name: 'Collection Tier', level: 3 }
         ],
         nodes: [
-            // Search Head Cluster (3 members) - Top tier
+            // ===========================================
+            // LARGE SCALE ENVIRONMENT DEMO
+            // Represents: 7 SHC members, 2 standalone SH,
+            // 15 indexers (3 sites), 12 HFs, 51 UFs
+            // ===========================================
+
+            // Search Head Cluster (7 members) - mimics real enterprise SHC
             { id: 'shc_member_1', name: 'sh-cluster-01', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Captain' },
             { id: 'shc_member_2', name: 'sh-cluster-02', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
             { id: 'shc_member_3', name: 'sh-cluster-03', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
-            { id: 'sh_standalone', name: 'sh-standalone-01', type: 'search_head', tier: 0, health: 'green', role: 'Standalone SH' },
+            { id: 'shc_member_4', name: 'sh-cluster-04', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
+            { id: 'shc_member_5', name: 'sh-cluster-05', type: 'search_head_cluster', tier: 0, health: 'yellow', cluster: 'shc1', role: 'SHC Member' },
+            { id: 'shc_member_6', name: 'sh-cluster-06', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
+            { id: 'shc_member_7', name: 'sh-cluster-07', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
 
-            // Indexer Cluster (4 peer nodes)
-            { id: 'idx_1', name: 'indexer-01', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', role: 'Peer Node' },
-            { id: 'idx_2', name: 'indexer-02', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', role: 'Peer Node' },
-            { id: 'idx_3', name: 'indexer-03', type: 'indexer', tier: 1, health: 'yellow', cluster: 'idxc1', role: 'Peer Node' },
-            { id: 'idx_4', name: 'indexer-04', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', role: 'Peer Node' },
+            // Standalone Search Heads (2)
+            { id: 'sh_standalone_1', name: 'sh-es-01', type: 'search_head', tier: 0, health: 'green', role: 'Enterprise Security' },
+            { id: 'sh_standalone_2', name: 'sh-itsi-01', type: 'search_head', tier: 0, health: 'green', role: 'ITSI' },
 
-            // Heavy Forwarders
-            { id: 'hf_1', name: 'hf-datacenter-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Aggregation' },
-            { id: 'hf_2', name: 'hf-datacenter-02', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Aggregation' },
-            { id: 'hf_3', name: 'hf-cloud-01', type: 'heavy_forwarder', tier: 2, health: 'yellow', role: 'Cloud Ingestion' },
+            // Indexer Cluster (15 peer nodes across 3 sites) - mimics multisite cluster
+            // Site A (5 indexers)
+            { id: 'idx_a1', name: 'idx-site-a-01', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site A', role: 'Peer Node' },
+            { id: 'idx_a2', name: 'idx-site-a-02', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site A', role: 'Peer Node' },
+            { id: 'idx_a3', name: 'idx-site-a-03', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site A', role: 'Peer Node' },
+            { id: 'idx_a4', name: 'idx-site-a-04', type: 'indexer', tier: 1, health: 'yellow', cluster: 'idxc1', site: 'Site A', role: 'Peer Node' },
+            { id: 'idx_a5', name: 'idx-site-a-05', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site A', role: 'Peer Node' },
+            // Site B (5 indexers)
+            { id: 'idx_b1', name: 'idx-site-b-01', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site B', role: 'Peer Node' },
+            { id: 'idx_b2', name: 'idx-site-b-02', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site B', role: 'Peer Node' },
+            { id: 'idx_b3', name: 'idx-site-b-03', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site B', role: 'Peer Node' },
+            { id: 'idx_b4', name: 'idx-site-b-04', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site B', role: 'Peer Node' },
+            { id: 'idx_b5', name: 'idx-site-b-05', type: 'indexer', tier: 1, health: 'red', cluster: 'idxc1', site: 'Site B', role: 'Peer Node' },
+            // Site C (5 indexers)
+            { id: 'idx_c1', name: 'idx-site-c-01', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site C', role: 'Peer Node' },
+            { id: 'idx_c2', name: 'idx-site-c-02', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site C', role: 'Peer Node' },
+            { id: 'idx_c3', name: 'idx-site-c-03', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site C', role: 'Peer Node' },
+            { id: 'idx_c4', name: 'idx-site-c-04', type: 'indexer', tier: 1, health: 'yellow', cluster: 'idxc1', site: 'Site C', role: 'Peer Node' },
+            { id: 'idx_c5', name: 'idx-site-c-05', type: 'indexer', tier: 1, health: 'green', cluster: 'idxc1', site: 'Site C', role: 'Peer Node' },
+
+            // Heavy Forwarders (12 HFs across different roles)
+            // Syslog HFs
+            { id: 'hf_syslog_1', name: 'hf-syslog-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Syslog' },
+            { id: 'hf_syslog_2', name: 'hf-syslog-02', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Syslog' },
+            { id: 'hf_syslog_3', name: 'hf-syslog-03', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Syslog' },
+            // Windows Events HFs
+            { id: 'hf_win_1', name: 'hf-winevent-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Windows Events' },
+            { id: 'hf_win_2', name: 'hf-winevent-02', type: 'heavy_forwarder', tier: 2, health: 'yellow', role: 'Windows Events' },
+            { id: 'hf_win_3', name: 'hf-winevent-03', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Windows Events' },
+            // Cloud HFs
+            { id: 'hf_cloud_1', name: 'hf-aws-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Cloud' },
+            { id: 'hf_cloud_2', name: 'hf-azure-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Cloud' },
+            { id: 'hf_cloud_3', name: 'hf-gcp-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Cloud' },
+            // Security HFs
+            { id: 'hf_sec_1', name: 'hf-security-01', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Security' },
+            { id: 'hf_sec_2', name: 'hf-security-02', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Security' },
+            { id: 'hf_sec_3', name: 'hf-security-03', type: 'heavy_forwarder', tier: 2, health: 'red', role: 'Security' },
 
             // Universal Forwarders - Large deployment demo (50+ UFs)
             // Web Servers (12 UFs)
@@ -280,89 +320,124 @@ require([
             { id: 'uf_51', name: 'gcp-k8s-node-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' }
         ],
         connections: [
-            // UFs -> HFs (distributed across all 3 HFs)
-            // Web Servers -> HF1 (datacenter)
-            { source: 'uf_1', target: 'hf_1' },
-            { source: 'uf_2', target: 'hf_1' },
-            { source: 'uf_3', target: 'hf_1' },
-            { source: 'uf_4', target: 'hf_1' },
-            { source: 'uf_5', target: 'hf_1' },
-            { source: 'uf_6', target: 'hf_1' },
-            { source: 'uf_7', target: 'hf_2' },
-            { source: 'uf_8', target: 'hf_2' },
-            { source: 'uf_9', target: 'hf_2' },
-            { source: 'uf_10', target: 'hf_2' },
-            { source: 'uf_11', target: 'hf_1' },
-            { source: 'uf_12', target: 'hf_1' },
-            // App Servers -> HF1 & HF2
-            { source: 'uf_13', target: 'hf_1' },
-            { source: 'uf_14', target: 'hf_1' },
-            { source: 'uf_15', target: 'hf_1' },
-            { source: 'uf_16', target: 'hf_1' },
-            { source: 'uf_17', target: 'hf_2' },
-            { source: 'uf_18', target: 'hf_2' },
-            { source: 'uf_19', target: 'hf_2' },
-            { source: 'uf_20', target: 'hf_2' },
-            { source: 'uf_21', target: 'hf_1' },
-            { source: 'uf_22', target: 'hf_1' },
-            { source: 'uf_23', target: 'hf_2' },
-            { source: 'uf_24', target: 'hf_2' },
-            { source: 'uf_25', target: 'hf_2' },
-            { source: 'uf_26', target: 'hf_1' },
-            { source: 'uf_27', target: 'hf_1' },
-            // Database -> HF2
-            { source: 'uf_28', target: 'hf_2' },
-            { source: 'uf_29', target: 'hf_2' },
-            { source: 'uf_30', target: 'hf_2' },
-            { source: 'uf_31', target: 'hf_2' },
-            { source: 'uf_32', target: 'hf_2' },
-            { source: 'uf_33', target: 'hf_2' },
-            { source: 'uf_34', target: 'hf_2' },
-            { source: 'uf_35', target: 'hf_2' },
-            // Firewalls -> HF1
-            { source: 'uf_36', target: 'hf_1' },
-            { source: 'uf_37', target: 'hf_1' },
-            { source: 'uf_38', target: 'hf_1' },
-            { source: 'uf_39', target: 'hf_1' },
-            { source: 'uf_40', target: 'hf_1' },
-            { source: 'uf_41', target: 'hf_1' },
-            // Cloud -> HF3 (cloud ingestion)
-            { source: 'uf_42', target: 'hf_3' },
-            { source: 'uf_43', target: 'hf_3' },
-            { source: 'uf_44', target: 'hf_3' },
-            { source: 'uf_45', target: 'hf_3' },
-            { source: 'uf_46', target: 'hf_3' },
-            { source: 'uf_47', target: 'hf_3' },
-            { source: 'uf_48', target: 'hf_3' },
-            { source: 'uf_49', target: 'hf_3' },
-            { source: 'uf_50', target: 'hf_3' },
-            { source: 'uf_51', target: 'hf_3' },
+            // UFs -> HFs (organized by data type -> specialized HFs)
+            // Web/App Servers -> Syslog HFs
+            { source: 'uf_1', target: 'hf_syslog_1' },
+            { source: 'uf_2', target: 'hf_syslog_1' },
+            { source: 'uf_3', target: 'hf_syslog_1' },
+            { source: 'uf_4', target: 'hf_syslog_2' },
+            { source: 'uf_5', target: 'hf_syslog_2' },
+            { source: 'uf_6', target: 'hf_syslog_2' },
+            { source: 'uf_7', target: 'hf_syslog_3' },
+            { source: 'uf_8', target: 'hf_syslog_3' },
+            { source: 'uf_9', target: 'hf_syslog_1' },
+            { source: 'uf_10', target: 'hf_syslog_1' },
+            { source: 'uf_11', target: 'hf_syslog_2' },
+            { source: 'uf_12', target: 'hf_syslog_2' },
+            // App Servers -> Syslog HFs
+            { source: 'uf_13', target: 'hf_syslog_1' },
+            { source: 'uf_14', target: 'hf_syslog_2' },
+            { source: 'uf_15', target: 'hf_syslog_3' },
+            { source: 'uf_16', target: 'hf_syslog_1' },
+            { source: 'uf_17', target: 'hf_syslog_2' },
+            { source: 'uf_18', target: 'hf_syslog_3' },
+            { source: 'uf_19', target: 'hf_syslog_1' },
+            { source: 'uf_20', target: 'hf_syslog_2' },
+            { source: 'uf_21', target: 'hf_syslog_3' },
+            { source: 'uf_22', target: 'hf_syslog_1' },
+            { source: 'uf_23', target: 'hf_syslog_2' },
+            { source: 'uf_24', target: 'hf_syslog_3' },
+            { source: 'uf_25', target: 'hf_syslog_1' },
+            { source: 'uf_26', target: 'hf_syslog_2' },
+            { source: 'uf_27', target: 'hf_syslog_3' },
+            // Database -> Windows Events HFs (WinRM/DB logs)
+            { source: 'uf_28', target: 'hf_win_1' },
+            { source: 'uf_29', target: 'hf_win_1' },
+            { source: 'uf_30', target: 'hf_win_2' },
+            { source: 'uf_31', target: 'hf_win_2' },
+            { source: 'uf_32', target: 'hf_win_3' },
+            { source: 'uf_33', target: 'hf_win_3' },
+            { source: 'uf_34', target: 'hf_win_1' },
+            { source: 'uf_35', target: 'hf_win_2' },
+            // Firewalls -> Security HFs
+            { source: 'uf_36', target: 'hf_sec_1' },
+            { source: 'uf_37', target: 'hf_sec_1' },
+            { source: 'uf_38', target: 'hf_sec_2' },
+            { source: 'uf_39', target: 'hf_sec_2' },
+            { source: 'uf_40', target: 'hf_sec_3' },
+            { source: 'uf_41', target: 'hf_sec_3' },
+            // Cloud UFs -> Cloud HFs
+            { source: 'uf_42', target: 'hf_cloud_1' },
+            { source: 'uf_43', target: 'hf_cloud_1' },
+            { source: 'uf_44', target: 'hf_cloud_1' },
+            { source: 'uf_45', target: 'hf_cloud_2' },
+            { source: 'uf_46', target: 'hf_cloud_2' },
+            { source: 'uf_47', target: 'hf_cloud_2' },
+            { source: 'uf_48', target: 'hf_cloud_3' },
+            { source: 'uf_49', target: 'hf_cloud_3' },
+            { source: 'uf_50', target: 'hf_cloud_3' },
+            { source: 'uf_51', target: 'hf_cloud_3' },
 
-            // HFs -> Indexers
-            { source: 'hf_1', target: 'idx_1' },
-            { source: 'hf_1', target: 'idx_2' },
-            { source: 'hf_2', target: 'idx_2' },
-            { source: 'hf_2', target: 'idx_3' },
-            { source: 'hf_3', target: 'idx_3' },
-            { source: 'hf_3', target: 'idx_4' },
+            // HFs -> Indexers (load balanced across sites)
+            // Syslog HFs -> Site A
+            { source: 'hf_syslog_1', target: 'idx_a1' },
+            { source: 'hf_syslog_1', target: 'idx_a2' },
+            { source: 'hf_syslog_2', target: 'idx_a3' },
+            { source: 'hf_syslog_2', target: 'idx_a4' },
+            { source: 'hf_syslog_3', target: 'idx_a5' },
+            { source: 'hf_syslog_3', target: 'idx_b1' },
+            // Windows HFs -> Site B
+            { source: 'hf_win_1', target: 'idx_b2' },
+            { source: 'hf_win_1', target: 'idx_b3' },
+            { source: 'hf_win_2', target: 'idx_b4' },
+            { source: 'hf_win_2', target: 'idx_b5' },
+            { source: 'hf_win_3', target: 'idx_c1' },
+            { source: 'hf_win_3', target: 'idx_c2' },
+            // Cloud HFs -> Site C
+            { source: 'hf_cloud_1', target: 'idx_c3' },
+            { source: 'hf_cloud_1', target: 'idx_c4' },
+            { source: 'hf_cloud_2', target: 'idx_c5' },
+            { source: 'hf_cloud_2', target: 'idx_a1' },
+            { source: 'hf_cloud_3', target: 'idx_a2' },
+            { source: 'hf_cloud_3', target: 'idx_a3' },
+            // Security HFs -> All sites
+            { source: 'hf_sec_1', target: 'idx_a4' },
+            { source: 'hf_sec_1', target: 'idx_b1' },
+            { source: 'hf_sec_2', target: 'idx_b2' },
+            { source: 'hf_sec_2', target: 'idx_c1' },
+            { source: 'hf_sec_3', target: 'idx_c2' },
+            { source: 'hf_sec_3', target: 'idx_c3' },
 
-            // Search Heads -> Indexers
-            { source: 'shc_member_1', target: 'idx_1', type: 'search' },
-            { source: 'shc_member_1', target: 'idx_2', type: 'search' },
-            { source: 'shc_member_1', target: 'idx_3', type: 'search' },
-            { source: 'shc_member_1', target: 'idx_4', type: 'search' },
-            { source: 'shc_member_2', target: 'idx_1', type: 'search' },
-            { source: 'shc_member_2', target: 'idx_2', type: 'search' },
-            { source: 'shc_member_2', target: 'idx_3', type: 'search' },
-            { source: 'shc_member_2', target: 'idx_4', type: 'search' },
-            { source: 'shc_member_3', target: 'idx_1', type: 'search' },
-            { source: 'shc_member_3', target: 'idx_2', type: 'search' },
-            { source: 'shc_member_3', target: 'idx_3', type: 'search' },
-            { source: 'shc_member_3', target: 'idx_4', type: 'search' },
-            { source: 'sh_standalone', target: 'idx_1', type: 'search' },
-            { source: 'sh_standalone', target: 'idx_2', type: 'search' },
-            { source: 'sh_standalone', target: 'idx_3', type: 'search' },
-            { source: 'sh_standalone', target: 'idx_4', type: 'search' }
+            // Search Heads -> Indexers (all SHs query all indexers)
+            // SHC Members -> All sites
+            { source: 'shc_member_1', target: 'idx_a1', type: 'search' },
+            { source: 'shc_member_1', target: 'idx_b1', type: 'search' },
+            { source: 'shc_member_1', target: 'idx_c1', type: 'search' },
+            { source: 'shc_member_2', target: 'idx_a2', type: 'search' },
+            { source: 'shc_member_2', target: 'idx_b2', type: 'search' },
+            { source: 'shc_member_2', target: 'idx_c2', type: 'search' },
+            { source: 'shc_member_3', target: 'idx_a3', type: 'search' },
+            { source: 'shc_member_3', target: 'idx_b3', type: 'search' },
+            { source: 'shc_member_3', target: 'idx_c3', type: 'search' },
+            { source: 'shc_member_4', target: 'idx_a4', type: 'search' },
+            { source: 'shc_member_4', target: 'idx_b4', type: 'search' },
+            { source: 'shc_member_4', target: 'idx_c4', type: 'search' },
+            { source: 'shc_member_5', target: 'idx_a5', type: 'search' },
+            { source: 'shc_member_5', target: 'idx_b5', type: 'search' },
+            { source: 'shc_member_5', target: 'idx_c5', type: 'search' },
+            { source: 'shc_member_6', target: 'idx_a1', type: 'search' },
+            { source: 'shc_member_6', target: 'idx_b2', type: 'search' },
+            { source: 'shc_member_6', target: 'idx_c3', type: 'search' },
+            { source: 'shc_member_7', target: 'idx_a2', type: 'search' },
+            { source: 'shc_member_7', target: 'idx_b3', type: 'search' },
+            { source: 'shc_member_7', target: 'idx_c4', type: 'search' },
+            // Standalone Search Heads
+            { source: 'sh_standalone_1', target: 'idx_a1', type: 'search' },
+            { source: 'sh_standalone_1', target: 'idx_b1', type: 'search' },
+            { source: 'sh_standalone_1', target: 'idx_c1', type: 'search' },
+            { source: 'sh_standalone_2', target: 'idx_a2', type: 'search' },
+            { source: 'sh_standalone_2', target: 'idx_b2', type: 'search' },
+            { source: 'sh_standalone_2', target: 'idx_c2', type: 'search' }
         ]
     };
 

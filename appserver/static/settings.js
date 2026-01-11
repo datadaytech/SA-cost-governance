@@ -414,30 +414,29 @@ require([
         });
     }
 
-    // Show notification
+    // Show notification (premium style)
     function showNotification(message, type) {
-        var $notification = $('<div class="settings-notification ' + type + '">' + message + '</div>');
-        $notification.css({
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '12px 24px',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: '500',
-            zIndex: 10000,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            background: type === 'success' ? '#65A637' : (type === 'error' ? '#dc3545' : '#6c757d'),
-            color: 'white'
-        });
+        // Remove any existing notifications
+        $('.notification').remove();
+
+        var icon = type === 'success' ? '&#10003;' : (type === 'error' ? '&#10007;' : '&#9432;');
+        var $notification = $('<div class="notification ' + type + '">' +
+            '<div class="icon">' + icon + '</div>' +
+            '<span class="message">' + message + '</span>' +
+        '</div>');
 
         $('body').append($notification);
 
         setTimeout(function() {
-            $notification.fadeOut(300, function() {
-                $(this).remove();
+            $notification.css({
+                transition: 'all 0.3s ease',
+                transform: 'translateX(120%)',
+                opacity: 0
             });
-        }, 3000);
+            setTimeout(function() {
+                $notification.remove();
+            }, 300);
+        }, 4000);
     }
 
     // Initialize
@@ -452,12 +451,55 @@ require([
         $('#enable-scheduled').on('change', function() {
             var enabled = $(this).is(':checked');
             $('#schedule-status').text(enabled ? 'Enabled' : 'Disabled');
+            if (enabled) {
+                $('#schedule-status').addClass('active');
+                $('#schedule-badge').text('Active').removeClass('warning');
+            } else {
+                $('#schedule-status').removeClass('active');
+                $('#schedule-badge').text('Disabled').addClass('warning');
+            }
+        });
+
+        // Segmented control handler for view mode
+        $('#view-mode-control .segment').on('click', function() {
+            var $this = $(this);
+            var value = $this.data('value');
+
+            // Update active state
+            $('#view-mode-control .segment').removeClass('active');
+            $this.addClass('active');
+
+            // Store the value (will be saved when Save Preferences is clicked)
+            $('#view-mode-control').data('selectedValue', value);
+        });
+
+        // Load saved view mode into segmented control
+        KVStore.get('sa_topology_settings', 'default_view_mode', function(err, data) {
+            if (!err && data && data.setting_value) {
+                var savedMode = JSON.parse(data.setting_value);
+                $('#view-mode-control .segment').removeClass('active');
+                $('#view-mode-control .segment[data-value="' + savedMode + '"]').addClass('active');
+                $('#view-mode-control').data('selectedValue', savedMode);
+            }
         });
 
         // Button handlers
         $('#save-schedule-btn').on('click', saveScheduleSettings);
         $('#run-now-btn').on('click', runDiscoveryNow);
-        $('#save-advanced-btn').on('click', saveAdvancedSettings);
+        $('#save-advanced-btn').on('click', function() {
+            // Get view mode from segmented control
+            var viewMode = $('#view-mode-control').data('selectedValue') || 'cached';
+
+            // Save view mode first
+            KVStore.set('sa_topology_settings', 'default_view_mode', viewMode, function(err) {
+                if (err) {
+                    console.warn('Could not save view mode:', err);
+                }
+            });
+
+            // Then save advanced settings
+            saveAdvancedSettings();
+        });
         $('#clear-cache-btn').on('click', clearCache);
 
         // Update next run time when schedule changes

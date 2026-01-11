@@ -5,6 +5,36 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.13] - 2025-01-10
+
+### Added
+- **Multi-Tier Grouping System**: Automatically groups all tiers for large-scale visualization
+  - **Search Head Cluster Grouping**: Groups SHC members when count exceeds threshold (default: 4)
+  - **Standalone Search Head Grouping**: Groups standalone SHs by role when > 5
+  - **Indexer Grouping by Site**: Groups indexers by site (Site A, Site B, Site C) for multisite clusters
+  - **Heavy Forwarder Grouping**: Groups HFs by role (Syslog, Windows Events, Cloud, Security)
+  - **Universal Forwarder Grouping**: Enhanced UF grouping with role-based categories
+
+- **Large-Scale Mock Data**: Demo mode now represents enterprise environment
+  - 7 SHC members (1 captain + 6 members)
+  - 2 Standalone Search Heads (Enterprise Security, ITSI)
+  - 15 Indexers across 3 sites (Site A, B, C with 5 each)
+  - 12 Heavy Forwarders (Syslog, Windows, Cloud, Security roles)
+  - 51 Universal Forwarders (Web, App, Database, Firewall, Cloud roles)
+
+- **Generic Group Modal**: Click any group to see aggregate KPIs and member list
+  - Two-column layout with aggregate KPIs on left
+  - Scrollable member list on right with health indicators
+  - Click-through navigation to individual member details
+
+### Technical Details
+- `GROUPING_CONFIG` object defines thresholds and grouping strategy per tier
+- `groupNodesByType()` generic function for any node type grouping
+- `applyMultiTierGrouping()` applies grouping across all tiers
+- `isGroupType()` helper identifies grouped nodes for rendering
+- Configurable thresholds: SH=5, SHC=4, IDX=8, HF=6, UF=8
+- Connection aggregation: Groups inherit connections from members
+
 ## [v1.0.12] - 2025-01-10
 
 ### Changed
