@@ -3,6 +3,7 @@
   <view name="demo" />
   <view name="component_reference" />
   <view name="code_examples" />
+  <view name="hands_on_exercises" />
 
   <collection label="Documentation">
     <view name="quick_start" />

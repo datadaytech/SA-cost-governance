@@ -476,7 +476,7 @@
     font-family: var(--sit-font-family);
     font-size: var(--sit-font-size-md);
     color: var(--sit-text-primary);
-    background: var(--sit-bg-dark);
+    background: var(--sit-bg-medium);
     border: 1px solid var(--sit-border-color);
     border-radius: var(--sit-radius-md);
     transition: all var(--sit-transition-fast);
@@ -520,12 +520,12 @@
 
 .sit-select {
     width: 100%;
-    padding: var(--sit-spacing-sm) var(--sit-spacing-md);
+    padding: var(--sit-spacing-md) var(--sit-spacing-md);
     padding-right: 36px;
     font-family: var(--sit-font-family);
     font-size: var(--sit-font-size-md);
     color: var(--sit-text-primary);
-    background: var(--sit-bg-dark);
+    background: var(--sit-bg-medium);
     border: 1px solid var(--sit-border-color);
     border-radius: var(--sit-radius-md);
     cursor: pointer;
