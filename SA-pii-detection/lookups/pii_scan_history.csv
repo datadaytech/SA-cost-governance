@@ -1,0 +1,1 @@
+scan_id,scan_start_time,scan_end_time,scan_duration,indexes_scanned,events_processed,findings_detected,scan_type,initiated_by,status,error_message

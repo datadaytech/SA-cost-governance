@@ -1,0 +1,206 @@
+<dashboard version="1.1" theme="dark" script="pii_detection.js?v=3" stylesheet="pii_detection.css">
+  <label>PII Findings Management</label>
+  <description>Review, flag, and remediate PII findings</description>
+
+  <init>
+    <set token="selected_severity">*</set>
+    <set token="selected_status">detected</set>
+    <set token="selected_pii_type">*</set>
+  </init>
+
+  <!-- Filter Controls -->
+  <fieldset submitButton="true" autoRun="true">
+    <input type="dropdown" token="selected_severity">
+      <label>Severity</label>
+      <choice value="*">All</choice>
+      <choice value="critical">Critical</choice>
+      <choice value="high">High</choice>
+      <choice value="medium">Medium</choice>
+      <choice value="low">Low</choice>
+      <default>*</default>
+    </input>
+
+    <input type="dropdown" token="selected_status">
+      <label>Status</label>
+      <choice value="*">All</choice>
+      <choice value="detected">Detected</choice>
+      <choice value="flagged">Flagged</choice>
+      <choice value="remediated">Remediated</choice>
+      <choice value="whitelisted">Whitelisted</choice>
+      <choice value="false_positive">False Positive</choice>
+      <default>detected</default>
+    </input>
+
+    <input type="dropdown" token="selected_pii_type">
+      <label>PII Type</label>
+      <choice value="*">All</choice>
+      <choice value="ssn">SSN</choice>
+      <choice value="credit_card">Credit Card</choice>
+      <choice value="email">Email</choice>
+      <choice value="phone">Phone Number</choice>
+      <choice value="ip">IP Address</choice>
+      <choice value="bank_account">Bank Account</choice>
+      <choice value="passport">Passport</choice>
+      <choice value="drivers_license">Driver's License</choice>
+      <choice value="dob">Date of Birth</choice>
+      <choice value="mrn">Medical Record Number</choice>
+      <default>*</default>
+    </input>
+
+    <input type="text" token="search_text">
+      <label>Search (index/sourcetype/source)</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+
+  <!-- Summary Row -->
+  <row>
+    <panel>
+      <title>Filtered Results Summary</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_findings_lookup
+| search severity=$selected_severity$ status=$selected_status$ pii_type=$selected_pii_type$
+| search index=*$search_text$* OR sourcetype=*$search_text$* OR source=*$search_text$*
+| stats count as total
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Total Findings</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Critical Items</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_findings_lookup
+| search severity=critical status=$selected_status$ pii_type=$selected_pii_type$
+| search index=*$search_text$* OR sourcetype=*$search_text$* OR source=*$search_text$*
+| stats count as critical
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Critical Priority</option>
+        <option name="rangeColors">["0x65A637","0xD93F3C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Main Findings Table -->
+  <row>
+    <panel>
+      <title>PII Findings - Click row to view details</title>
+      <table id="pii_findings_main_table">
+        <search>
+          <query>
+| inputlookup pii_findings_lookup
+| search severity=$selected_severity$ status=$selected_status$ pii_type=$selected_pii_type$
+| search index=*$search_text$* OR sourcetype=*$search_text$* OR source=*$search_text$*
+| eval timestamp_readable=strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+| eval flagged_time_readable=if(isnotnull(flagged_time), strftime(flagged_time, "%Y-%m-%d %H:%M:%S"), "")
+| eval reviewed_time_readable=if(isnotnull(reviewed_time), strftime(reviewed_time, "%Y-%m-%d %H:%M:%S"), "")
+| sort - timestamp
+| table finding_id, timestamp_readable, pii_type, severity, status, index, sourcetype, source, host, event_count, flagged_by, flagged_time_readable, reviewed_by, reviewed_time_readable, notes
+| rename
+    finding_id as "Finding ID",
+    timestamp_readable as "Detected",
+    pii_type as "PII Type",
+    severity as "Severity",
+    status as "Status",
+    index as "Index",
+    sourcetype as "Sourcetype",
+    source as "Source",
+    host as "Host",
+    event_count as "Events",
+    flagged_by as "Flagged By",
+    flagged_time_readable as "Flagged Time",
+    reviewed_by as "Reviewed By",
+    reviewed_time_readable as "Reviewed Time",
+    notes as "Notes"
+          </query>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">25</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+        <format type="color" field="Severity">
+          <colorPalette type="map">{"critical":"#D93F3C","high":"#F58F39","medium":"#F7BC38","low":"#65A637"}</colorPalette>
+        </format>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"detected":"#F7BC38","flagged":"#F58F39","remediated":"#65A637","whitelisted":"#6DB7C6","false_positive":"#999999"}</colorPalette>
+        </format>
+        <drilldown>
+          <set token="selected_finding_id">$row.Finding ID$</set>
+          <set token="show_finding_modal">true</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Bulk Actions Row -->
+  <row>
+    <panel>
+      <html>
+        <div class="bulk-actions-container">
+          <h3>Bulk Actions</h3>
+          <p>Select findings above and apply actions:</p>
+          <div class="action-buttons">
+            <button class="btn btn-primary" id="flag_selected_btn" data-action="flag">
+              <i class="icon-flag"></i> Flag Selected
+            </button>
+            <button class="btn btn-success" id="whitelist_selected_btn" data-action="whitelist">
+              <i class="icon-check"></i> Whitelist Selected
+            </button>
+            <button class="btn btn-warning" id="false_positive_btn" data-action="false_positive">
+              <i class="icon-x"></i> Mark as False Positive
+            </button>
+            <button class="btn btn-info" id="remediate_selected_btn" data-action="remediate">
+              <i class="icon-shield"></i> Remediate Selected
+            </button>
+            <button class="btn btn-default" id="export_selected_btn" data-action="export">
+              <i class="icon-download"></i> Export Selected
+            </button>
+          </div>
+          <div id="action_feedback" class="action-feedback"></div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Finding Details Modal (Hidden by default) -->
+  <row depends="$show_finding_modal$">
+    <panel>
+      <title>Finding Details - $selected_finding_id$</title>
+      <table>
+        <search>
+          <query>
+| inputlookup pii_findings_lookup
+| search finding_id=$selected_finding_id$
+| eval timestamp_readable=strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+| eval flagged_time_readable=if(isnotnull(flagged_time), strftime(flagged_time, "%Y-%m-%d %H:%M:%S"), "N/A")
+| eval reviewed_time_readable=if(isnotnull(reviewed_time), strftime(reviewed_time, "%Y-%m-%d %H:%M:%S"), "N/A")
+| transpose
+| rename column as "Field", "row 1" as "Value"
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">50</option>
+      </table>
+      <html>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="flag_finding_btn">Flag</button>
+          <button class="btn btn-success" id="whitelist_finding_btn">Whitelist</button>
+          <button class="btn btn-warning" id="false_positive_finding_btn">False Positive</button>
+          <button class="btn btn-info" id="remediate_finding_btn">Remediate</button>
+          <button class="btn btn-default" id="close_modal_btn">Close</button>
+        </div>
+      </html>
+    </panel>
+  </row>
+</dashboard>

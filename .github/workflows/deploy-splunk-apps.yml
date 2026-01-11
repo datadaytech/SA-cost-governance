@@ -1,0 +1,395 @@
+name: Deploy Splunk Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'SA-*/**'
+      - 'TA-*/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'SA-*/**'
+      - 'TA-*/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'build'
+        type: choice
+        options:
+          - build
+          - dev
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Deploy PRs to Build environment for testing
+  deploy-to-build:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'build')
+    runs-on: [self-hosted, splunk-build]
+    environment: build
+
+    steps:
+      - name: Deploy to Build Splunk
+        env:
+          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_ADMIN_PASSWORD }}
+          BUILD_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -e
+          cd /root/apps
+
+          echo "=== Deploying to BUILD environment ==="
+          echo "PR: #${{ github.event.pull_request.number || 'N/A' }}"
+          echo "Branch: ${{ github.head_ref || github.ref_name }}"
+          echo "Build Number: ${BUILD_NUMBER}"
+          echo "Commit: ${COMMIT_SHA:0:7}"
+
+          echo "=== Fixing permissions for git ==="
+          /usr/bin/sudo chown -R $(whoami):$(whoami) . 2>/dev/null || true
+
+          echo "=== Fetching PR branch ==="
+          git fetch origin ${{ github.head_ref || github.ref_name }}
+          git checkout ${{ github.head_ref || github.ref_name }}
+          git pull origin ${{ github.head_ref || github.ref_name }}
+
+          echo "=== Finding Splunk apps (SA-* and TA-*) ==="
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          if [ -z "$APPS" ]; then
+            echo "No Splunk apps found"
+            exit 0
+          fi
+
+          echo "Found apps:"
+          echo "$APPS"
+
+          echo "=== Updating build numbers in app.conf ==="
+          for app in $APPS; do
+            APP_CONF="$app/default/app.conf"
+            if [ -f "$APP_CONF" ]; then
+              # Update build number
+              if grep -q "^build" "$APP_CONF"; then
+                sed -i "s/^build.*/build = ${BUILD_NUMBER}/" "$APP_CONF"
+              else
+                # Add build number after [install] section
+                sed -i "/^\[install\]/a build = ${BUILD_NUMBER}" "$APP_CONF"
+              fi
+              echo "Updated $app build number to ${BUILD_NUMBER}"
+            fi
+          done
+
+          echo "=== Setting Splunk permissions ==="
+          for app in $APPS; do
+            /usr/bin/sudo chown -R 41812:41812 "$app" 2>/dev/null || true
+          done
+
+          echo "=== Reloading Splunk app configs ==="
+          for app in $APPS; do
+            echo "Reloading $app"
+            /usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app"
+          done
+
+          echo "=== Verifying build numbers ==="
+          sleep 2
+          FAILED=0
+          for app in $APPS; do
+            DEPLOYED_BUILD=$(/usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              "https://localhost:8089/services/apps/local/${app}?output_mode=json" | \
+              python3 -c "import sys,json; d=json.load(sys.stdin); print(d['entry'][0]['content'].get('build','unknown'))" 2>/dev/null || echo "unknown")
+
+            if [ "$DEPLOYED_BUILD" = "${BUILD_NUMBER}" ]; then
+              echo "✅ $app: Build ${DEPLOYED_BUILD} verified"
+            else
+              echo "❌ $app: Expected build ${BUILD_NUMBER}, got ${DEPLOYED_BUILD}"
+              FAILED=1
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "::warning::Some apps may not have updated correctly"
+          fi
+
+          echo "=== Build deployment complete ==="
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Deployed to Build Environment\n\n**Build Number:** ${process.env.BUILD_NUMBER}\n**Commit:** \`${{ github.sha }}\`\n\n**Splunk Build URL:** http://192.168.71.147:8000\n\n**Verify deployment:**\n\`\`\`bash\ncurl -sk -u admin:PASSWORD "https://192.168.71.147:8089/services/apps/local/SA-pii-detection?output_mode=json" | jq '.entry[0].content.build'\n\`\`\`\n\nPlease test your changes before merging.`
+            })
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+
+      - name: Slack Notification - Build
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping notification"
+            exit 0
+          fi
+
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR="#36a64f"
+            STATUS="Success"
+            EMOJI=":white_check_mark:"
+          else
+            COLOR="#dc3545"
+            STATUS="Failed"
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H 'Content-type: application/json' --data "{
+            \"attachments\": [{
+              \"color\": \"${COLOR}\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"${EMOJI} Splunk Build Deployment ${STATUS}\",
+                    \"emoji\": true
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Environment:*\nBuild\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Build Number:*\n${BUILD_NUMBER}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n${{ github.head_ref || github.ref_name }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*PR:*\n#${{ github.event.pull_request.number || 'N/A' }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${{ github.sha }}\`\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Actor:*\n${{ github.actor }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Splunk\", \"emoji\": true},
+                      \"url\": \"http://192.168.71.147:8000\"
+                    },
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Workflow\", \"emoji\": true},
+                      \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }]
+          }" "$SLACK_WEBHOOK_URL"
+
+  # Deploy to Dev environment when PR is merged to main
+  deploy-to-dev:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    runs-on: [self-hosted, splunk-lxc]
+    environment: dev
+
+    steps:
+      - name: Deploy to Dev Splunk
+        env:
+          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_ADMIN_PASSWORD }}
+          BUILD_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -e
+          cd /root/apps
+
+          echo "=== Deploying to DEV environment ==="
+          echo "Build Number: ${BUILD_NUMBER}"
+          echo "Commit: ${COMMIT_SHA:0:7}"
+
+          echo "=== Fixing permissions for git pull ==="
+          /usr/bin/sudo chown -R $(whoami):$(whoami) . 2>/dev/null || true
+
+          echo "=== Pulling latest changes ==="
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+          echo "=== Finding Splunk apps (SA-* and TA-*) ==="
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          if [ -z "$APPS" ]; then
+            echo "No Splunk apps found"
+            exit 0
+          fi
+
+          echo "Found apps:"
+          echo "$APPS"
+
+          echo "=== Updating build numbers in app.conf ==="
+          for app in $APPS; do
+            APP_CONF="$app/default/app.conf"
+            if [ -f "$APP_CONF" ]; then
+              # Update build number
+              if grep -q "^build" "$APP_CONF"; then
+                sed -i "s/^build.*/build = ${BUILD_NUMBER}/" "$APP_CONF"
+              else
+                sed -i "/^\[install\]/a build = ${BUILD_NUMBER}" "$APP_CONF"
+              fi
+              echo "Updated $app build number to ${BUILD_NUMBER}"
+            fi
+          done
+
+          echo "=== Setting Splunk permissions ==="
+          for app in $APPS; do
+            /usr/bin/sudo chown -R 41812:41812 "$app" 2>/dev/null || true
+          done
+
+          echo "=== Reloading Splunk app configs ==="
+          for app in $APPS; do
+            echo "Reloading $app"
+            /usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app"
+          done
+
+          echo "=== Verifying build numbers ==="
+          sleep 2
+          FAILED=0
+          for app in $APPS; do
+            DEPLOYED_BUILD=$(/usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              "https://localhost:8089/services/apps/local/${app}?output_mode=json" | \
+              python3 -c "import sys,json; d=json.load(sys.stdin); print(d['entry'][0]['content'].get('build','unknown'))" 2>/dev/null || echo "unknown")
+
+            if [ "$DEPLOYED_BUILD" = "${BUILD_NUMBER}" ]; then
+              echo "✅ $app: Build ${DEPLOYED_BUILD} verified"
+            else
+              echo "❌ $app: Expected build ${BUILD_NUMBER}, got ${DEPLOYED_BUILD}"
+              FAILED=1
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo "::warning::Some apps may not have updated correctly"
+          fi
+
+          echo "=== Dev deployment complete ==="
+
+      - name: Generate deployment summary
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          cd /root/apps
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          echo "## ✅ Deployed to Dev Environment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Number:** ${BUILD_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Splunk Dev URL:** http://192.168.71.199:8000" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Apps Updated:" >> $GITHUB_STEP_SUMMARY
+          echo "| App | Build |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|-------|" >> $GITHUB_STEP_SUMMARY
+          for app in $APPS; do
+            echo "| $app | ${BUILD_NUMBER} |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Verify Deployment:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -sk -u admin:PASSWORD 'https://192.168.71.199:8089/services/apps/local/SA-pii-detection?output_mode=json' | jq '.entry[0].content.build'" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Slack Notification - Dev
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping notification"
+            exit 0
+          fi
+
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR="#36a64f"
+            STATUS="Success"
+            EMOJI=":white_check_mark:"
+          else
+            COLOR="#dc3545"
+            STATUS="Failed"
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H 'Content-type: application/json' --data "{
+            \"attachments\": [{
+              \"color\": \"${COLOR}\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"${EMOJI} Splunk Dev Deployment ${STATUS}\",
+                    \"emoji\": true
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Environment:*\nDev\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Build Number:*\n${BUILD_NUMBER}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\nmain\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${{ github.sha }}\`\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Actor:*\n${{ github.actor }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Trigger:*\n${{ github.event_name }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Splunk\", \"emoji\": true},
+                      \"url\": \"http://192.168.71.199:8000\"
+                    },
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Workflow\", \"emoji\": true},
+                      \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }]
+          }" "$SLACK_WEBHOOK_URL"

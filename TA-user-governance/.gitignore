@@ -1,0 +1,14 @@
+# Splunk local configs
+local/
+*.pyc
+__pycache__/
+.DS_Store
+*.log
+local.meta
+
+# Test artifacts
+tests/coverage/
+tests/test-reports/
+tests/screenshots/
+node_modules/
+*.log

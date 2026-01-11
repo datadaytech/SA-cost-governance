@@ -1,0 +1,75 @@
+<dashboard version="1.1" theme="dark">
+  <label>Cost Settings</label>
+  <description>Configure cost governance settings and thresholds</description>
+
+  <row>
+    <panel>
+      <title>Current Settings</title>
+      <table>
+        <search>
+          <query>| inputlookup cost_governance_settings.csv
+| eval last_updated_time=strftime(last_updated, "%Y-%m-%d %H:%M:%S")
+| table cost_per_gb, warning_threshold_percent, critical_threshold_percent, budget_period, notification_email, last_updated_time, updated_by
+| rename cost_per_gb as "Cost per GB ($)", warning_threshold_percent as "Warning Threshold (%)", critical_threshold_percent as "Critical Threshold (%)", budget_period as "Budget Period", notification_email as "Notification Email", last_updated_time as "Last Updated", updated_by as "Updated By"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Cost Thresholds</title>
+      <table>
+        <search>
+          <query>| inputlookup cost_thresholds.csv
+| table threshold_name, threshold_type, threshold_value, action, enabled
+| rename threshold_name as "Threshold Name", threshold_type as "Type", threshold_value as "Value", action as "Action", enabled as "Enabled"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>User Budgets</title>
+      <table>
+        <search>
+          <query>| inputlookup user_cost_budget.csv
+| table username, monthly_budget_gb, alert_threshold_percent, manager_email
+| rename username as "Username", monthly_budget_gb as "Monthly Budget (GB)", alert_threshold_percent as "Alert Threshold (%)", manager_email as "Manager Email"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <html>
+        <h3>How to Update Settings</h3>
+        <p>Settings can be updated via the lookup editor or by running SPL commands:</p>
+        <pre>
+| inputlookup cost_governance_settings.csv
+| eval cost_per_gb=150, warning_threshold_percent=80, critical_threshold_percent=95
+| eval last_updated=now(), updated_by="admin"
+| outputlookup cost_governance_settings.csv
+        </pre>
+        <h4>Add User Budget</h4>
+        <pre>
+| makeresults
+| eval username="jsmith", monthly_budget_gb=100, alert_threshold_percent=80, manager_email="manager@company.com"
+| table username, monthly_budget_gb, alert_threshold_percent, manager_email
+| outputlookup append=true user_cost_budget.csv
+        </pre>
+      </html>
+    </panel>
+  </row>
+</dashboard>

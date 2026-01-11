@@ -1,0 +1,13 @@
+[]
+export = system
+
+[lookups]
+export = system
+access = read : [ * ], write : [ admin, sc_admin ]
+
+[transforms]
+export = system
+
+[savedsearches]
+export = system
+access = read : [ * ], write : [ admin, sc_admin ]

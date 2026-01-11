@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nav search_view="search" color="#65A637">
+  <view name="topology" default="true" label="Topology View" />
+  <view name="tile_view" label="Service Analyzer" />
+  <view name="search" />
+  <divider />
+  <view name="settings" label="Settings" />
+  <divider />
+  <a href="https://docs.splunk.com" target="_blank">Documentation</a>
+</nav>

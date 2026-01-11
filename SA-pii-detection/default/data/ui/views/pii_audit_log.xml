@@ -1,0 +1,234 @@
+<dashboard version="1.1" theme="dark">
+  <label>PII Audit Log</label>
+  <description>Complete audit trail of all PII-related actions</description>
+
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time_picker">
+      <label>Time Range</label>
+      <default>
+        <earliest>-7d@d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+
+    <input type="dropdown" token="selected_action">
+      <label>Action Type</label>
+      <choice value="*">All</choice>
+      <choice value="flag">Flag</choice>
+      <choice value="whitelist">Whitelist</choice>
+      <choice value="remediate">Remediate</choice>
+      <choice value="false_positive">False Positive</choice>
+      <choice value="scan">Scan</choice>
+      <choice value="settings_change">Settings Change</choice>
+      <default>*</default>
+    </input>
+
+    <input type="text" token="search_user">
+      <label>Performed By (User)</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+
+  <!-- Summary Statistics -->
+  <row>
+    <panel>
+      <title>Total Actions</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| stats count as total_actions
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Actions Logged</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Unique Users</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| stats dc(performed_by) as unique_users
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Unique Users</option>
+      </single>
+    </panel>
+
+    <panel>
+      <title>Findings Affected</title>
+      <single>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| stats dc(finding_id) as affected_findings
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="underLabel">Findings Affected</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Actions Over Time -->
+  <row>
+    <panel>
+      <title>Actions Over Time</title>
+      <chart>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| eval day=strftime(timestamp, "%Y-%m-%d")
+| timechart span=1d count by action
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Actions by User -->
+  <row>
+    <panel>
+      <title>Top 10 Active Users</title>
+      <chart>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| stats count by performed_by
+| sort - count
+| head 10
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.axisTitleX.text">User</option>
+        <option name="charting.axisTitleY.text">Actions</option>
+      </chart>
+    </panel>
+
+    <panel>
+      <title>Actions by Type</title>
+      <chart>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| stats count by action
+| sort - count
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Detailed Audit Log -->
+  <row>
+    <panel>
+      <title>Detailed Audit Log</title>
+      <table id="audit_log_table">
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search action=$selected_action$ performed_by=*$search_user$*
+| eval timestamp_readable=strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+| sort - timestamp
+| table audit_id, timestamp_readable, action, finding_id, pii_type, performed_by, old_status, new_status, details, ip_address
+| rename
+    audit_id as "Audit ID",
+    timestamp_readable as "Timestamp",
+    action as "Action",
+    finding_id as "Finding ID",
+    pii_type as "PII Type",
+    performed_by as "Performed By",
+    old_status as "Old Status",
+    new_status as "New Status",
+    details as "Details",
+    ip_address as "IP Address"
+          </query>
+          <earliest>$time_picker.earliest$</earliest>
+          <latest>$time_picker.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">25</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Action">
+          <colorPalette type="map">
+            {"flag":"#F58F39","whitelist":"#6DB7C6","remediate":"#65A637","false_positive":"#999999","scan":"#3C78D8","settings_change":"#F7BC38"}
+          </colorPalette>
+        </format>
+        <drilldown>
+          <set token="selected_audit_id">$row.Audit ID$</set>
+          <set token="show_audit_modal">true</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+
+  <!-- Export Actions -->
+  <row>
+    <panel>
+      <html>
+        <div class="audit-actions-container">
+          <button class="btn btn-default" id="export_audit_log_btn">
+            <i class="icon-download"></i> Export Audit Log
+          </button>
+          <button class="btn btn-default" id="generate_report_btn">
+            <i class="icon-file"></i> Generate Compliance Report
+          </button>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Audit Detail Modal -->
+  <row depends="$show_audit_modal$">
+    <panel>
+      <title>Audit Entry Details - $selected_audit_id$</title>
+      <table>
+        <search>
+          <query>
+| inputlookup pii_audit_log_lookup
+| search audit_id=$selected_audit_id$
+| eval timestamp_readable=strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+| transpose
+| rename column as "Field", "row 1" as "Value"
+          </query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+      <html>
+        <button class="btn btn-default" id="close_audit_modal_btn">Close</button>
+      </html>
+    </panel>
+  </row>
+</dashboard>

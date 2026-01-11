@@ -1,0 +1,31 @@
+#
+# Permissions for TA-splunk_diagnostic
+#
+
+[]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[savedsearches]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[collections]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[transforms]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[macros]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[views]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system
+
+[lookups]
+access = read : [ * ], write : [ admin, sc_admin ]
+export = system

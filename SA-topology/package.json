@@ -1,0 +1,27 @@
+{
+  "name": "sa-topology",
+  "version": "1.0.0",
+  "description": "A Splunk app that provides dynamic topology visualization of your Splunk infrastructure, similar to ITSI's Service Analyzer Treeview.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DataDay-Technology-Solutions/sa-topology.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DataDay-Technology-Solutions/sa-topology/issues"
+  },
+  "homepage": "https://github.com/DataDay-Technology-Solutions/sa-topology#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}
