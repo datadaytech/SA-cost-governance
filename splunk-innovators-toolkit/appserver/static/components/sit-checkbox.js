@@ -62,9 +62,15 @@ define([
         },
         
         handleClick: function(e) {
-            // Prevent double-firing when clicking the label
-            if (e.target.tagName.toLowerCase() === 'label') {
+            // Prevent double-firing when clicking the label or input directly
+            if (e.target.tagName.toLowerCase() === 'label' || e.target.tagName.toLowerCase() === 'input') {
                 return;
+            }
+
+            // Toggle the checkbox when clicking anywhere else (like the box)
+            var $input = this.$el.find('input');
+            if (!$input.prop('disabled')) {
+                $input.prop('checked', !$input.prop('checked')).trigger('change');
             }
         },
         

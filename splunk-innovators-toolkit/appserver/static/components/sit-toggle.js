@@ -26,7 +26,8 @@ define([
         },
         
         events: {
-            'change input': 'handleChange'
+            'change input': 'handleChange',
+            'click': 'handleClick'
         },
         
         initialize: function(options) {
@@ -69,14 +70,27 @@ define([
             return this;
         },
         
+        handleClick: function(e) {
+            // Prevent double-firing when clicking the label or input directly
+            if (e.target.tagName.toLowerCase() === 'label' || e.target.tagName.toLowerCase() === 'input') {
+                return;
+            }
+
+            // Toggle when clicking the track or thumb
+            var $input = this.$el.find('input');
+            if (!$input.prop('disabled')) {
+                $input.prop('checked', !$input.prop('checked')).trigger('change');
+            }
+        },
+
         handleChange: function(e) {
             var isChecked = this.$el.find('input').prop('checked');
             this.options.checked = isChecked;
-            
+
             if (_.isFunction(this.options.onChange)) {
                 this.options.onChange.call(this, isChecked);
             }
-            
+
             this.trigger('change', isChecked);
         },
         
