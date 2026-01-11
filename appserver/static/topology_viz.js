@@ -217,30 +217,126 @@ require([
             { id: 'hf_2', name: 'hf-datacenter-02', type: 'heavy_forwarder', tier: 2, health: 'green', role: 'Aggregation' },
             { id: 'hf_3', name: 'hf-cloud-01', type: 'heavy_forwarder', tier: 2, health: 'yellow', role: 'Cloud Ingestion' },
 
-            // Universal Forwarders
+            // Universal Forwarders - Large deployment demo (50+ UFs)
+            // Web Servers (12 UFs)
             { id: 'uf_1', name: 'web-prod-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
             { id: 'uf_2', name: 'web-prod-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
             { id: 'uf_3', name: 'web-prod-03', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
-            { id: 'uf_4', name: 'app-prod-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
-            { id: 'uf_5', name: 'app-prod-02', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'App Server' },
-            { id: 'uf_6', name: 'db-prod-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
-            { id: 'uf_7', name: 'fw-edge-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Firewall' },
-            { id: 'uf_8', name: 'fw-edge-02', type: 'universal_forwarder', tier: 3, health: 'red', role: 'Firewall' },
-            { id: 'uf_9', name: 'aws-lambda-collector', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud Lambda' },
-            { id: 'uf_10', name: 'azure-vm-collector', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud VM' }
+            { id: 'uf_4', name: 'web-prod-04', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'Web Server' },
+            { id: 'uf_5', name: 'web-prod-05', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_6', name: 'web-prod-06', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_7', name: 'web-prod-07', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_8', name: 'web-prod-08', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_9', name: 'web-stage-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_10', name: 'web-stage-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+            { id: 'uf_11', name: 'web-dev-01', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'Web Server' },
+            { id: 'uf_12', name: 'web-dev-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Web Server' },
+
+            // App Servers (15 UFs)
+            { id: 'uf_13', name: 'app-prod-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_14', name: 'app-prod-02', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'App Server' },
+            { id: 'uf_15', name: 'app-prod-03', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_16', name: 'app-prod-04', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_17', name: 'app-prod-05', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_18', name: 'app-prod-06', type: 'universal_forwarder', tier: 3, health: 'red', role: 'App Server' },
+            { id: 'uf_19', name: 'app-prod-07', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_20', name: 'app-prod-08', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_21', name: 'app-prod-09', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_22', name: 'app-prod-10', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'App Server' },
+            { id: 'uf_23', name: 'app-stage-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_24', name: 'app-stage-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_25', name: 'app-stage-03', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_26', name: 'app-dev-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+            { id: 'uf_27', name: 'app-dev-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'App Server' },
+
+            // Database Servers (8 UFs)
+            { id: 'uf_28', name: 'db-prod-mysql-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_29', name: 'db-prod-mysql-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_30', name: 'db-prod-postgres-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_31', name: 'db-prod-postgres-02', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'Database' },
+            { id: 'uf_32', name: 'db-prod-mongo-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_33', name: 'db-prod-redis-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_34', name: 'db-prod-redis-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+            { id: 'uf_35', name: 'db-stage-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Database' },
+
+            // Firewalls/Network (6 UFs)
+            { id: 'uf_36', name: 'fw-edge-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Firewall' },
+            { id: 'uf_37', name: 'fw-edge-02', type: 'universal_forwarder', tier: 3, health: 'red', role: 'Firewall' },
+            { id: 'uf_38', name: 'fw-internal-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Firewall' },
+            { id: 'uf_39', name: 'fw-internal-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Firewall' },
+            { id: 'uf_40', name: 'fw-dmz-01', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'Firewall' },
+            { id: 'uf_41', name: 'fw-dmz-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Firewall' },
+
+            // Cloud Infrastructure (10 UFs)
+            { id: 'uf_42', name: 'aws-lambda-api', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_43', name: 'aws-lambda-worker', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_44', name: 'aws-ec2-web-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_45', name: 'aws-ec2-web-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_46', name: 'aws-ecs-cluster', type: 'universal_forwarder', tier: 3, health: 'yellow', role: 'Cloud' },
+            { id: 'uf_47', name: 'azure-vm-app-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_48', name: 'azure-vm-app-02', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_49', name: 'azure-func-api', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_50', name: 'gcp-compute-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' },
+            { id: 'uf_51', name: 'gcp-k8s-node-01', type: 'universal_forwarder', tier: 3, health: 'green', role: 'Cloud' }
         ],
         connections: [
-            // UFs -> HFs
+            // UFs -> HFs (distributed across all 3 HFs)
+            // Web Servers -> HF1 (datacenter)
             { source: 'uf_1', target: 'hf_1' },
             { source: 'uf_2', target: 'hf_1' },
             { source: 'uf_3', target: 'hf_1' },
             { source: 'uf_4', target: 'hf_1' },
-            { source: 'uf_5', target: 'hf_2' },
-            { source: 'uf_6', target: 'hf_2' },
+            { source: 'uf_5', target: 'hf_1' },
+            { source: 'uf_6', target: 'hf_1' },
             { source: 'uf_7', target: 'hf_2' },
             { source: 'uf_8', target: 'hf_2' },
-            { source: 'uf_9', target: 'hf_3' },
-            { source: 'uf_10', target: 'hf_3' },
+            { source: 'uf_9', target: 'hf_2' },
+            { source: 'uf_10', target: 'hf_2' },
+            { source: 'uf_11', target: 'hf_1' },
+            { source: 'uf_12', target: 'hf_1' },
+            // App Servers -> HF1 & HF2
+            { source: 'uf_13', target: 'hf_1' },
+            { source: 'uf_14', target: 'hf_1' },
+            { source: 'uf_15', target: 'hf_1' },
+            { source: 'uf_16', target: 'hf_1' },
+            { source: 'uf_17', target: 'hf_2' },
+            { source: 'uf_18', target: 'hf_2' },
+            { source: 'uf_19', target: 'hf_2' },
+            { source: 'uf_20', target: 'hf_2' },
+            { source: 'uf_21', target: 'hf_1' },
+            { source: 'uf_22', target: 'hf_1' },
+            { source: 'uf_23', target: 'hf_2' },
+            { source: 'uf_24', target: 'hf_2' },
+            { source: 'uf_25', target: 'hf_2' },
+            { source: 'uf_26', target: 'hf_1' },
+            { source: 'uf_27', target: 'hf_1' },
+            // Database -> HF2
+            { source: 'uf_28', target: 'hf_2' },
+            { source: 'uf_29', target: 'hf_2' },
+            { source: 'uf_30', target: 'hf_2' },
+            { source: 'uf_31', target: 'hf_2' },
+            { source: 'uf_32', target: 'hf_2' },
+            { source: 'uf_33', target: 'hf_2' },
+            { source: 'uf_34', target: 'hf_2' },
+            { source: 'uf_35', target: 'hf_2' },
+            // Firewalls -> HF1
+            { source: 'uf_36', target: 'hf_1' },
+            { source: 'uf_37', target: 'hf_1' },
+            { source: 'uf_38', target: 'hf_1' },
+            { source: 'uf_39', target: 'hf_1' },
+            { source: 'uf_40', target: 'hf_1' },
+            { source: 'uf_41', target: 'hf_1' },
+            // Cloud -> HF3 (cloud ingestion)
+            { source: 'uf_42', target: 'hf_3' },
+            { source: 'uf_43', target: 'hf_3' },
+            { source: 'uf_44', target: 'hf_3' },
+            { source: 'uf_45', target: 'hf_3' },
+            { source: 'uf_46', target: 'hf_3' },
+            { source: 'uf_47', target: 'hf_3' },
+            { source: 'uf_48', target: 'hf_3' },
+            { source: 'uf_49', target: 'hf_3' },
+            { source: 'uf_50', target: 'hf_3' },
+            { source: 'uf_51', target: 'hf_3' },
 
             // HFs -> Indexers
             { source: 'hf_1', target: 'idx_1' },
@@ -928,6 +1024,163 @@ require([
         });
     }
 
+    // ===========================================
+    // UF GROUPING CONFIGURATION
+    // ===========================================
+    var UF_GROUP_THRESHOLD = 8; // Group UFs when more than this many exist
+    var ENABLE_UF_GROUPING = true; // Toggle grouping on/off
+
+    // Group Universal Forwarders by role for better visualization
+    function groupUniversalForwarders(data) {
+        if (!ENABLE_UF_GROUPING) return { groupedData: data, ufGroups: [] };
+
+        var ufNodes = data.nodes.filter(function(n) { return n.type === 'universal_forwarder'; });
+        var otherNodes = data.nodes.filter(function(n) { return n.type !== 'universal_forwarder'; });
+
+        // Only group if we have more than threshold
+        if (ufNodes.length <= UF_GROUP_THRESHOLD) {
+            return { groupedData: data, ufGroups: [] };
+        }
+
+        console.log('SA Topology: Grouping', ufNodes.length, 'UFs by role');
+
+        // Group UFs by role
+        var ufGroupMap = {};
+        ufNodes.forEach(function(node) {
+            var groupKey = node.role || 'Other';
+            if (!ufGroupMap[groupKey]) {
+                ufGroupMap[groupKey] = {
+                    id: 'uf_group_' + groupKey.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                    name: groupKey,
+                    type: 'uf_group',
+                    tier: 3,
+                    role: groupKey,
+                    count: 0,
+                    members: [],
+                    healthCounts: { green: 0, yellow: 0, red: 0 },
+                    totalThroughputKB: 0,
+                    connections: { inbound: [], outbound: [] }
+                };
+            }
+            ufGroupMap[groupKey].count++;
+            ufGroupMap[groupKey].members.push(node);
+            ufGroupMap[groupKey].healthCounts[node.health || 'green']++;
+            ufGroupMap[groupKey].totalThroughputKB += (node.throughputKB || 0);
+
+            // Track outbound connections from members
+            if (node.connections && node.connections.outbound) {
+                node.connections.outbound.forEach(function(targetId) {
+                    if (ufGroupMap[groupKey].connections.outbound.indexOf(targetId) === -1) {
+                        ufGroupMap[groupKey].connections.outbound.push(targetId);
+                    }
+                });
+            }
+        });
+
+        // Convert groups to array and calculate aggregate health
+        var ufGroups = Object.values(ufGroupMap).map(function(group) {
+            // Determine overall health (worst case)
+            if (group.healthCounts.red > 0) {
+                group.health = 'red';
+            } else if (group.healthCounts.yellow > 0) {
+                group.health = 'yellow';
+            } else {
+                group.health = 'green';
+            }
+
+            // Generate aggregate KPIs
+            group.kpis = generateGroupKPIs(group);
+            group.healthScore = calculateHealthScore(group.kpis);
+
+            return group;
+        });
+
+        // Sort groups by count (largest first)
+        ufGroups.sort(function(a, b) { return b.count - a.count; });
+
+        // Create new data structure with groups instead of individual UFs
+        var groupedData = {
+            tiers: data.tiers,
+            nodes: otherNodes.concat(ufGroups),
+            connections: []
+        };
+
+        // Rebuild connections - replace individual UF connections with group connections
+        data.connections.forEach(function(conn) {
+            var sourceNode = data.nodes.find(function(n) { return n.id === conn.source; });
+            var targetNode = data.nodes.find(function(n) { return n.id === conn.target; });
+
+            if (sourceNode && sourceNode.type === 'universal_forwarder') {
+                // Find the group this UF belongs to
+                var sourceGroup = ufGroups.find(function(g) {
+                    return g.members.some(function(m) { return m.id === sourceNode.id; });
+                });
+                if (sourceGroup) {
+                    // Check if we already have this group connection
+                    var existingConn = groupedData.connections.find(function(c) {
+                        return c.source === sourceGroup.id && c.target === conn.target;
+                    });
+                    if (existingConn) {
+                        existingConn.throughputKB = (existingConn.throughputKB || 0) + (conn.throughputKB || 0);
+                        existingConn.memberCount = (existingConn.memberCount || 1) + 1;
+                    } else {
+                        groupedData.connections.push({
+                            source: sourceGroup.id,
+                            target: conn.target,
+                            type: conn.type || 'data',
+                            throughputKB: conn.throughputKB || 0,
+                            memberCount: 1
+                        });
+                    }
+                }
+            } else {
+                // Keep non-UF connections as-is
+                groupedData.connections.push(conn);
+            }
+        });
+
+        console.log('SA Topology: Created', ufGroups.length, 'UF groups from', ufNodes.length, 'forwarders');
+        return { groupedData: groupedData, ufGroups: ufGroups, originalUFs: ufNodes };
+    }
+
+    // Generate aggregate KPIs for a UF group
+    function generateGroupKPIs(group) {
+        var definitions = kpiDefinitions.universal_forwarder;
+        var kpis = [];
+
+        definitions.forEach(function(def) {
+            // Aggregate values from all members
+            var values = group.members.map(function(m) {
+                var kpi = m.kpis ? m.kpis.find(function(k) { return k.id === def.id; }) : null;
+                return kpi ? kpi.value : 0;
+            });
+
+            var avgValue = values.reduce(function(a, b) { return a + b; }, 0) / values.length;
+            var maxValue = Math.max.apply(null, values);
+            var minValue = Math.min.apply(null, values);
+
+            // Use max value for threshold-based severity (worst case)
+            var checkValue = def.inverse ? minValue : maxValue;
+            var severity = def.inverse ? getSeverityInverse(checkValue, def.thresholds) : getSeverity(checkValue, def.thresholds);
+
+            kpis.push({
+                id: def.id,
+                name: def.name,
+                value: Math.round(avgValue * 10) / 10,
+                minValue: Math.round(minValue * 10) / 10,
+                maxValue: Math.round(maxValue * 10) / 10,
+                unit: def.unit,
+                severity: severity,
+                sparkline: generateSparklineData(avgValue, 10, 0),
+                thresholds: def.thresholds,
+                inverse: def.inverse,
+                isAggregate: true
+            });
+        });
+
+        return kpis;
+    }
+
     // Main rendering function
     function renderTopology(data, $container) {
         console.log('SA Topology: Rendering topology with', data.nodes.length, 'nodes');
@@ -939,7 +1192,16 @@ require([
             return;
         }
 
-        // Calculate health counts
+        // Apply UF grouping if enabled and threshold met
+        var groupingResult = groupUniversalForwarders(data);
+        var renderData = groupingResult.groupedData;
+        var ufGroups = groupingResult.ufGroups;
+        var originalUFs = groupingResult.originalUFs;
+
+        // Store original data for modal access
+        var originalData = data;
+
+        // Calculate health counts (from original data for accuracy)
         var healthCounts = { green: 0, yellow: 0, red: 0 };
         data.nodes.forEach(function(node) {
             if (node.health && healthCounts.hasOwnProperty(node.health)) {
@@ -950,6 +1212,12 @@ require([
         $('#health-green').text(healthCounts.green);
         $('#health-yellow').text(healthCounts.yellow);
         $('#health-red').text(healthCounts.red);
+
+        // Show grouping indicator if UFs are grouped
+        if (ufGroups && ufGroups.length > 0) {
+            var totalUFs = originalUFs ? originalUFs.length : 0;
+            console.log('SA Topology: Displaying', ufGroups.length, 'UF groups representing', totalUFs, 'forwarders');
+        }
 
         // Setup dimensions
         var width = $container.width() || 1200;
@@ -971,9 +1239,9 @@ require([
         var tierHeight = (height - margin.top - margin.bottom) / (numTiers - 1);
         var contentWidth = width - margin.left - margin.right;
 
-        // Group and position nodes
+        // Group and position nodes (use renderData which may have grouped UFs)
         var nodesByTier = {};
-        data.nodes.forEach(function(node) {
+        renderData.nodes.forEach(function(node) {
             if (!nodesByTier[node.tier]) nodesByTier[node.tier] = [];
             nodesByTier[node.tier].push(node);
         });
@@ -1047,16 +1315,16 @@ require([
                 .text(label);
         }
 
-        drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
-        drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
+        drawClusterBox(renderData.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
+        drawClusterBox(renderData.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
 
         // Draw connections with throughput-based styling
         var linksGroup = g.append('g').attr('class', 'links');
 
         // Calculate max throughput for scaling
-        var maxThroughput = d3.max(data.connections, function(c) { return c.throughputKB || 0; }) || 1;
+        var maxThroughput = d3.max(renderData.connections, function(c) { return c.throughputKB || 0; }) || 1;
 
-        data.connections.forEach(function(conn) {
+        renderData.connections.forEach(function(conn) {
             var source = nodePositions[conn.source];
             var target = nodePositions[conn.target];
             if (!source || !target) return;
@@ -1113,8 +1381,13 @@ require([
         // Draw nodes
         var nodesGroup = g.append('g').attr('class', 'nodes');
 
+        // Separate regular nodes from UF groups
+        var regularNodes = renderData.nodes.filter(function(n) { return n.type !== 'uf_group'; });
+        var groupNodes = renderData.nodes.filter(function(n) { return n.type === 'uf_group'; });
+
+        // Render regular nodes (non-grouped)
         var nodeElements = nodesGroup.selectAll('.node')
-            .data(data.nodes)
+            .data(regularNodes)
             .enter()
             .append('g')
             .attr('class', 'node')
@@ -1177,6 +1450,151 @@ require([
             .attr('font-family', 'Arial, sans-serif')
             .text(function(d) {
                 return d.name.length > 18 ? d.name.substring(0, 16) + '...' : d.name;
+            });
+
+        // ===========================================
+        // RENDER UF GROUPS (STACKED ICONS)
+        // ===========================================
+        var ufGroupElements = nodesGroup.selectAll('.uf-group')
+            .data(groupNodes)
+            .enter()
+            .append('g')
+            .attr('class', 'uf-group')
+            .attr('transform', function(d) {
+                var pos = nodePositions[d.id];
+                return 'translate(' + pos.x + ',' + pos.y + ')';
+            })
+            .style('cursor', 'pointer')
+            .on('click', function(event, d) {
+                event.stopPropagation();
+                showUFGroupModal(d, originalData);
+            })
+            .on('mouseover', function(event, d) {
+                d3.select(this).selectAll('.stack-rect')
+                    .transition()
+                    .duration(200)
+                    .attr('transform', function(d, i) {
+                        return 'scale(1.1)';
+                    });
+                d3.select(this).select('.count-badge')
+                    .transition()
+                    .duration(200)
+                    .attr('r', 14);
+            })
+            .on('mouseout', function(event, d) {
+                d3.select(this).selectAll('.stack-rect')
+                    .transition()
+                    .duration(200)
+                    .attr('transform', 'scale(1)');
+                d3.select(this).select('.count-badge')
+                    .transition()
+                    .duration(200)
+                    .attr('r', 12);
+            });
+
+        // Draw stacked rectangles for each UF group
+        ufGroupElements.each(function(d) {
+            var group = d3.select(this);
+            var baseColor = severityColors[healthToSeverity[d.health]] || severityColors.normal;
+
+            // Calculate stack depth based on count (max 4 visible layers)
+            var stackDepth = Math.min(4, Math.ceil(d.count / 5));
+
+            // Draw stacked rectangles (back to front)
+            for (var i = stackDepth - 1; i >= 0; i--) {
+                var offsetX = i * 4;
+                var offsetY = -i * 3;
+                var opacity = 1 - (i * 0.15);
+
+                group.append('rect')
+                    .attr('class', 'stack-rect')
+                    .attr('x', -18 + offsetX)
+                    .attr('y', -22 + offsetY)
+                    .attr('width', 36)
+                    .attr('height', 44)
+                    .attr('rx', 6)
+                    .attr('fill', baseColor)
+                    .attr('fill-opacity', opacity)
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', i === 0 ? 2 : 1)
+                    .style('filter', i === 0 ? 'drop-shadow(0px 2px 6px rgba(0,0,0,0.4))' : 'none');
+            }
+
+            // Add UF icon/text on front card
+            group.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', 0)
+                .attr('fill', '#fff')
+                .attr('font-weight', 'bold')
+                .attr('font-size', '12px')
+                .attr('font-family', 'Arial, sans-serif')
+                .text('UF');
+
+            // Add count badge (top right)
+            group.append('circle')
+                .attr('class', 'count-badge')
+                .attr('cx', 22)
+                .attr('cy', -20)
+                .attr('r', 12)
+                .attr('fill', d.healthCounts.red > 0 ? severityColors.critical :
+                              (d.healthCounts.yellow > 0 ? severityColors.medium : '#4a5568'))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .style('filter', 'drop-shadow(0px 1px 3px rgba(0,0,0,0.5))');
+
+            group.append('text')
+                .attr('class', 'count-text')
+                .attr('x', 22)
+                .attr('y', -16)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#fff')
+                .attr('font-weight', 'bold')
+                .attr('font-size', d.count >= 100 ? '8px' : (d.count >= 10 ? '9px' : '10px'))
+                .attr('font-family', 'Arial, sans-serif')
+                .text(d.count >= 1000 ? Math.round(d.count/1000) + 'k' : d.count);
+
+            // Health breakdown mini-badges (bottom of stack)
+            var healthBadgeY = 32;
+            var badgeSpacing = 18;
+            var badges = [];
+            if (d.healthCounts.green > 0) badges.push({ color: severityColors.normal, count: d.healthCounts.green });
+            if (d.healthCounts.yellow > 0) badges.push({ color: severityColors.medium, count: d.healthCounts.yellow });
+            if (d.healthCounts.red > 0) badges.push({ color: severityColors.critical, count: d.healthCounts.red });
+
+            var totalBadgeWidth = badges.length * badgeSpacing;
+            var startX = -totalBadgeWidth / 2 + badgeSpacing / 2;
+
+            badges.forEach(function(badge, idx) {
+                group.append('circle')
+                    .attr('cx', startX + (idx * badgeSpacing))
+                    .attr('cy', healthBadgeY)
+                    .attr('r', 6)
+                    .attr('fill', badge.color)
+                    .attr('stroke', '#1a1a2e')
+                    .attr('stroke-width', 1);
+
+                group.append('text')
+                    .attr('x', startX + (idx * badgeSpacing))
+                    .attr('y', healthBadgeY + 3)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#fff')
+                    .attr('font-size', '7px')
+                    .attr('font-weight', 'bold')
+                    .text(badge.count);
+            });
+        });
+
+        // Group labels (role name)
+        ufGroupElements.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('y', 52)
+            .attr('fill', '#ccd6f6')
+            .attr('font-size', '10px')
+            .attr('font-weight', '500')
+            .attr('font-family', 'Arial, sans-serif')
+            .text(function(d) {
+                var label = d.role || d.name;
+                return label.length > 14 ? label.substring(0, 12) + '...' : label;
             });
 
         // Add legend
@@ -1654,6 +2072,382 @@ require([
                 .attr('cy', yScale(data[data.length - 1]))
                 .attr('r', 3)
                 .attr('fill', color);
+        }
+
+        // ===========================================
+        // UF GROUP MODAL - Shows details for grouped UFs
+        // ===========================================
+        function showUFGroupModal(group, originalData) {
+            // Remove existing modal
+            $('#kpi-modal-overlay').remove();
+
+            var healthScoreColor = group.healthScore >= 80 ? severityColors.normal :
+                                   group.healthScore >= 60 ? severityColors.low :
+                                   group.healthScore >= 40 ? severityColors.medium :
+                                   group.healthScore >= 20 ? severityColors.high :
+                                   severityColors.critical;
+
+            // Create modal overlay
+            var $overlay = $('<div id="kpi-modal-overlay"></div>').css({
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(0,0,0,0.7)',
+                zIndex: 10000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            });
+
+            // Create modal content (wider for group details)
+            var $modal = $('<div id="kpi-modal"></div>').css({
+                background: '#1a1a2e',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                width: '800px',
+                maxHeight: '85vh',
+                overflow: 'hidden',
+                border: '1px solid #2d3748'
+            });
+
+            // Modal header with group info
+            var $header = $('<div class="modal-header"></div>').css({
+                padding: '20px 24px',
+                borderBottom: '1px solid #2d3748',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start'
+            });
+
+            var $titleSection = $('<div></div>');
+            $titleSection.append($('<h2></h2>').text(group.role + ' Universal Forwarders').css({
+                margin: 0,
+                color: '#e2e8f0',
+                fontSize: '20px',
+                fontWeight: '600'
+            }));
+            $titleSection.append($('<div></div>').html(
+                '<span style="color:#65A637;font-weight:600;">' + group.count + '</span> forwarders in this group'
+            ).css({
+                color: '#8892b0',
+                fontSize: '13px',
+                marginTop: '4px'
+            }));
+
+            // Health summary badges
+            var $healthSummary = $('<div class="health-summary"></div>').css({
+                display: 'flex',
+                gap: '12px',
+                marginTop: '8px'
+            });
+
+            if (group.healthCounts.green > 0) {
+                $healthSummary.append($('<span></span>').css({
+                    background: 'rgba(101, 166, 55, 0.2)',
+                    color: severityColors.normal,
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                }).text(group.healthCounts.green + ' Healthy'));
+            }
+            if (group.healthCounts.yellow > 0) {
+                $healthSummary.append($('<span></span>').css({
+                    background: 'rgba(248, 190, 52, 0.2)',
+                    color: severityColors.medium,
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                }).text(group.healthCounts.yellow + ' Warning'));
+            }
+            if (group.healthCounts.red > 0) {
+                $healthSummary.append($('<span></span>').css({
+                    background: 'rgba(220, 78, 65, 0.2)',
+                    color: severityColors.critical,
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                }).text(group.healthCounts.red + ' Critical'));
+            }
+            $titleSection.append($healthSummary);
+
+            var $healthScore = $('<div class="health-score"></div>').css({
+                textAlign: 'center'
+            });
+            $healthScore.append($('<div></div>').text(group.healthScore).css({
+                fontSize: '32px',
+                fontWeight: '700',
+                color: healthScoreColor,
+                lineHeight: '1'
+            }));
+            $healthScore.append($('<div></div>').text('Avg Health').css({
+                fontSize: '11px',
+                color: '#8892b0',
+                marginTop: '4px'
+            }));
+
+            $header.append($titleSection);
+            $header.append($healthScore);
+
+            // Close button
+            var $closeBtn = $('<button>&times;</button>').css({
+                position: 'absolute',
+                top: '12px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: '#8892b0',
+                fontSize: '24px',
+                cursor: 'pointer',
+                padding: '4px 8px'
+            }).hover(
+                function() { $(this).css('color', '#e2e8f0'); },
+                function() { $(this).css('color', '#8892b0'); }
+            ).on('click', function() {
+                $overlay.remove();
+            });
+
+            // Modal body - Two columns
+            var $body = $('<div class="modal-body"></div>').css({
+                padding: '16px 24px',
+                maxHeight: '55vh',
+                overflowY: 'auto',
+                display: 'flex',
+                gap: '24px'
+            });
+
+            // Left column - Aggregate KPIs
+            var $leftCol = $('<div class="kpi-column"></div>').css({
+                flex: '1',
+                minWidth: '0'
+            });
+
+            $leftCol.append($('<h3></h3>').text('Aggregate KPIs (Avg/Min/Max)').css({
+                color: '#e2e8f0',
+                fontSize: '14px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #2d3748'
+            }));
+
+            var $kpiList = $('<div class="kpi-list"></div>');
+
+            group.kpis.forEach(function(kpi, index) {
+                var $kpiRow = $('<div class="kpi-row"></div>').css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '10px 12px',
+                    background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    borderRadius: '6px',
+                    marginBottom: '4px'
+                });
+
+                // Severity indicator
+                var $severity = $('<div class="severity-indicator"></div>').css({
+                    width: '6px',
+                    height: '32px',
+                    borderRadius: '3px',
+                    background: severityColors[kpi.severity],
+                    marginRight: '12px',
+                    flexShrink: 0
+                });
+
+                // KPI info
+                var $info = $('<div class="kpi-info"></div>').css({ flex: 1 });
+                $info.append($('<div class="kpi-name"></div>').text(kpi.name).css({
+                    color: '#e2e8f0',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                }));
+
+                // Value with min/max range
+                var $value = $('<div class="kpi-value"></div>').css({
+                    textAlign: 'right',
+                    flexShrink: 0
+                });
+                $value.append($('<div></div>').text(kpi.value + ' ' + kpi.unit).css({
+                    color: '#e2e8f0',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                }));
+                $value.append($('<div></div>').text(kpi.minValue + ' - ' + kpi.maxValue + ' ' + kpi.unit).css({
+                    color: '#8892b0',
+                    fontSize: '10px',
+                    marginTop: '2px'
+                }));
+
+                $kpiRow.append($severity);
+                $kpiRow.append($info);
+                $kpiRow.append($value);
+                $kpiList.append($kpiRow);
+            });
+
+            $leftCol.append($kpiList);
+
+            // Right column - Member list
+            var $rightCol = $('<div class="member-column"></div>').css({
+                width: '280px',
+                flexShrink: 0
+            });
+
+            $rightCol.append($('<h3></h3>').text('Group Members (' + group.count + ')').css({
+                color: '#e2e8f0',
+                fontSize: '14px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #2d3748'
+            }));
+
+            var $memberList = $('<div class="member-list"></div>').css({
+                maxHeight: '300px',
+                overflowY: 'auto'
+            });
+
+            // Sort members by health (critical first)
+            var sortedMembers = group.members.slice().sort(function(a, b) {
+                var healthOrder = { red: 0, yellow: 1, green: 2 };
+                return (healthOrder[a.health] || 2) - (healthOrder[b.health] || 2);
+            });
+
+            sortedMembers.forEach(function(member) {
+                var $memberRow = $('<div class="member-row"></div>').css({
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px 10px',
+                    borderRadius: '4px',
+                    marginBottom: '4px',
+                    background: 'rgba(255,255,255,0.02)',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                }).hover(
+                    function() { $(this).css('background', 'rgba(255,255,255,0.06)'); },
+                    function() { $(this).css('background', 'rgba(255,255,255,0.02)'); }
+                ).on('click', function() {
+                    // Close group modal and open individual modal
+                    $overlay.remove();
+                    showKPIModal(member);
+                });
+
+                // Health indicator dot
+                $memberRow.append($('<div></div>').css({
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: severityColors[healthToSeverity[member.health]] || severityColors.unknown,
+                    marginRight: '10px',
+                    flexShrink: 0
+                }));
+
+                // Member name
+                $memberRow.append($('<div></div>').text(member.name).css({
+                    flex: 1,
+                    color: '#ccd6f6',
+                    fontSize: '12px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                }));
+
+                // Health score
+                $memberRow.append($('<div></div>').text(member.healthScore || '--').css({
+                    color: severityColors[healthToSeverity[member.health]] || '#8892b0',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    marginLeft: '8px'
+                }));
+
+                $memberList.append($memberRow);
+            });
+
+            $rightCol.append($memberList);
+
+            // Throughput summary
+            if (group.totalThroughputKB > 0) {
+                var throughputDisplay = group.totalThroughputKB >= 1024 ?
+                    (group.totalThroughputKB / 1024).toFixed(2) + ' MB' :
+                    Math.round(group.totalThroughputKB) + ' KB';
+
+                var $throughput = $('<div class="throughput-info"></div>').css({
+                    marginTop: '12px',
+                    padding: '10px',
+                    background: 'rgba(101, 166, 55, 0.1)',
+                    borderRadius: '6px',
+                    textAlign: 'center'
+                });
+                $throughput.append($('<div></div>').text('Total Group Throughput').css({
+                    color: '#8892b0',
+                    fontSize: '10px',
+                    marginBottom: '4px'
+                }));
+                $throughput.append($('<div></div>').text(throughputDisplay).css({
+                    color: '#65A637',
+                    fontSize: '16px',
+                    fontWeight: '700'
+                }));
+                $rightCol.append($throughput);
+            }
+
+            $body.append($leftCol);
+            $body.append($rightCol);
+
+            // Modal footer
+            var $footer = $('<div class="modal-footer"></div>').css({
+                padding: '16px 24px',
+                borderTop: '1px solid #2d3748',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+            });
+
+            $footer.append($('<span></span>').text('Click a member to view individual KPIs').css({
+                color: '#8892b0',
+                fontSize: '12px'
+            }));
+
+            var $drilldownBtn = $('<button>Search All in Group</button>').css({
+                background: '#6495ED',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: '500'
+            }).hover(
+                function() { $(this).css('background', '#4a7fd4'); },
+                function() { $(this).css('background', '#6495ED'); }
+            );
+
+            $footer.append($drilldownBtn);
+
+            // Assemble modal
+            $modal.append($closeBtn);
+            $modal.append($header);
+            $modal.append($body);
+            $modal.append($footer);
+            $overlay.append($modal);
+            $('body').append($overlay);
+
+            // Close on overlay click
+            $overlay.on('click', function(e) {
+                if (e.target === this) {
+                    $overlay.remove();
+                }
+            });
+
+            // Close on ESC key
+            $(document).on('keydown.kpiModal', function(e) {
+                if (e.keyCode === 27) {
+                    $overlay.remove();
+                    $(document).off('keydown.kpiModal');
+                }
+            });
         }
 
         // Add zoom behavior

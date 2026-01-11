@@ -425,3 +425,105 @@
 .level-indicator.level-1 { top: 210px; }
 .level-indicator.level-2 { top: 360px; }
 .level-indicator.level-3 { top: 510px; }
+
+/* ==========================================
+   UF Group Styles (Stacked Icons)
+   ========================================== */
+
+.uf-group {
+    cursor: pointer;
+}
+
+.uf-group .stack-rect {
+    transition: all 0.2s ease;
+}
+
+.uf-group:hover .stack-rect {
+    filter: drop-shadow(0px 4px 12px rgba(255, 255, 255, 0.3)) !important;
+}
+
+.uf-group .count-badge {
+    transition: all 0.2s ease;
+}
+
+.uf-group:hover .count-badge {
+    transform: scale(1.15);
+}
+
+.uf-group .count-text {
+    pointer-events: none;
+}
+
+/* Pulse animation for groups with critical members */
+.uf-group.has-critical .count-badge {
+    animation: pulse-critical 2s infinite;
+}
+
+@keyframes pulse-critical {
+    0% {
+        filter: drop-shadow(0px 0px 0px rgba(220, 78, 65, 0.8));
+    }
+    50% {
+        filter: drop-shadow(0px 0px 8px rgba(220, 78, 65, 0.8));
+    }
+    100% {
+        filter: drop-shadow(0px 0px 0px rgba(220, 78, 65, 0.8));
+    }
+}
+
+/* Health mini-badges at bottom of group */
+.uf-group .health-mini-badge {
+    transition: transform 0.2s ease;
+}
+
+.uf-group:hover .health-mini-badge {
+    transform: scale(1.1);
+}
+
+/* ==========================================
+   UF Group Modal Styles
+   ========================================== */
+
+.member-list {
+    scrollbar-width: thin;
+    scrollbar-color: #4a5568 #1a1a2e;
+}
+
+.member-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.member-list::-webkit-scrollbar-track {
+    background: #1a1a2e;
+    border-radius: 3px;
+}
+
+.member-list::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 3px;
+}
+
+.member-list::-webkit-scrollbar-thumb:hover {
+    background: #5a6578;
+}
+
+.member-row {
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.member-row:hover {
+    transform: translateX(2px);
+}
+
+.member-row:active {
+    transform: scale(0.98);
+}
+
+/* Group throughput card */
+.throughput-info {
+    transition: background 0.2s ease;
+}
+
+.throughput-info:hover {
+    background: rgba(101, 166, 55, 0.15) !important;
+}

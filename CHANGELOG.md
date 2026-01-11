@@ -5,6 +5,36 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.11] - 2025-01-10
+
+### Added
+- **UF Grouping Visualization**: Automatically groups Universal Forwarders by role when count exceeds threshold
+  - **Stacked Icon Design**: Visual representation showing multiple stacked cards for grouped UFs
+  - **Count Badge**: Displays total number of UFs in each group (supports 1-1000+)
+  - **Health Breakdown**: Mini-badges below each group showing count of green/yellow/red UFs
+  - **Aggregate KPIs**: Group modal displays average, min, and max values for all KPIs across members
+  - **Click-through Navigation**: Click group to see all members, click member to see individual KPIs
+  - **Dynamic Grouping**: Automatically activates when more than 8 UFs are present (configurable)
+
+- **Enhanced Mock Data**: Demo mode now includes 51 Universal Forwarders across 5 role categories
+  - Web Servers (12 UFs)
+  - App Servers (15 UFs)
+  - Database (8 UFs)
+  - Firewall (6 UFs)
+  - Cloud (10 UFs)
+
+### Changed
+- Collection Tier now displays grouped icons instead of individual circles when many UFs present
+- Connection lines from UF groups aggregate throughput from all members
+- Improved scalability: Can effectively display 100-1000+ UFs without visual clutter
+
+### Technical Details
+- `groupUniversalForwarders()` function transforms UF nodes into role-based groups
+- `generateGroupKPIs()` creates aggregate KPIs with min/max/avg calculations
+- `showUFGroupModal()` displays two-column modal with KPIs and member list
+- UF_GROUP_THRESHOLD constant controls when grouping activates (default: 8)
+- CSS animations for group hover effects and critical-state badges
+
 ## [v1.0.10] - 2025-01-10
 
 ### Added
