@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nav search_view="search" color="#65A637">
+  <view name="topology" default="true" />
+  <view name="search" />
+  <divider />
+  <a href="https://docs.splunk.com" target="_blank">Documentation</a>
+</nav>

@@ -1,0 +1,54 @@
+<form version="1.1" theme="light" script="topology_viz.js" stylesheet="topology.css">
+  <label>SA Topology Analyzer</label>
+  <description>Dynamic infrastructure topology visualization - Similar to ITSI Service Analyzer</description>
+
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time Range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="view_mode" searchWhenChanged="true">
+      <label>View Mode</label>
+      <choice value="live">Live Data</choice>
+      <choice value="mock">Mock Demo</choice>
+      <default>mock</default>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <html>
+        <div class="topology-header">
+          <h1>Splunk Infrastructure Topology</h1>
+          <p>Real-time visualization of data flow from Universal Forwarders through Indexes to Search Heads</p>
+          <div class="health-summary">
+            <div class="health-badge green">
+              <span class="count" id="health-green">0</span>
+              <span>Healthy</span>
+            </div>
+            <div class="health-badge yellow">
+              <span class="count" id="health-yellow">0</span>
+              <span>Warning</span>
+            </div>
+            <div class="health-badge red">
+              <span class="count" id="health-red">0</span>
+              <span>Critical</span>
+            </div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <html>
+        <div id="topology-container" style="width:100%;min-height:600px;position:relative;"></div>
+      </html>
+    </panel>
+  </row>
+
+</form>
