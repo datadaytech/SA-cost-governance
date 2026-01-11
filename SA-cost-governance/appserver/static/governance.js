@@ -4190,7 +4190,8 @@ require([
     }
 
     function parseFieldRuns(field, max) {
-        if (field === '*') return 1;
+        // '*' means every value in the range (e.g., every minute = 60, every hour = 24)
+        if (field === '*') return max;
         if (field.indexOf('*/') === 0) {
             var step = parseInt(field.substring(2));
             return Math.ceil(max / step);
@@ -4199,18 +4200,28 @@ require([
             return field.split(',').length;
         }
         if (field.indexOf('-') > -1) {
-            var parts = field.split('-');
-            return parseInt(parts[1]) - parseInt(parts[0]) + 1;
+            var rangeParts = field.split('-');
+            // Handle step notation like "0-59/5"
+            if (rangeParts[1].indexOf('/') > -1) {
+                var endStep = rangeParts[1].split('/');
+                var rangeSize = parseInt(endStep[0]) - parseInt(rangeParts[0]) + 1;
+                return Math.ceil(rangeSize / parseInt(endStep[1]));
+            }
+            return parseInt(rangeParts[1]) - parseInt(rangeParts[0]) + 1;
         }
         return 1;
     }
 
     function formatFrequency(freq) {
-        if (freq >= 1440) return Math.round(freq) + 'x';
-        if (freq >= 60) return Math.round(freq) + 'x';
-        if (freq >= 1) return Math.round(freq) + 'x';
-        if (freq >= 0.1) return freq.toFixed(1) + 'x';
-        return '<1x';
+        // freq is runs per day
+        if (freq >= 1440) return Math.round(freq) + 'x/day';
+        if (freq >= 48) return Math.round(freq) + 'x/day';
+        if (freq >= 24) return Math.round(freq) + 'x/day';
+        if (freq >= 2) return Math.round(freq) + 'x/day';
+        if (freq >= 1) return Math.round(freq) + 'x/day';
+        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';  // ~1x/week or more
+        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';  // ~1x/month or more
+        return '<1x/month';
     }
 
     function describeCron(minute, hour, dayMonth, month, dayWeek) {
@@ -4521,6 +4532,72 @@ require([
         return text;
     }
 
+    // Generate randomized cron presets to distribute scheduler load
+    function generateRandomizedPresets() {
+        // Random minute offset for interval-based schedules (0-4 for /5, etc.)
+        var offset5 = Math.floor(Math.random() * 5);
+        var offset15 = Math.floor(Math.random() * 15);
+        var offset30 = Math.floor(Math.random() * 30);
+
+        // Random minute for hourly+ schedules (0-59)
+        var randomMin = function() { return Math.floor(Math.random() * 60); };
+
+        // Random day of week (0-6, Sun-Sat)
+        var randomDayOfWeek = Math.floor(Math.random() * 7);
+
+        // Random day of month (1-28 to be safe for all months)
+        var randomDayOfMonth = Math.floor(Math.random() * 28) + 1;
+
+        // Build the 15-min intervals with offset
+        var m15_1 = offset15;
+        var m15_2 = (offset15 + 15) % 60;
+        var m15_3 = (offset15 + 30) % 60;
+        var m15_4 = (offset15 + 45) % 60;
+        var mins15 = [m15_1, m15_2, m15_3, m15_4].sort(function(a, b) { return a - b; }).join(',');
+
+        // Build the 30-min intervals with offset
+        var m30_1 = offset30;
+        var m30_2 = (offset30 + 30) % 60;
+        var mins30 = [m30_1, m30_2].sort(function(a, b) { return a - b; }).join(',');
+
+        // Generate random minutes for each preset
+        var minHourly = randomMin();
+        var min2Hour = randomMin();
+        var min4Hour = randomMin();
+        var min6Hour = randomMin();
+        var min12Hour = randomMin();
+        var minMidnight = randomMin();
+        var min6AM = randomMin();
+        var minWeekly = randomMin();
+        var minMonthly = randomMin();
+
+        var presets = [
+            { label: 'Every 5 Min', cron: offset5 + '-59/5 * * * *' },
+            { label: 'Every 15 Min', cron: mins15 + ' * * * *' },
+            { label: 'Every 30 Min', cron: mins30 + ' * * * *' },
+            { label: 'Hourly', cron: minHourly + ' * * * *' },
+            { label: 'Every 2 Hours', cron: min2Hour + ' */2 * * *' },
+            { label: 'Every 4 Hours', cron: min4Hour + ' */4 * * *' },
+            { label: 'Every 6 Hours', cron: min6Hour + ' */6 * * *' },
+            { label: 'Twice Daily', cron: min12Hour + ' */12 * * *' },
+            { label: 'Daily ~Midnight', cron: minMidnight + ' 0 * * *' },
+            { label: 'Daily ~6 AM', cron: min6AM + ' 6 * * *' },
+            { label: 'Weekly', cron: minWeekly + ' 0 * * ' + randomDayOfWeek },
+            { label: 'Monthly', cron: minMonthly + ' 0 ' + randomDayOfMonth + ' * *' }
+        ];
+
+        var html = '';
+        for (var i = 0; i < presets.length; i++) {
+            var p = presets[i];
+            html += '<div class="cron-preset-btn" data-cron="' + p.cron + '">' +
+                    '<div class="cron-preset-label">' + p.label + '</div>' +
+                    '<div class="cron-preset-cron">' + p.cron + '</div>' +
+                    '</div>';
+        }
+
+        return html;
+    }
+
     function openCronModal(searchName, cronSchedule, owner, app) {
         console.log("Opening cron modal for:", searchName, cronSchedule);
         currentCronSearch = { name: searchName, cron: cronSchedule, owner: owner, app: app };
@@ -4537,6 +4614,9 @@ require([
             $('#cronMonth').val(parts[3]);
             $('#cronDayWeek').val(parts[4]);
         }
+
+        // Regenerate randomized presets each time the modal opens
+        $('.cron-preset-grid').html(generateRandomizedPresets());
 
         $('.cron-preset-btn').removeClass('active');
         updateCronPreview();
