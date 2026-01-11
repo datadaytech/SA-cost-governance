@@ -4052,7 +4052,33 @@ require([
                 $('.cron-clickable[data-search="' + searchName + '"]').text(newCron).attr('data-cron', newCron);
                 currentCronSearch.cron = newCron;
 
-                // Don't auto-refresh - the visual update is done
+                // Also update the Frequency column to match the new schedule
+                var newFreq = getCronFrequencyPerDay(newCron);
+                var newFreqLabel = formatFrequency(newFreq);
+
+                // Find the row containing this search and update the Frequency cell
+                var $cronCell = $('.cron-clickable[data-search="' + searchName + '"]').closest('td');
+                if ($cronCell.length) {
+                    var $row = $cronCell.closest('tr');
+                    var $table = $row.closest('table');
+
+                    // Find Frequency column index from header
+                    var freqColIndex = -1;
+                    $table.find('thead th').each(function(index) {
+                        if ($(this).text().trim() === 'Frequency') {
+                            freqColIndex = index;
+                            return false;
+                        }
+                    });
+
+                    // Update the frequency cell if found
+                    if (freqColIndex >= 0) {
+                        var $freqCell = $row.find('td').eq(freqColIndex);
+                        if ($freqCell.length) {
+                            $freqCell.text(newFreqLabel);
+                        }
+                    }
+                }
             }
         });
 
@@ -5190,6 +5216,7 @@ require([
             var skipCheckboxes = true;
 
             var scheduleColIndex = -1;
+            var frequencyColIndex = -1;
             var searchNameColIndex = -1;
             var ownerColIndex = -1;
             var appColIndex = -1;
@@ -5205,6 +5232,7 @@ require([
             $table.find('thead th').each(function(index) {
                 var text = $(this).text().trim();
                 if (text === 'Schedule') scheduleColIndex = index;
+                if (text === 'Frequency') frequencyColIndex = index;
                 if (text === 'Search Name') searchNameColIndex = index;
                 if (text === 'Dashboard') { dashboardColIndex = index; isDashboardTable = true; }
                 if (text === 'Owner') ownerColIndex = index;
