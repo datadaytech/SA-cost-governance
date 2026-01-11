@@ -14,11 +14,11 @@
 #topology-container {
     width: 100%;
     min-height: 700px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
     border-radius: 8px;
     position: relative;
     overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 #topology-container svg {
@@ -31,23 +31,24 @@
    ========================================== */
 
 .topology-header {
-    background: #ffffff;
+    background: #161b22;
     padding: 20px;
     margin-bottom: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid #30363d;
 }
 
 .topology-header h1 {
     margin: 0 0 10px 0;
     font-size: 24px;
-    color: #333;
+    color: #e6edf3;
     font-weight: 600;
 }
 
 .topology-header p {
     margin: 0;
-    color: #666;
+    color: #8b949e;
     font-size: 14px;
 }
 
@@ -151,7 +152,7 @@
 
 .legend-item text {
     font-size: 12px;
-    fill: #333;
+    fill: #8b949e;
 }
 
 /* ==========================================
@@ -162,15 +163,16 @@
     position: absolute;
     top: 20px;
     right: 20px;
-    background: #ffffff;
+    background: #161b22;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     padding: 0;
     min-width: 280px;
     max-width: 350px;
     z-index: 1000;
     display: none;
     overflow: hidden;
+    border: 1px solid #30363d;
 }
 
 .node-details-panel h3 {
@@ -185,7 +187,7 @@
 
 .detail-row {
     padding: 12px 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #30363d;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -196,13 +198,13 @@
 }
 
 .detail-row .label {
-    color: #666;
+    color: #8b949e;
     font-size: 13px;
     font-weight: 500;
 }
 
 .detail-row .value {
-    color: #333;
+    color: #e6edf3;
     font-size: 13px;
     font-weight: 600;
 }
@@ -236,10 +238,10 @@
 
 .toolbar-btn {
     padding: 8px 16px;
-    border: 1px solid #ddd;
+    border: 1px solid #30363d;
     border-radius: 4px;
-    background: #fff;
-    color: #333;
+    background: #21262d;
+    color: #e6edf3;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -249,8 +251,8 @@
 }
 
 .toolbar-btn:hover {
-    background: #f5f5f5;
-    border-color: #ccc;
+    background: #30363d;
+    border-color: #484f58;
 }
 
 .toolbar-btn.active {
@@ -274,13 +276,13 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    color: #666;
+    color: #8b949e;
 }
 
 .topology-loading .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid #f3f3f3;
+    border: 4px solid #30363d;
     border-top: 4px solid #65A637;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -352,16 +354,30 @@
    ========================================== */
 
 .dashboard-body {
-    background: #f5f5f5 !important;
+    background: #0d1117 !important;
 }
 
 .panel-body {
     padding: 0 !important;
+    background: transparent !important;
 }
 
 .dashboard-panel {
     background: transparent !important;
     box-shadow: none !important;
+}
+
+.dashboard-row {
+    background: transparent !important;
+}
+
+/* Ensure form elements match dark theme */
+.dashboard-body .input,
+.dashboard-body select,
+.dashboard-body .dropdown-toggle {
+    background: #21262d !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
 }
 
 /* ==========================================
@@ -415,7 +431,7 @@
     position: absolute;
     left: 10px;
     font-size: 11px;
-    color: #999;
+    color: #8b949e;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
