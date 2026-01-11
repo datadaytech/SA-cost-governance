@@ -325,7 +325,7 @@ require([
         var nodePositions = {};
         Object.keys(nodesByTier).forEach(function(tier) {
             var tierNodes = nodesByTier[tier];
-            var tierY = (numTiers - 1 - tier) * tierHeight;
+            var tierY = tier * tierHeight; // Tier 0 (Search) at top, Tier 3 (UF) at bottom
             var nodeSpacing = contentWidth / (tierNodes.length + 1);
 
             tierNodes.forEach(function(node, i) {
@@ -342,7 +342,7 @@ require([
         var tierColors = ['rgba(100, 149, 237, 0.1)', 'rgba(255, 165, 0, 0.1)', 'rgba(147, 112, 219, 0.1)', 'rgba(60, 179, 113, 0.1)'];
 
         tierLabels.forEach(function(label, i) {
-            var tierY = (numTiers - 1 - i) * tierHeight;
+            var tierY = i * tierHeight; // Match node positioning
 
             g.append('rect')
                 .attr('x', -margin.left + 10)
