@@ -21,11 +21,16 @@ require([
     'underscore',
     'd3',
     'splunkjs/mvc',
+    'splunkjs/mvc/searchmanager',
     'splunkjs/mvc/simplexml/ready!'
-], function($, _, d3, mvc) {
+], function($, _, d3, mvc, SearchManager) {
     'use strict';
 
     console.log('SA Topology: Script loaded, D3 version:', d3.version);
+
+    // Get the view mode token
+    var tokens = mvc.Components.get('default');
+    var viewMode = tokens.get('view_mode') || 'mock';
 
     // ITSI-style severity colors (5 levels)
     var severityColors = {
@@ -271,21 +276,223 @@ require([
         node.healthScore = calculateHealthScore(node.kpis);
     });
 
-    // Wait for DOM to be ready
-    $(document).ready(function() {
-        console.log('SA Topology: DOM ready, looking for container...');
+    // Live topology discovery using Splunk REST APIs and searches
+    function discoverLiveTopology(callback) {
+        console.log('SA Topology: Discovering live topology...');
 
-        var $container = $('#topology-container');
-        if ($container.length === 0) {
-            console.error('SA Topology: Container #topology-container not found!');
-            return;
+        var liveData = {
+            tiers: [
+                { id: 'tier_sh', name: 'Search Tier', level: 0 },
+                { id: 'tier_idx', name: 'Indexing Tier', level: 1 },
+                { id: 'tier_hf', name: 'Forwarding Tier', level: 2 },
+                { id: 'tier_uf', name: 'Collection Tier', level: 3 }
+            ],
+            nodes: [],
+            connections: []
+        };
+
+        var discoveryComplete = { serverInfo: false, peers: false, forwarders: false };
+
+        function checkComplete() {
+            if (discoveryComplete.serverInfo && discoveryComplete.peers && discoveryComplete.forwarders) {
+                // Generate KPIs for all discovered nodes
+                liveData.nodes.forEach(function(node) {
+                    node.kpis = generateNodeKPIs(node);
+                    node.healthScore = calculateHealthScore(node.kpis);
+                });
+                console.log('SA Topology: Live discovery complete', liveData);
+                callback(liveData);
+            }
         }
+
+        // 1. Discover current server (Search Head)
+        var serverInfoSearch = new SearchManager({
+            id: 'serverInfoSearch_' + Date.now(),
+            search: '| rest /services/server/info | head 1 | table serverName, version, server_roles, guid',
+            earliest_time: '-1m',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        serverInfoSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                if (rows && rows.length > 0) {
+                    var serverName = rows[0][0] || 'search-head';
+                    var version = rows[0][1] || '';
+                    var roles = rows[0][2] || '';
+
+                    // Determine if this is a search head
+                    var isSearchHead = roles.indexOf('search_head') > -1 || roles.indexOf('indexer') > -1;
+
+                    liveData.nodes.push({
+                        id: 'sh_current',
+                        name: serverName,
+                        type: 'search_head',
+                        tier: 0,
+                        health: 'green',
+                        role: 'Current Instance',
+                        version: version
+                    });
+                }
+            }
+            discoveryComplete.serverInfo = true;
+            checkComplete();
+        });
+
+        // 2. Discover distributed search peers (Indexers)
+        var peersSearch = new SearchManager({
+            id: 'peersSearch_' + Date.now(),
+            search: '| rest /services/search/distributed/peers | table peerName, status, version, guid | head 20',
+            earliest_time: '-1m',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        peersSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                rows.forEach(function(row, i) {
+                    var peerName = row[0] || 'indexer-' + (i + 1);
+                    var status = row[1] || 'Up';
+
+                    var nodeId = 'idx_' + (i + 1);
+                    liveData.nodes.push({
+                        id: nodeId,
+                        name: peerName,
+                        type: 'indexer',
+                        tier: 1,
+                        health: status === 'Up' ? 'green' : 'yellow',
+                        cluster: 'idxc1',
+                        role: 'Peer Node'
+                    });
+
+                    // Connect search head to indexer
+                    liveData.connections.push({
+                        source: 'sh_current',
+                        target: nodeId,
+                        type: 'search'
+                    });
+                });
+            }
+
+            // If no indexers found, this might be a standalone - add self as indexer
+            if (liveData.nodes.filter(function(n) { return n.type === 'indexer'; }).length === 0) {
+                liveData.nodes.push({
+                    id: 'idx_local',
+                    name: 'local-indexer',
+                    type: 'indexer',
+                    tier: 1,
+                    health: 'green',
+                    role: 'Local Indexing'
+                });
+                liveData.connections.push({
+                    source: 'sh_current',
+                    target: 'idx_local',
+                    type: 'search'
+                });
+            }
+
+            discoveryComplete.peers = true;
+            checkComplete();
+        });
+
+        // 3. Discover forwarders from tcpin_connections
+        var forwardersSearch = new SearchManager({
+            id: 'forwardersSearch_' + Date.now(),
+            search: 'index=_internal sourcetype=splunkd group=tcpin_connections earliest=-1h | stats latest(fwdType) as fwdType, latest(version) as version, sum(kb) as kb by hostname | head 20',
+            earliest_time: '-1h',
+            latest_time: 'now',
+            autostart: true
+        });
+
+        forwardersSearch.data('results').on('data', function(results) {
+            if (results.hasData()) {
+                var rows = results.data().rows;
+                var hfCount = 0;
+                var ufCount = 0;
+                var indexerIds = liveData.nodes.filter(function(n) { return n.type === 'indexer'; }).map(function(n) { return n.id; });
+                var firstIndexer = indexerIds[0] || 'idx_local';
+
+                rows.forEach(function(row) {
+                    var hostname = row[0] || 'forwarder';
+                    var fwdType = row[1] || 'uf';
+                    var version = row[2] || '';
+
+                    if (fwdType === 'full' || fwdType === 'heavy') {
+                        hfCount++;
+                        var hfId = 'hf_' + hfCount;
+                        liveData.nodes.push({
+                            id: hfId,
+                            name: hostname,
+                            type: 'heavy_forwarder',
+                            tier: 2,
+                            health: 'green',
+                            role: 'Heavy Forwarder'
+                        });
+                        // Connect HF to indexer
+                        liveData.connections.push({
+                            source: hfId,
+                            target: firstIndexer
+                        });
+                    } else {
+                        ufCount++;
+                        var ufId = 'uf_' + ufCount;
+                        liveData.nodes.push({
+                            id: ufId,
+                            name: hostname,
+                            type: 'universal_forwarder',
+                            tier: 3,
+                            health: 'green',
+                            role: 'Universal Forwarder'
+                        });
+
+                        // Connect UF to HF if exists, otherwise to indexer
+                        var hfIds = liveData.nodes.filter(function(n) { return n.type === 'heavy_forwarder'; }).map(function(n) { return n.id; });
+                        if (hfIds.length > 0) {
+                            liveData.connections.push({
+                                source: ufId,
+                                target: hfIds[ufCount % hfIds.length]
+                            });
+                        } else {
+                            liveData.connections.push({
+                                source: ufId,
+                                target: firstIndexer
+                            });
+                        }
+                    }
+                });
+            }
+
+            // If no forwarders found, show placeholder message
+            if (liveData.nodes.filter(function(n) { return n.tier >= 2; }).length === 0) {
+                console.log('SA Topology: No forwarders discovered - this appears to be a standalone instance');
+            }
+
+            discoveryComplete.forwarders = true;
+            checkComplete();
+        });
+
+        // Handle search errors
+        serverInfoSearch.on('search:error', function() { discoveryComplete.serverInfo = true; checkComplete(); });
+        peersSearch.on('search:error', function() { discoveryComplete.peers = true; checkComplete(); });
+        forwardersSearch.on('search:error', function() { discoveryComplete.forwarders = true; checkComplete(); });
+    }
+
+    // Main rendering function
+    function renderTopology(data, $container) {
+        console.log('SA Topology: Rendering topology with', data.nodes.length, 'nodes');
 
         $container.empty();
 
+        if (data.nodes.length === 0) {
+            $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;">No topology data discovered.<br>This may be a standalone instance with no forwarders connected.</div>');
+            return;
+        }
+
         // Calculate health counts
         var healthCounts = { green: 0, yellow: 0, red: 0 };
-        mockData.nodes.forEach(function(node) {
+        data.nodes.forEach(function(node) {
             if (node.health && healthCounts.hasOwnProperty(node.health)) {
                 healthCounts[node.health]++;
             }
@@ -317,7 +524,7 @@ require([
 
         // Group and position nodes
         var nodesByTier = {};
-        mockData.nodes.forEach(function(node) {
+        data.nodes.forEach(function(node) {
             if (!nodesByTier[node.tier]) nodesByTier[node.tier] = [];
             nodesByTier[node.tier].push(node);
         });
@@ -391,13 +598,13 @@ require([
                 .text(label);
         }
 
-        drawClusterBox(mockData.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
-        drawClusterBox(mockData.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
+        drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
+        drawClusterBox(data.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
 
         // Draw connections
         var linksGroup = g.append('g').attr('class', 'links');
 
-        mockData.connections.forEach(function(conn) {
+        data.connections.forEach(function(conn) {
             var source = nodePositions[conn.source];
             var target = nodePositions[conn.target];
             if (!source || !target) return;
@@ -423,7 +630,7 @@ require([
         var nodesGroup = g.append('g').attr('class', 'nodes');
 
         var nodeElements = nodesGroup.selectAll('.node')
-            .data(mockData.nodes)
+            .data(data.nodes)
             .enter()
             .append('g')
             .attr('class', 'node')
@@ -869,6 +1076,47 @@ require([
 
         svg.call(zoom);
 
-        console.log('SA Topology: Visualization complete with', mockData.nodes.length, 'nodes');
+        console.log('SA Topology: Visualization complete with', data.nodes.length, 'nodes');
+    }
+
+    // Wait for DOM to be ready
+    $(document).ready(function() {
+        console.log('SA Topology: DOM ready, looking for container...');
+
+        var $container = $('#topology-container');
+        if ($container.length === 0) {
+            console.error('SA Topology: Container #topology-container not found!');
+            return;
+        }
+
+        // Check view mode from token
+        var currentViewMode = tokens.get('view_mode') || 'mock';
+        console.log('SA Topology: View mode is', currentViewMode);
+
+        if (currentViewMode === 'live') {
+            // Show loading state
+            $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Discovering live topology...</div>');
+
+            // Discover and render live topology
+            discoverLiveTopology(function(liveData) {
+                renderTopology(liveData, $container);
+            });
+        } else {
+            // Render mock data
+            renderTopology(mockData, $container);
+        }
+
+        // Listen for view mode changes
+        tokens.on('change:view_mode', function(model, value) {
+            console.log('SA Topology: View mode changed to', value);
+            if (value === 'live') {
+                $container.html('<div style="text-align:center;padding:100px;color:#8892b0;font-size:16px;"><div style="font-size:24px;margin-bottom:10px;">&#8987;</div>Discovering live topology...</div>');
+                discoverLiveTopology(function(liveData) {
+                    renderTopology(liveData, $container);
+                });
+            } else {
+                renderTopology(mockData, $container);
+            }
+        });
     });
 });
