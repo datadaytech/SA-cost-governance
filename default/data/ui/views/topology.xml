@@ -23,7 +23,7 @@
       <html>
         <div class="topology-header">
           <h1>Splunk Infrastructure Topology</h1>
-          <p>Real-time visualization of data flow from Universal Forwarders through Indexes to Search Heads</p>
+          <p>Real-time visualization of data flow from Universal Forwarders through Heavy Forwarders to Indexers, with Search Head queries</p>
           <div class="health-summary">
             <div class="health-badge green">
               <span class="count" id="health-green">0</span>

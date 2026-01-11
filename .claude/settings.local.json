@@ -10,7 +10,8 @@
       "Bash(open \"http://localhost:8000/en-US/app/sa-topology/topology\")",
       "Bash(npx playwright install:*)",
       "Bash(SPLUNK_PASS=changeme npx playwright test:*)",
-      "Bash(SPLUNK_PASS='changeme123' npx playwright test:*)"
+      "Bash(SPLUNK_PASS='changeme123' npx playwright test:*)",
+      "Bash(gh pr create:*)"
     ]
   }
 }
