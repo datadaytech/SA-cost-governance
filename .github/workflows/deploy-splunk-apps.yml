@@ -134,6 +134,79 @@ jobs:
         env:
           BUILD_NUMBER: ${{ github.run_number }}
 
+      - name: Slack Notification - Build
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping notification"
+            exit 0
+          fi
+
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR="#36a64f"
+            STATUS="Success"
+            EMOJI=":white_check_mark:"
+          else
+            COLOR="#dc3545"
+            STATUS="Failed"
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H 'Content-type: application/json' --data "{
+            \"attachments\": [{
+              \"color\": \"${COLOR}\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"${EMOJI} Splunk Build Deployment ${STATUS}\",
+                    \"emoji\": true
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Environment:*\nBuild\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Build Number:*\n${BUILD_NUMBER}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\n${{ github.head_ref || github.ref_name }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*PR:*\n#${{ github.event.pull_request.number || 'N/A' }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${{ github.sha }}\`\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Actor:*\n${{ github.actor }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Splunk\", \"emoji\": true},
+                      \"url\": \"http://192.168.71.147:8000\"
+                    },
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Workflow\", \"emoji\": true},
+                      \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }]
+          }" "$SLACK_WEBHOOK_URL"
+
   # Deploy to Dev environment when PR is merged to main
   deploy-to-dev:
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
@@ -247,3 +320,76 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "curl -sk -u admin:PASSWORD 'https://192.168.71.199:8089/services/apps/local/SA-pii-detection?output_mode=json' | jq '.entry[0].content.build'" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Slack Notification - Dev
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SLACK_WEBHOOK_URL not set, skipping notification"
+            exit 0
+          fi
+
+          if [ "${{ job.status }}" = "success" ]; then
+            COLOR="#36a64f"
+            STATUS="Success"
+            EMOJI=":white_check_mark:"
+          else
+            COLOR="#dc3545"
+            STATUS="Failed"
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H 'Content-type: application/json' --data "{
+            \"attachments\": [{
+              \"color\": \"${COLOR}\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"${EMOJI} Splunk Dev Deployment ${STATUS}\",
+                    \"emoji\": true
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Environment:*\nDev\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Build Number:*\n${BUILD_NUMBER}\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Branch:*\nmain\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Commit:*\n\`${{ github.sha }}\`\"}
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Actor:*\n${{ github.actor }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Trigger:*\n${{ github.event_name }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"actions\",
+                  \"elements\": [
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Splunk\", \"emoji\": true},
+                      \"url\": \"http://192.168.71.199:8000\"
+                    },
+                    {
+                      \"type\": \"button\",
+                      \"text\": {\"type\": \"plain_text\", \"text\": \"View Workflow\", \"emoji\": true},
+                      \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                    }
+                  ]
+                }
+              ]
+            }]
+          }" "$SLACK_WEBHOOK_URL"
