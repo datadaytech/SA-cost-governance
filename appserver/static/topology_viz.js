@@ -119,6 +119,39 @@ require([
             { id: 'captain_stability', name: 'Captain Stability', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
             { id: 'cpu_usage', name: 'CPU Usage', unit: '%', thresholds: { critical: 95, high: 85, medium: 70, low: 50 }, inverse: false },
             { id: 'shc_member_count', name: 'Active Members', unit: '', thresholds: { critical: 1, high: 2, medium: 2, low: 3 }, inverse: true }
+        ],
+        // Management Tier KPIs
+        cluster_manager: [
+            { id: 'peer_count', name: 'Managed Peers', unit: '', thresholds: { critical: 0, high: 1, medium: 3, low: 5 }, inverse: true },
+            { id: 'replication_status', name: 'Replication Status', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
+            { id: 'search_factor_met', name: 'Search Factor Met', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
+            { id: 'cpu_usage', name: 'CPU Usage', unit: '%', thresholds: { critical: 95, high: 85, medium: 70, low: 50 }, inverse: false },
+            { id: 'last_bundle_push', name: 'Bundle Age', unit: 'min', thresholds: { critical: 1440, high: 720, medium: 360, low: 60 }, inverse: false }
+        ],
+        shc_deployer: [
+            { id: 'managed_members', name: 'Managed Members', unit: '', thresholds: { critical: 0, high: 1, medium: 2, low: 3 }, inverse: true },
+            { id: 'bundle_status', name: 'Bundle Status', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
+            { id: 'last_deploy', name: 'Last Deploy Age', unit: 'min', thresholds: { critical: 10080, high: 4320, medium: 1440, low: 60 }, inverse: false },
+            { id: 'cpu_usage', name: 'CPU Usage', unit: '%', thresholds: { critical: 95, high: 85, medium: 70, low: 50 }, inverse: false }
+        ],
+        license_manager: [
+            { id: 'license_usage', name: 'License Usage', unit: '%', thresholds: { critical: 100, high: 90, medium: 80, low: 70 }, inverse: false },
+            { id: 'pool_warnings', name: 'Pool Warnings', unit: '', thresholds: { critical: 5, high: 3, medium: 1, low: 0 }, inverse: false },
+            { id: 'slave_count', name: 'License Slaves', unit: '', thresholds: { critical: 0, high: 1, medium: 5, low: 10 }, inverse: true },
+            { id: 'daily_volume_gb', name: 'Daily Volume', unit: 'GB', thresholds: { critical: 1000, high: 500, medium: 250, low: 100 }, inverse: false }
+        ],
+        deployment_server: [
+            { id: 'client_count', name: 'Managed Clients', unit: '', thresholds: { critical: 0, high: 100, medium: 500, low: 1000 }, inverse: true },
+            { id: 'phone_home_rate', name: 'Phone Home Rate', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
+            { id: 'reload_errors', name: 'Reload Errors', unit: '', thresholds: { critical: 10, high: 5, medium: 2, low: 0 }, inverse: false },
+            { id: 'cpu_usage', name: 'CPU Usage', unit: '%', thresholds: { critical: 95, high: 85, medium: 70, low: 50 }, inverse: false },
+            { id: 'app_count', name: 'Deployed Apps', unit: '', thresholds: { critical: 0, high: 5, medium: 20, low: 50 }, inverse: true }
+        ],
+        monitoring_console: [
+            { id: 'data_collection', name: 'Data Collection', unit: '%', thresholds: { critical: 50, high: 70, medium: 85, low: 95 }, inverse: true },
+            { id: 'search_peers', name: 'Search Peers', unit: '', thresholds: { critical: 0, high: 1, medium: 5, low: 10 }, inverse: true },
+            { id: 'alert_count', name: 'Active Alerts', unit: '', thresholds: { critical: 20, high: 10, medium: 5, low: 0 }, inverse: false },
+            { id: 'cpu_usage', name: 'CPU Usage', unit: '%', thresholds: { critical: 95, high: 85, medium: 70, low: 50 }, inverse: false }
         ]
     };
 
@@ -192,22 +225,37 @@ require([
     }
 
     // Realistic Splunk topology data - layered architecture
+    // Based on Splunk Validated Architectures (SVA) M4/M14 multisite design
     var mockData = {
         tiers: [
+            { id: 'tier_mgmt', name: 'Management', level: -1, position: 'side' },
             { id: 'tier_sh', name: 'Search Tier', level: 0 },
             { id: 'tier_idx', name: 'Indexing Tier', level: 1 },
-            { id: 'tier_hf', name: 'Forwarding Tier', level: 2 },
-            { id: 'tier_uf', name: 'Collection Tier', level: 3 }
+            { id: 'tier_fwd', name: 'Forwarding Tier', level: 2 },
+            { id: 'tier_collect', name: 'Collection Tier', level: 3 }
         ],
         nodes: [
             // ===========================================
-            // LARGE SCALE ENVIRONMENT DEMO
-            // Represents: 7 SHC members, 2 standalone SH,
-            // 15 indexers (3 sites), 12 HFs, 51 UFs
+            // SPLUNK VALIDATED ARCHITECTURE (SVA) DEMO
+            // Based on M4/M14 Multisite Clustered Deployment
             // ===========================================
 
-            // Search Head Cluster (7 members) - mimics real enterprise SHC
-            { id: 'shc_member_1', name: 'sh-cluster-01', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Captain' },
+            // MANAGEMENT TIER - Control Plane Components
+            // Per SVA: These components control and monitor Splunk operations
+            { id: 'cm_1', name: 'cluster-manager', type: 'cluster_manager', tier: -1, health: 'green',
+              role: 'Cluster Manager', manages: 'idxc1', description: 'Controls indexer cluster replication and search factor' },
+            { id: 'deployer_1', name: 'shc-deployer', type: 'shc_deployer', tier: -1, health: 'green',
+              role: 'SHC Deployer', manages: 'shc1', description: 'Distributes apps and configs to SHC members' },
+            { id: 'lm_1', name: 'license-master', type: 'license_manager', tier: -1, health: 'green',
+              role: 'License Manager', description: 'Governs license pool for all Splunk instances' },
+            { id: 'ds_1', name: 'deployment-server', type: 'deployment_server', tier: -1, health: 'green',
+              role: 'Deployment Server', manages: 'all_forwarders', description: 'Distributes configs to forwarders' },
+            { id: 'mc_1', name: 'monitoring-console', type: 'monitoring_console', tier: -1, health: 'green',
+              role: 'Monitoring Console', description: 'Platform health monitoring and alerting' },
+
+            // SEARCH TIER - Search Head Cluster (7 members per user environment)
+            // Per SVA: Odd number for quorum, captain elected automatically
+            { id: 'shc_member_1', name: 'sh-cluster-01', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Captain', isCaptain: true },
             { id: 'shc_member_2', name: 'sh-cluster-02', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
             { id: 'shc_member_3', name: 'sh-cluster-03', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
             { id: 'shc_member_4', name: 'sh-cluster-04', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
@@ -215,9 +263,10 @@ require([
             { id: 'shc_member_6', name: 'sh-cluster-06', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
             { id: 'shc_member_7', name: 'sh-cluster-07', type: 'search_head_cluster', tier: 0, health: 'green', cluster: 'shc1', role: 'SHC Member' },
 
-            // Standalone Search Heads (2)
-            { id: 'sh_standalone_1', name: 'sh-es-01', type: 'search_head', tier: 0, health: 'green', role: 'Enterprise Security' },
-            { id: 'sh_standalone_2', name: 'sh-itsi-01', type: 'search_head', tier: 0, health: 'green', role: 'ITSI' },
+            // Standalone Search Heads (Premium Apps - ES, ITSI)
+            // Per SVA: Some apps require dedicated search heads outside SHC
+            { id: 'sh_standalone_1', name: 'sh-es-01', type: 'search_head', tier: 0, health: 'green', role: 'Enterprise Security', app: 'ES' },
+            { id: 'sh_standalone_2', name: 'sh-itsi-01', type: 'search_head', tier: 0, health: 'green', role: 'ITSI', app: 'ITSI' },
 
             // Indexer Cluster (15 peer nodes across 3 sites) - mimics multisite cluster
             // Site A (5 indexers)
@@ -437,8 +486,51 @@ require([
             { source: 'sh_standalone_1', target: 'idx_c1', type: 'search' },
             { source: 'sh_standalone_2', target: 'idx_a2', type: 'search' },
             { source: 'sh_standalone_2', target: 'idx_b2', type: 'search' },
-            { source: 'sh_standalone_2', target: 'idx_c2', type: 'search' }
+            { source: 'sh_standalone_2', target: 'idx_c2', type: 'search' },
+
+            // ===========================================
+            // MANAGEMENT/CONTROL CONNECTIONS
+            // Per SVA: Management components control their respective clusters
+            // ===========================================
+
+            // Cluster Manager -> Indexer Cluster (controls replication)
+            { source: 'cm_1', target: 'idx_a1', type: 'control', label: 'Manages' },
+            { source: 'cm_1', target: 'idx_b1', type: 'control' },
+            { source: 'cm_1', target: 'idx_c1', type: 'control' },
+
+            // SHC Deployer -> Search Head Cluster (distributes configs)
+            { source: 'deployer_1', target: 'shc_member_1', type: 'control', label: 'Deploys' },
+
+            // Deployment Server -> All Forwarders (distributes configs)
+            { source: 'ds_1', target: 'hf_syslog_1', type: 'control', label: 'Manages' },
+            { source: 'ds_1', target: 'hf_win_1', type: 'control' },
+            { source: 'ds_1', target: 'hf_cloud_1', type: 'control' },
+            { source: 'ds_1', target: 'hf_sec_1', type: 'control' },
+
+            // License Manager -> All Splunk instances (license reporting)
+            // Represented as connection to key components
+            { source: 'lm_1', target: 'cm_1', type: 'license' },
+            { source: 'lm_1', target: 'deployer_1', type: 'license' },
+
+            // ===========================================
+            // REPLICATION CONNECTIONS (Multisite)
+            // Per SVA: site_replication_factor defines cross-site copies
+            // ===========================================
+
+            // Inter-site replication (Site A <-> Site B <-> Site C)
+            { source: 'idx_a1', target: 'idx_b1', type: 'replication', bidirectional: true },
+            { source: 'idx_b1', target: 'idx_c1', type: 'replication', bidirectional: true },
+            { source: 'idx_a1', target: 'idx_c1', type: 'replication', bidirectional: true }
         ]
+    };
+
+    // Connection type styling configuration
+    var CONNECTION_STYLES = {
+        data: { color: '#65A637', width: 2, dasharray: null, label: 'Data Flow' },
+        search: { color: '#7c3aed', width: 1.5, dasharray: '5,3', label: 'Search Query' },
+        control: { color: '#708794', width: 1, dasharray: '2,2', label: 'Management' },
+        replication: { color: '#F58220', width: 1.5, dasharray: '3,3', label: 'Replication' },
+        license: { color: '#999999', width: 0.5, dasharray: '1,3', label: 'License' }
     };
 
     // Pre-generate KPIs for all nodes
@@ -1458,34 +1550,58 @@ require([
             console.log('SA Topology: Displaying', ufGroups.length, 'UF groups representing', totalUFs, 'forwarders');
         }
 
-        // Setup dimensions
+        // Setup dimensions - adjusted for management panel
         var width = $container.width() || 1200;
-        var height = 700;
-        var margin = { top: 80, right: 150, bottom: 50, left: 150 };
+        var height = 750;
+        var mgmtPanelWidth = 120; // Side panel for management tier
+        var margin = { top: 80, right: 100, bottom: 50, left: mgmtPanelWidth + 60 };
 
         // Create SVG
         var svg = d3.select('#topology-container')
             .append('svg')
             .attr('width', width)
             .attr('height', height)
-            .style('background', 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)');
+            .style('background', 'linear-gradient(180deg, #0d1117 0%, #161b22 50%, #1a1a2e 100%)');
 
+        // Main content group
         var g = svg.append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-        // Calculate tier positions
+        // Management panel group (left side)
+        var mgmtGroup = svg.append('g')
+            .attr('class', 'management-panel')
+            .attr('transform', 'translate(20,' + margin.top + ')');
+
+        // Calculate tier positions (only data tiers 0-3)
         var numTiers = 4;
         var tierHeight = (height - margin.top - margin.bottom) / (numTiers - 1);
         var contentWidth = width - margin.left - margin.right;
 
-        // Group and position nodes (use renderData which may have grouped UFs)
+        // Separate management tier nodes from data tier nodes
+        var mgmtNodes = renderData.nodes.filter(function(n) { return n.tier === -1; });
+        var dataTierNodes = renderData.nodes.filter(function(n) { return n.tier >= 0; });
+
+        // Group data tier nodes by tier
         var nodesByTier = {};
-        renderData.nodes.forEach(function(node) {
+        dataTierNodes.forEach(function(node) {
             if (!nodesByTier[node.tier]) nodesByTier[node.tier] = [];
             nodesByTier[node.tier].push(node);
         });
 
         var nodePositions = {};
+
+        // Position management tier nodes in side panel
+        var mgmtSpacing = (height - margin.top - margin.bottom) / (mgmtNodes.length + 1);
+        mgmtNodes.forEach(function(node, i) {
+            nodePositions[node.id] = {
+                x: -margin.left + 70, // In the management panel area
+                y: mgmtSpacing * (i + 1),
+                data: node,
+                isManagement: true
+            };
+        });
+
+        // Position data tier nodes
         Object.keys(nodesByTier).forEach(function(tier) {
             var tierNodes = nodesByTier[tier];
             var tierY = tier * tierHeight; // Tier 0 (Search) at top, Tier 3 (UF) at bottom
@@ -1495,34 +1611,60 @@ require([
                 nodePositions[node.id] = {
                     x: nodeSpacing * (i + 1),
                     y: tierY,
-                    data: node
+                    data: node,
+                    isManagement: false
                 };
             });
         });
 
+        // Draw Management Panel background (side panel)
+        if (mgmtNodes.length > 0) {
+            mgmtGroup.append('rect')
+                .attr('x', 0)
+                .attr('y', -20)
+                .attr('width', mgmtPanelWidth)
+                .attr('height', height - margin.top - margin.bottom + 40)
+                .attr('fill', 'rgba(112, 135, 148, 0.08)')
+                .attr('stroke', 'rgba(112, 135, 148, 0.3)')
+                .attr('stroke-width', 1)
+                .attr('rx', 8);
+
+            mgmtGroup.append('text')
+                .attr('x', mgmtPanelWidth / 2)
+                .attr('y', -5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#708794')
+                .attr('font-size', '10px')
+                .attr('font-weight', '700')
+                .attr('font-family', 'Arial, sans-serif')
+                .attr('letter-spacing', '1px')
+                .text('MANAGEMENT');
+        }
+
         // Draw tier backgrounds
         var tierLabels = ['Search Tier', 'Indexing Tier', 'Forwarding Tier', 'Collection Tier'];
-        var tierColors = ['rgba(100, 149, 237, 0.1)', 'rgba(255, 165, 0, 0.1)', 'rgba(147, 112, 219, 0.1)', 'rgba(60, 179, 113, 0.1)'];
+        var tierColors = ['rgba(100, 149, 237, 0.08)', 'rgba(255, 165, 0, 0.08)', 'rgba(147, 112, 219, 0.08)', 'rgba(60, 179, 113, 0.08)'];
 
         tierLabels.forEach(function(label, i) {
             var tierY = i * tierHeight; // Match node positioning
 
             g.append('rect')
-                .attr('x', -margin.left + 10)
+                .attr('x', -20)
                 .attr('y', tierY - 35)
-                .attr('width', width - 20)
+                .attr('width', contentWidth + 40)
                 .attr('height', 70)
                 .attr('fill', tierColors[i])
                 .attr('rx', 5);
 
             g.append('text')
-                .attr('x', -margin.left + 20)
+                .attr('x', -10)
                 .attr('y', tierY + 5)
                 .attr('fill', '#8892b0')
-                .attr('font-size', '11px')
+                .attr('font-size', '10px')
                 .attr('font-weight', '600')
                 .attr('font-family', 'Arial, sans-serif')
-                .text(label);
+                .attr('letter-spacing', '0.5px')
+                .text(label.toUpperCase());
         });
 
         // Draw cluster boxes
@@ -1557,10 +1699,10 @@ require([
         drawClusterBox(renderData.nodes.filter(function(n) { return n.cluster === 'shc1'; }), '#6495ED', 'Search Head Cluster');
         drawClusterBox(renderData.nodes.filter(function(n) { return n.cluster === 'idxc1'; }), '#FFA500', 'Indexer Cluster');
 
-        // Draw connections with throughput-based styling
+        // Draw connections with type-based styling
         var linksGroup = g.append('g').attr('class', 'links');
 
-        // Calculate max throughput for scaling
+        // Calculate max throughput for scaling data connections
         var maxThroughput = d3.max(renderData.connections, function(c) { return c.throughputKB || 0; }) || 1;
 
         renderData.connections.forEach(function(conn) {
@@ -1568,28 +1710,50 @@ require([
             var target = nodePositions[conn.target];
             if (!source || !target) return;
 
-            var isSearchConn = conn.type === 'search';
+            // Get connection style from config, default to data
+            var connType = conn.type || 'data';
+            var style = CONNECTION_STYLES[connType] || CONNECTION_STYLES.data;
             var throughputKB = conn.throughputKB || 0;
 
-            // Scale stroke width based on throughput (1-6 pixels for data, 1 for search)
-            var strokeWidth = isSearchConn ? 1 : Math.max(1.5, Math.min(6, 1.5 + (throughputKB / maxThroughput) * 4.5));
+            // For data connections, scale stroke width based on throughput
+            var strokeWidth = style.width;
+            if (connType === 'data' && throughputKB > 0) {
+                strokeWidth = Math.max(1.5, Math.min(6, 1.5 + (throughputKB / maxThroughput) * 4.5));
+            }
 
-            // Color based on throughput (green for high, orange for medium, gray for low/none)
-            var strokeColor = isSearchConn ? '#6495ED' :
-                              (throughputKB > maxThroughput * 0.7 ? '#65A637' :
-                               throughputKB > maxThroughput * 0.3 ? '#F8BE34' : '#4a5568');
+            // For data connections, color based on throughput
+            var strokeColor = style.color;
+            if (connType === 'data' && throughputKB > 0) {
+                strokeColor = throughputKB > maxThroughput * 0.7 ? '#65A637' :
+                              throughputKB > maxThroughput * 0.3 ? '#F8BE34' : '#4a5568';
+            }
+
+            // Opacity based on connection type
+            var opacity = (connType === 'search' || connType === 'license') ? 0.4 :
+                          (connType === 'control' || connType === 'replication') ? 0.6 : 0.8;
 
             var path = linksGroup.append('path')
                 .attr('fill', 'none')
                 .attr('stroke', strokeColor)
                 .attr('stroke-width', strokeWidth)
-                .attr('stroke-dasharray', isSearchConn ? '4,4' : 'none')
-                .attr('opacity', isSearchConn ? 0.4 : 0.8)
-                .attr('class', 'connection-path')
+                .attr('stroke-dasharray', style.dasharray || 'none')
+                .attr('opacity', opacity)
+                .attr('class', 'connection-path connection-' + connType)
                 .attr('data-source', conn.source)
                 .attr('data-target', conn.target)
+                .attr('data-type', connType)
                 .attr('data-throughput', throughputKB)
                 .attr('d', function() {
+                    // For management connections, use different curve
+                    if (source.isManagement || target.isManagement) {
+                        // Horizontal then vertical path for management
+                        var ctrlX = source.x + (target.x - source.x) * 0.3;
+                        return 'M' + source.x + ',' + source.y +
+                               'C' + ctrlX + ',' + source.y +
+                               ' ' + ctrlX + ',' + target.y +
+                               ' ' + target.x + ',' + target.y;
+                    }
+                    // Standard vertical curve for data tiers
                     var midY = (source.y + target.y) / 2;
                     return 'M' + source.x + ',' + source.y +
                            'C' + source.x + ',' + midY +
@@ -1597,8 +1761,8 @@ require([
                            ' ' + target.x + ',' + target.y;
                 });
 
-            // Add throughput label for significant connections
-            if (!isSearchConn && throughputKB > 10) {
+            // Add throughput label for significant data connections
+            if (connType === 'data' && throughputKB > 10) {
                 var midX = (source.x + target.x) / 2;
                 var midY = (source.y + target.y) / 2;
                 var throughputLabel = throughputKB >= 1024 ?
@@ -1617,14 +1781,154 @@ require([
             }
         });
 
+        // Add connection legend
+        var legendGroup = svg.append('g')
+            .attr('class', 'connection-legend')
+            .attr('transform', 'translate(' + (width - 140) + ', 20)');
+
+        legendGroup.append('rect')
+            .attr('x', -10)
+            .attr('y', -5)
+            .attr('width', 130)
+            .attr('height', 95)
+            .attr('fill', 'rgba(0,0,0,0.3)')
+            .attr('rx', 5);
+
+        legendGroup.append('text')
+            .attr('x', 0)
+            .attr('y', 8)
+            .attr('fill', '#8892b0')
+            .attr('font-size', '9px')
+            .attr('font-weight', '600')
+            .text('CONNECTION TYPES');
+
+        var legendItems = [
+            { type: 'data', label: 'Data Flow' },
+            { type: 'search', label: 'Search Query' },
+            { type: 'control', label: 'Management' },
+            { type: 'replication', label: 'Replication' }
+        ];
+
+        legendItems.forEach(function(item, i) {
+            var style = CONNECTION_STYLES[item.type];
+            var y = 22 + i * 16;
+
+            legendGroup.append('line')
+                .attr('x1', 0)
+                .attr('y1', y)
+                .attr('x2', 30)
+                .attr('y2', y)
+                .attr('stroke', style.color)
+                .attr('stroke-width', style.width)
+                .attr('stroke-dasharray', style.dasharray || 'none');
+
+            legendGroup.append('text')
+                .attr('x', 38)
+                .attr('y', y + 3)
+                .attr('fill', '#8892b0')
+                .attr('font-size', '9px')
+                .text(item.label);
+        });
+
         // Draw nodes
         var nodesGroup = g.append('g').attr('class', 'nodes');
 
-        // Separate regular nodes from ALL group types
-        var regularNodes = renderData.nodes.filter(function(n) { return !isGroupType(n.type); });
+        // Separate nodes by type: management, regular data tier, and grouped
+        var managementNodes = renderData.nodes.filter(function(n) { return n.tier === -1; });
+        var regularNodes = renderData.nodes.filter(function(n) { return n.tier >= 0 && !isGroupType(n.type); });
         var groupNodes = renderData.nodes.filter(function(n) { return isGroupType(n.type); });
 
-        // Render regular nodes (non-grouped)
+        // Node abbreviations for all types
+        var typeAbbrev = {
+            search_head_cluster: 'SHC',
+            search_head: 'SH',
+            indexer: 'IDX',
+            heavy_forwarder: 'HF',
+            universal_forwarder: 'UF',
+            cluster_manager: 'CM',
+            shc_deployer: 'DEP',
+            license_manager: 'LM',
+            deployment_server: 'DS',
+            monitoring_console: 'MC'
+        };
+
+        // ===========================================
+        // RENDER MANAGEMENT NODES (Diamond shapes in side panel)
+        // ===========================================
+        var mgmtNodeElements = mgmtGroup.selectAll('.mgmt-node')
+            .data(managementNodes)
+            .enter()
+            .append('g')
+            .attr('class', 'mgmt-node')
+            .attr('transform', function(d) {
+                var pos = nodePositions[d.id];
+                return 'translate(' + (mgmtPanelWidth / 2) + ',' + pos.y + ')';
+            })
+            .style('cursor', 'pointer')
+            .on('click', function(event, d) {
+                event.stopPropagation();
+                showKPIModal(d);
+            })
+            .on('mouseover', function(event, d) {
+                d3.select(this).select('.mgmt-diamond')
+                    .transition()
+                    .duration(200)
+                    .attr('transform', 'rotate(45) scale(1.15)');
+            })
+            .on('mouseout', function(event, d) {
+                d3.select(this).select('.mgmt-diamond')
+                    .transition()
+                    .duration(200)
+                    .attr('transform', 'rotate(45) scale(1)');
+            });
+
+        // Diamond shapes for management nodes
+        mgmtNodeElements.append('rect')
+            .attr('class', 'mgmt-diamond')
+            .attr('x', -16)
+            .attr('y', -16)
+            .attr('width', 32)
+            .attr('height', 32)
+            .attr('rx', 4)
+            .attr('transform', 'rotate(45)')
+            .attr('fill', function(d) {
+                return severityColors[healthToSeverity[d.health]] || '#708794';
+            })
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
+            .style('filter', 'drop-shadow(0px 0px 6px rgba(255,255,255,0.2))');
+
+        // Management node abbreviations
+        mgmtNodeElements.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', 4)
+            .attr('fill', '#fff')
+            .attr('font-weight', 'bold')
+            .attr('font-size', '9px')
+            .attr('font-family', 'Arial, sans-serif')
+            .text(function(d) { return typeAbbrev[d.type] || '?'; });
+
+        // Management node labels
+        mgmtNodeElements.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('y', 35)
+            .attr('fill', '#8892b0')
+            .attr('font-size', '7px')
+            .attr('font-family', 'Arial, sans-serif')
+            .text(function(d) {
+                var labels = {
+                    cluster_manager: 'Cluster Mgr',
+                    shc_deployer: 'Deployer',
+                    license_manager: 'License Mgr',
+                    deployment_server: 'Deploy Srv',
+                    monitoring_console: 'Mon Console'
+                };
+                return labels[d.type] || d.role;
+            });
+
+        // ===========================================
+        // RENDER DATA TIER NODES (Circles)
+        // ===========================================
         var nodeElements = nodesGroup.selectAll('.node')
             .data(regularNodes)
             .enter()
@@ -1662,14 +1966,14 @@ require([
             .attr('stroke-width', 2)
             .style('filter', 'drop-shadow(0px 0px 8px rgba(255,255,255,0.3))');
 
-        // Node abbreviations
-        var typeAbbrev = {
-            search_head_cluster: 'SHC',
-            search_head: 'SH',
-            indexer: 'IDX',
-            heavy_forwarder: 'HF',
-            universal_forwarder: 'UF'
-        };
+        // Add captain star for SHC captain
+        nodeElements.filter(function(d) { return d.isCaptain; })
+            .append('text')
+            .attr('x', 18)
+            .attr('y', -18)
+            .attr('fill', '#FFD700')
+            .attr('font-size', '14px')
+            .text('★');
 
         nodeElements.append('text')
             .attr('text-anchor', 'middle')

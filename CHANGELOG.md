@@ -5,6 +5,46 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.14] - 2025-01-10
+
+### Added
+- **Management Tier**: New side panel showing Splunk control plane components
+  - **Cluster Manager (CM)**: Controls indexer cluster replication and search factor
+  - **SHC Deployer**: Distributes apps and configs to SHC members
+  - **License Manager (LM)**: Governs license pool for all instances
+  - **Deployment Server (DS)**: Distributes configs to forwarders
+  - **Monitoring Console (MC)**: Platform health monitoring
+
+- **Connection Type Legend**: Visual differentiation of connection types
+  - Data Flow (solid green): UF/HF → Indexers
+  - Search Query (dashed purple): Search Heads → Indexers
+  - Management (dotted gray): Control plane connections
+  - Replication (dashed orange): Cross-site indexer replication
+
+- **Visual Enhancements Based on Splunk Validated Architectures (SVA)**
+  - Diamond-shaped nodes for management components
+  - Captain indicator (★) for SHC captain
+  - Side panel layout for management tier
+  - Improved tier label styling
+
+### Changed
+- Redesigned layout to separate data flow from management/control plane
+- Updated mock data with SVA-compliant component descriptions
+- Improved connection curves for management connections
+- Darker background gradient matching GitHub-inspired theme
+
+### Technical Details
+- Based on Splunk Validated Architectures M4/M14 multisite documentation
+- `CONNECTION_STYLES` config for consistent connection rendering
+- KPI definitions for all management component types
+- Management nodes positioned in dedicated side panel (`tier: -1`)
+
+### Research Sources
+- [Splunk Validated Architectures](https://docs.splunk.com/Documentation/SVA/current/Architectures/About)
+- [Multisite Indexer Cluster Architecture](https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Multisitearchitecture)
+- [Data Collection Architecture - Splunk Lantern](https://lantern.splunk.com/Splunk_Success_Framework/Platform_Management/Data_collection_architecture)
+- [ITSI Service Analyzer Tree View](https://help.splunk.com/en/splunk-it-service-intelligence/splunk-it-service-intelligence/visualize-and-assess-service-health/4.18/service-analyzer/use-the-service-analyzer-tree-view-in-itsi)
+
 ## [v1.0.13] - 2025-01-10
 
 ### Added
