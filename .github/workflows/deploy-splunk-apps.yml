@@ -1,0 +1,70 @@
+name: Deploy Splunk Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'SA-*/**'
+      - 'TA-*/**'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy to Splunk
+        env:
+          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_ADMIN_PASSWORD }}
+        run: |
+          set -e
+          cd /root/apps
+
+          echo "=== Fixing permissions for git pull ==="
+          /usr/bin/sudo chown -R $(whoami):$(whoami) . 2>/dev/null || true
+
+          echo "=== Pulling latest changes ==="
+          git fetch origin main
+          git reset --hard origin/main
+
+          echo "=== Finding Splunk apps (SA-* and TA-*) ==="
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          if [ -z "$APPS" ]; then
+            echo "No Splunk apps found"
+            exit 0
+          fi
+
+          echo "Found apps:"
+          echo "$APPS"
+
+          echo "=== Setting Splunk permissions ==="
+          for app in $APPS; do
+            echo "Setting permissions for $app"
+            /usr/bin/sudo chown -R 41812:41812 "$app" 2>/dev/null || true
+          done
+
+          echo "=== Reloading Splunk app configs ==="
+          for app in $APPS; do
+            echo "Reloading $app"
+            /usr/bin/sudo docker exec splunk3 curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app (may not be installed yet)"
+          done
+
+          echo "=== Deployment complete ==="
+          echo "Deployed apps: $APPS"
+
+      - name: Generate deployment summary
+        run: |
+          cd /root/apps
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          echo "## Splunk Apps Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Apps Updated:" >> $GITHUB_STEP_SUMMARY
+          for app in $APPS; do
+            echo "- $app" >> $GITHUB_STEP_SUMMARY
+          done
