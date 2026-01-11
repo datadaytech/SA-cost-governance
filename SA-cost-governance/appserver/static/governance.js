@@ -6129,22 +6129,66 @@ require([
         });
     }
 
-    // Check if any searches were just auto-disabled and refresh if so
+    // Check if any searches were just auto-disabled and actually disable the Splunk saved searches
     function checkForNewlyDisabledSearches() {
         var now = Math.floor(Date.now() / 1000);
         var fiveMinAgo = now - 300; // Check for recent auto-disables
 
-        // Query for recently disabled searches
-        var checkQuery = '| inputlookup flagged_searches_lookup | search status="disabled" notes="*AUTO-DISABLED*" | where remediation_deadline > ' + fiveMinAgo + ' OR remediation_deadline < ' + (now + 60) + ' | stats count';
+        // Get locale prefix and CSRF token
+        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+        var csrfToken = '';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+
+        // Query for recently auto-disabled searches (need search_name and search_app to disable them)
+        var checkQuery = '| inputlookup flagged_searches_lookup | search status="disabled" notes="*AUTO-DISABLED*" | where remediation_deadline > ' + fiveMinAgo + ' OR remediation_deadline < ' + (now + 60) + ' | table search_name, search_app';
 
         runSearch(checkQuery, function(err, results) {
             if (!err && results && results.length > 0) {
-                var count = parseInt(results[0].count) || 0;
-                if (count > 0) {
-                    console.log("Found " + count + " recently auto-disabled search(es), refreshing dashboard...");
-                    showToast('🔴 ' + count + ' search(es) auto-disabled (deadline reached)');
-                    refreshDashboard();
-                }
+                console.log("Found " + results.length + " recently auto-disabled search(es), disabling actual saved searches...");
+
+                // Disable each saved search via REST API
+                var disabledCount = 0;
+                results.forEach(function(row) {
+                    var searchName = row.search_name;
+                    var searchApp = row.search_app || 'search';
+
+                    // Disable the actual Splunk saved search
+                    $.ajax({
+                        url: localePrefix + '/splunkd/__raw/servicesNS/nobody/' + encodeURIComponent(searchApp) + '/saved/searches/' + encodeURIComponent(searchName),
+                        type: 'POST',
+                        headers: {
+                            'X-Splunk-Form-Key': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        data: {
+                            'disabled': '1'
+                        },
+                        success: function() {
+                            disabledCount++;
+                            console.log("Disabled saved search: " + searchName);
+                            if (disabledCount === results.length) {
+                                showToast('🔴 ' + disabledCount + ' search(es) auto-disabled (deadline reached)');
+                                refreshDashboard();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("Failed to disable saved search " + searchName + ":", error);
+                            disabledCount++;
+                            if (disabledCount === results.length) {
+                                showToast('🔴 Searches auto-disabled (deadline reached)');
+                                refreshDashboard();
+                            }
+                        }
+                    });
+                });
             }
         });
     }
