@@ -205,7 +205,7 @@
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 13px; color: var(--status-warning);">&#9888;</span>
                     <div class="select-wrapper">
-                      <select id="warning-threshold" class="premium-select" style="min-width: 140px;">
+                      <select id="warning-threshold" class="premium-select" style="min-width: 160px;">
                         <option value="15">15 minutes</option>
                         <option value="30">30 minutes</option>
                         <option value="60" selected="selected">1 hour</option>
@@ -216,7 +216,7 @@
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 13px; color: var(--status-error);">&#9888;</span>
                     <div class="select-wrapper">
-                      <select id="critical-threshold" class="premium-select" style="min-width: 140px;">
+                      <select id="critical-threshold" class="premium-select" style="min-width: 160px;">
                         <option value="60">1 hour</option>
                         <option value="120">2 hours</option>
                         <option value="240" selected="selected">4 hours</option>

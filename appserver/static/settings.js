@@ -195,6 +195,54 @@ require([
         }
     };
 
+    // Load schedule settings directly from the saved search configuration
+    // This is the authoritative source for the cron schedule
+    function loadScheduleFromSavedSearch() {
+        console.log('SA Topology Settings: Loading schedule from saved search configuration...');
+
+        $.ajax({
+            url: '/splunkd/__raw/servicesNS/nobody/' + appName + '/saved/searches/SA%20Topology%20-%20Scheduled%20Discovery%20-%20Nodes?output_mode=json',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                try {
+                    var entry = data.entry[0].content;
+                    var cronSchedule = entry.cron_schedule || '3 2 * * *';
+                    var isScheduled = entry.is_scheduled;
+
+                    // Parse cron schedule (minute hour * * *)
+                    var cronParts = cronSchedule.split(' ');
+                    var minute = cronParts[0] || '3';
+                    var hour = cronParts[1] || '2';
+
+                    console.log('SA Topology Settings: Loaded cron schedule:', cronSchedule, 'enabled:', isScheduled);
+
+                    // Update UI with actual values from saved search
+                    $('#schedule-minute').val(minute);
+                    $('#schedule-hour').val(hour);
+                    $('#enable-scheduled').prop('checked', isScheduled === true || isScheduled === '1' || isScheduled === 1);
+                    $('#schedule-status').text(isScheduled ? 'Enabled' : 'Disabled');
+
+                    if (isScheduled) {
+                        $('#schedule-status').addClass('active');
+                        $('#schedule-badge').text('Active').removeClass('warning');
+                    } else {
+                        $('#schedule-status').removeClass('active');
+                        $('#schedule-badge').text('Disabled').addClass('warning');
+                    }
+                } catch (e) {
+                    console.warn('SA Topology Settings: Could not parse saved search config:', e);
+                }
+            },
+            error: function(xhr) {
+                console.warn('SA Topology Settings: Could not load saved search config:', xhr.responseText);
+                // Fall back to defaults
+                $('#schedule-hour').val('2');
+                $('#schedule-minute').val('3');
+            }
+        });
+    }
+
     // Load settings using the unified Storage interface
     function loadSettings() {
         console.log('SA Topology Settings: Loading settings using', storageMode, 'storage...');
@@ -209,31 +257,11 @@ require([
             }
         }
 
-        // Load schedule settings
-        Storage.get('schedule_enabled', function(err, data) {
-            if (!err && data) {
-                var enabled = parseValue(data);
-                if (enabled !== null) {
-                    $('#enable-scheduled').prop('checked', enabled === true || enabled === 'true');
-                    $('#schedule-status').text(enabled ? 'Enabled' : 'Disabled');
-                }
-            }
-        });
+        // Load schedule settings from the actual saved search configuration
+        // This ensures we always show the real scheduled values
+        loadScheduleFromSavedSearch();
 
-        Storage.get('schedule_hour', function(err, data) {
-            if (!err && data) {
-                var val = parseValue(data);
-                if (val !== null) $('#schedule-hour').val(val);
-            }
-        });
-
-        Storage.get('schedule_minute', function(err, data) {
-            if (!err && data) {
-                var val = parseValue(data);
-                if (val !== null) $('#schedule-minute').val(val);
-            }
-        });
-
+        // Also load from KV Store for other settings
         Storage.get('discovery_range', function(err, data) {
             if (!err && data) {
                 var val = parseValue(data);
