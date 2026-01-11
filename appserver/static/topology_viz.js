@@ -1025,60 +1025,141 @@ require([
     }
 
     // ===========================================
-    // UF GROUPING CONFIGURATION
+    // MULTI-TIER GROUPING CONFIGURATION
     // ===========================================
-    var UF_GROUP_THRESHOLD = 8; // Group UFs when more than this many exist
-    var ENABLE_UF_GROUPING = true; // Toggle grouping on/off
+    var GROUPING_CONFIG = {
+        // Tier 0: Search Heads
+        search_head: {
+            enabled: true,
+            threshold: 5,           // Group when more than 5 standalone SHs
+            groupBy: 'role',        // Group by role (or 'cluster', 'site')
+            groupType: 'sh_group',
+            tier: 0
+        },
+        search_head_cluster: {
+            enabled: true,
+            threshold: 4,           // Group SHC members when > 4
+            groupBy: 'cluster',     // Group by cluster name
+            groupType: 'shc_group',
+            tier: 0
+        },
+        // Tier 1: Indexers
+        indexer: {
+            enabled: true,
+            threshold: 8,           // Group indexers when > 8
+            groupBy: 'site',        // Group by site (or 'cluster', 'role')
+            fallbackGroupBy: 'cluster',
+            groupType: 'idx_group',
+            tier: 1
+        },
+        // Tier 2: Heavy Forwarders
+        heavy_forwarder: {
+            enabled: true,
+            threshold: 6,           // Group HFs when > 6
+            groupBy: 'role',        // Group by role
+            groupType: 'hf_group',
+            tier: 2
+        },
+        // Tier 3: Universal Forwarders
+        universal_forwarder: {
+            enabled: true,
+            threshold: 8,           // Group UFs when > 8
+            groupBy: 'role',        // Group by role
+            groupType: 'uf_group',
+            tier: 3
+        }
+    };
 
-    // Group Universal Forwarders by role for better visualization
-    function groupUniversalForwarders(data) {
-        if (!ENABLE_UF_GROUPING) return { groupedData: data, ufGroups: [] };
+    // Type labels for display
+    var GROUP_TYPE_LABELS = {
+        'sh_group': 'Search Heads',
+        'shc_group': 'SHC Members',
+        'idx_group': 'Indexers',
+        'hf_group': 'Heavy Forwarders',
+        'uf_group': 'Universal Forwarders'
+    };
 
-        var ufNodes = data.nodes.filter(function(n) { return n.type === 'universal_forwarder'; });
-        var otherNodes = data.nodes.filter(function(n) { return n.type !== 'universal_forwarder'; });
+    // Type abbreviations for icons
+    var GROUP_TYPE_ABBREV = {
+        'sh_group': 'SH',
+        'shc_group': 'SHC',
+        'idx_group': 'IDX',
+        'hf_group': 'HF',
+        'uf_group': 'UF'
+    };
+
+    // Generic function to group nodes of any type
+    function groupNodesByType(nodes, nodeType, config) {
+        if (!config.enabled) return { groups: [], ungrouped: nodes };
+
+        var typeNodes = nodes.filter(function(n) { return n.type === nodeType; });
 
         // Only group if we have more than threshold
-        if (ufNodes.length <= UF_GROUP_THRESHOLD) {
-            return { groupedData: data, ufGroups: [] };
+        if (typeNodes.length <= config.threshold) {
+            return { groups: [], ungrouped: typeNodes };
         }
 
-        console.log('SA Topology: Grouping', ufNodes.length, 'UFs by role');
+        console.log('SA Topology: Grouping', typeNodes.length, nodeType, 'by', config.groupBy);
 
-        // Group UFs by role
-        var ufGroupMap = {};
-        ufNodes.forEach(function(node) {
-            var groupKey = node.role || 'Other';
-            if (!ufGroupMap[groupKey]) {
-                ufGroupMap[groupKey] = {
-                    id: 'uf_group_' + groupKey.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        // Determine grouping key
+        var groupMap = {};
+        typeNodes.forEach(function(node) {
+            var groupKey;
+            if (config.groupBy === 'site' && node.site) {
+                groupKey = node.site;
+            } else if (config.groupBy === 'cluster' && node.cluster) {
+                groupKey = node.cluster;
+            } else if (config.groupBy === 'role' && node.role) {
+                groupKey = node.role;
+            } else if (config.fallbackGroupBy) {
+                // Try fallback
+                groupKey = node[config.fallbackGroupBy] || 'Other';
+            } else {
+                groupKey = node.role || 'Other';
+            }
+
+            if (!groupMap[groupKey]) {
+                groupMap[groupKey] = {
+                    id: config.groupType + '_' + groupKey.toLowerCase().replace(/[^a-z0-9]/g, '_'),
                     name: groupKey,
-                    type: 'uf_group',
-                    tier: 3,
+                    type: config.groupType,
+                    originalType: nodeType,
+                    tier: config.tier,
                     role: groupKey,
                     count: 0,
                     members: [],
                     healthCounts: { green: 0, yellow: 0, red: 0 },
                     totalThroughputKB: 0,
-                    connections: { inbound: [], outbound: [] }
+                    connections: { inbound: [], outbound: [] },
+                    cluster: node.cluster || ''
                 };
             }
-            ufGroupMap[groupKey].count++;
-            ufGroupMap[groupKey].members.push(node);
-            ufGroupMap[groupKey].healthCounts[node.health || 'green']++;
-            ufGroupMap[groupKey].totalThroughputKB += (node.throughputKB || 0);
+            groupMap[groupKey].count++;
+            groupMap[groupKey].members.push(node);
+            groupMap[groupKey].healthCounts[node.health || 'green']++;
+            groupMap[groupKey].totalThroughputKB += (node.throughputKB || 0);
 
-            // Track outbound connections from members
-            if (node.connections && node.connections.outbound) {
-                node.connections.outbound.forEach(function(targetId) {
-                    if (ufGroupMap[groupKey].connections.outbound.indexOf(targetId) === -1) {
-                        ufGroupMap[groupKey].connections.outbound.push(targetId);
-                    }
-                });
+            // Track connections from members
+            if (node.connections) {
+                if (node.connections.outbound) {
+                    node.connections.outbound.forEach(function(targetId) {
+                        if (groupMap[groupKey].connections.outbound.indexOf(targetId) === -1) {
+                            groupMap[groupKey].connections.outbound.push(targetId);
+                        }
+                    });
+                }
+                if (node.connections.inbound) {
+                    node.connections.inbound.forEach(function(sourceId) {
+                        if (groupMap[groupKey].connections.inbound.indexOf(sourceId) === -1) {
+                            groupMap[groupKey].connections.inbound.push(sourceId);
+                        }
+                    });
+                }
             }
         });
 
-        // Convert groups to array and calculate aggregate health
-        var ufGroups = Object.values(ufGroupMap).map(function(group) {
+        // Convert to array and calculate health
+        var groups = Object.values(groupMap).map(function(group) {
             // Determine overall health (worst case)
             if (group.healthCounts.red > 0) {
                 group.health = 'red';
@@ -1088,64 +1169,147 @@ require([
                 group.health = 'green';
             }
 
-            // Generate aggregate KPIs
+            // Generate aggregate KPIs based on original type
             group.kpis = generateGroupKPIs(group);
             group.healthScore = calculateHealthScore(group.kpis);
 
             return group;
         });
 
-        // Sort groups by count (largest first)
-        ufGroups.sort(function(a, b) { return b.count - a.count; });
+        // Sort by count
+        groups.sort(function(a, b) { return b.count - a.count; });
 
-        // Create new data structure with groups instead of individual UFs
+        return { groups: groups, ungrouped: [] };
+    }
+
+    // Main function to apply grouping to all tiers
+    function applyMultiTierGrouping(data) {
+        var allGroups = {
+            sh_groups: [],
+            shc_groups: [],
+            idx_groups: [],
+            hf_groups: [],
+            uf_groups: []
+        };
+
+        var remainingNodes = [];
+        var processedTypes = [];
+
+        // Process each node type that has grouping config
+        Object.keys(GROUPING_CONFIG).forEach(function(nodeType) {
+            var config = GROUPING_CONFIG[nodeType];
+            var result = groupNodesByType(data.nodes, nodeType, config);
+
+            if (result.groups.length > 0) {
+                allGroups[config.groupType + 's'] = result.groups;
+                processedTypes.push(nodeType);
+            } else {
+                // Keep ungrouped nodes
+                remainingNodes = remainingNodes.concat(
+                    data.nodes.filter(function(n) { return n.type === nodeType; })
+                );
+            }
+        });
+
+        // Add nodes that don't have grouping config
+        data.nodes.forEach(function(node) {
+            if (!GROUPING_CONFIG[node.type] && processedTypes.indexOf(node.type) === -1) {
+                remainingNodes.push(node);
+            }
+        });
+
+        // Combine all groups and remaining nodes
+        var allGroupNodes = [];
+        Object.values(allGroups).forEach(function(groupArray) {
+            allGroupNodes = allGroupNodes.concat(groupArray);
+        });
+
         var groupedData = {
             tiers: data.tiers,
-            nodes: otherNodes.concat(ufGroups),
+            nodes: remainingNodes.concat(allGroupNodes),
             connections: []
         };
 
-        // Rebuild connections - replace individual UF connections with group connections
+        // Rebuild connections - replace grouped node connections with group connections
+        var allGroupsList = allGroupNodes;
         data.connections.forEach(function(conn) {
             var sourceNode = data.nodes.find(function(n) { return n.id === conn.source; });
             var targetNode = data.nodes.find(function(n) { return n.id === conn.target; });
 
-            if (sourceNode && sourceNode.type === 'universal_forwarder') {
-                // Find the group this UF belongs to
-                var sourceGroup = ufGroups.find(function(g) {
-                    return g.members.some(function(m) { return m.id === sourceNode.id; });
-                });
-                if (sourceGroup) {
-                    // Check if we already have this group connection
-                    var existingConn = groupedData.connections.find(function(c) {
-                        return c.source === sourceGroup.id && c.target === conn.target;
-                    });
-                    if (existingConn) {
-                        existingConn.throughputKB = (existingConn.throughputKB || 0) + (conn.throughputKB || 0);
-                        existingConn.memberCount = (existingConn.memberCount || 1) + 1;
-                    } else {
-                        groupedData.connections.push({
-                            source: sourceGroup.id,
-                            target: conn.target,
-                            type: conn.type || 'data',
-                            throughputKB: conn.throughputKB || 0,
-                            memberCount: 1
-                        });
-                    }
+            var sourceGroup = null;
+            var targetGroup = null;
+
+            // Check if source is in a group
+            allGroupsList.forEach(function(group) {
+                if (group.members.some(function(m) { return m.id === conn.source; })) {
+                    sourceGroup = group;
                 }
+                if (group.members.some(function(m) { return m.id === conn.target; })) {
+                    targetGroup = group;
+                }
+            });
+
+            var finalSource = sourceGroup ? sourceGroup.id : conn.source;
+            var finalTarget = targetGroup ? targetGroup.id : conn.target;
+
+            // Check for existing connection
+            var existingConn = groupedData.connections.find(function(c) {
+                return c.source === finalSource && c.target === finalTarget;
+            });
+
+            if (existingConn) {
+                existingConn.throughputKB = (existingConn.throughputKB || 0) + (conn.throughputKB || 0);
+                existingConn.memberCount = (existingConn.memberCount || 1) + 1;
             } else {
-                // Keep non-UF connections as-is
-                groupedData.connections.push(conn);
+                groupedData.connections.push({
+                    source: finalSource,
+                    target: finalTarget,
+                    type: conn.type || 'data',
+                    throughputKB: conn.throughputKB || 0,
+                    memberCount: 1
+                });
             }
         });
 
-        console.log('SA Topology: Created', ufGroups.length, 'UF groups from', ufNodes.length, 'forwarders');
-        return { groupedData: groupedData, ufGroups: ufGroups, originalUFs: ufNodes };
+        console.log('SA Topology: Multi-tier grouping complete -',
+            'SH groups:', allGroups.sh_groups.length,
+            'SHC groups:', allGroups.shc_groups.length,
+            'IDX groups:', allGroups.idx_groups.length,
+            'HF groups:', allGroups.hf_groups.length,
+            'UF groups:', allGroups.uf_groups.length);
+
+        return {
+            groupedData: groupedData,
+            allGroups: allGroups,
+            originalData: data
+        };
     }
 
-    // Generate aggregate KPIs for a UF group
+    // Legacy wrapper for backward compatibility
+    function groupUniversalForwarders(data) {
+        // Now uses the multi-tier system
+        var result = applyMultiTierGrouping(data);
+        return {
+            groupedData: result.groupedData,
+            ufGroups: result.allGroups.uf_groups || [],
+            originalUFs: data.nodes.filter(function(n) { return n.type === 'universal_forwarder'; })
+        };
+    }
+
+    // Keep the old code path for now but it will use the new system
+    var ENABLE_UF_GROUPING = true; // Legacy flag
+    var UF_GROUP_THRESHOLD = 8; // Legacy threshold
+
+    // Check if a node type is a group type
+    function isGroupType(type) {
+        return type && type.indexOf('_group') > -1;
+    }
+
+    // Generate aggregate KPIs for any group type
     function generateGroupKPIs(group) {
-        var definitions = kpiDefinitions.universal_forwarder;
+        // Determine which KPI definitions to use based on original type
+        var originalType = group.originalType || 'universal_forwarder';
+        var definitions = kpiDefinitions[originalType] || kpiDefinitions.universal_forwarder;
         var kpis = [];
 
         definitions.forEach(function(def) {
@@ -1381,9 +1545,9 @@ require([
         // Draw nodes
         var nodesGroup = g.append('g').attr('class', 'nodes');
 
-        // Separate regular nodes from UF groups
-        var regularNodes = renderData.nodes.filter(function(n) { return n.type !== 'uf_group'; });
-        var groupNodes = renderData.nodes.filter(function(n) { return n.type === 'uf_group'; });
+        // Separate regular nodes from ALL group types
+        var regularNodes = renderData.nodes.filter(function(n) { return !isGroupType(n.type); });
+        var groupNodes = renderData.nodes.filter(function(n) { return isGroupType(n.type); });
 
         // Render regular nodes (non-grouped)
         var nodeElements = nodesGroup.selectAll('.node')
@@ -1453,13 +1617,13 @@ require([
             });
 
         // ===========================================
-        // RENDER UF GROUPS (STACKED ICONS)
+        // RENDER ALL TIER GROUPS (STACKED ICONS)
         // ===========================================
-        var ufGroupElements = nodesGroup.selectAll('.uf-group')
+        var tierGroupElements = nodesGroup.selectAll('.tier-group')
             .data(groupNodes)
             .enter()
             .append('g')
-            .attr('class', 'uf-group')
+            .attr('class', function(d) { return 'tier-group ' + d.type; })
             .attr('transform', function(d) {
                 var pos = nodePositions[d.id];
                 return 'translate(' + pos.x + ',' + pos.y + ')';
@@ -1467,7 +1631,7 @@ require([
             .style('cursor', 'pointer')
             .on('click', function(event, d) {
                 event.stopPropagation();
-                showUFGroupModal(d, originalData);
+                showTierGroupModal(d, originalData);
             })
             .on('mouseover', function(event, d) {
                 d3.select(this).selectAll('.stack-rect')
@@ -1492,8 +1656,8 @@ require([
                     .attr('r', 12);
             });
 
-        // Draw stacked rectangles for each UF group
-        ufGroupElements.each(function(d) {
+        // Draw stacked rectangles for each tier group
+        tierGroupElements.each(function(d) {
             var group = d3.select(this);
             var baseColor = severityColors[healthToSeverity[d.health]] || severityColors.normal;
 
@@ -1520,7 +1684,8 @@ require([
                     .style('filter', i === 0 ? 'drop-shadow(0px 2px 6px rgba(0,0,0,0.4))' : 'none');
             }
 
-            // Add UF icon/text on front card
+            // Add type icon/text on front card (uses GROUP_TYPE_ABBREV)
+            var abbrev = GROUP_TYPE_ABBREV[d.type] || '?';
             group.append('text')
                 .attr('text-anchor', 'middle')
                 .attr('dy', 0)
@@ -1528,7 +1693,7 @@ require([
                 .attr('font-weight', 'bold')
                 .attr('font-size', '12px')
                 .attr('font-family', 'Arial, sans-serif')
-                .text('UF');
+                .text(abbrev);
 
             // Add count badge (top right)
             group.append('circle')
@@ -1584,8 +1749,8 @@ require([
             });
         });
 
-        // Group labels (role name)
-        ufGroupElements.append('text')
+        // Group labels (role/site name)
+        tierGroupElements.append('text')
             .attr('text-anchor', 'middle')
             .attr('y', 52)
             .attr('fill', '#ccd6f6')
@@ -2075,9 +2240,11 @@ require([
         }
 
         // ===========================================
-        // UF GROUP MODAL - Shows details for grouped UFs
+        // TIER GROUP MODAL - Shows details for any grouped tier
         // ===========================================
-        function showUFGroupModal(group, originalData) {
+        function showTierGroupModal(group, originalData) {
+            // Get group type label
+            var groupTypeLabel = GROUP_TYPE_LABELS[group.type] || 'Nodes';
             // Remove existing modal
             $('#kpi-modal-overlay').remove();
 
@@ -2122,14 +2289,14 @@ require([
             });
 
             var $titleSection = $('<div></div>');
-            $titleSection.append($('<h2></h2>').text(group.role + ' Universal Forwarders').css({
+            $titleSection.append($('<h2></h2>').text(group.role + ' ' + groupTypeLabel).css({
                 margin: 0,
                 color: '#e2e8f0',
                 fontSize: '20px',
                 fontWeight: '600'
             }));
             $titleSection.append($('<div></div>').html(
-                '<span style="color:#65A637;font-weight:600;">' + group.count + '</span> forwarders in this group'
+                '<span style="color:#65A637;font-weight:600;">' + group.count + '</span> ' + groupTypeLabel.toLowerCase() + ' in this group'
             ).css({
                 color: '#8892b0',
                 fontSize: '13px',
