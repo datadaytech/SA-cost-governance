@@ -230,7 +230,7 @@
     1=1, 8)
 | sort sort_priority, - runtime_ratio
 | eval display_name = title
-| eval display_reason = coalesce(flag_reason, suspicious_reason, "")
+| eval display_reason = case(is_suspicious=1 AND isnotnull(suspicious_reason), suspicious_reason, flag_reason!="Manual status change via dropdown" AND isnotnull(flag_reason) AND flag_reason!="", flag_reason, 1=1, "")
 | table display_name, governance_status, owner, app, cron_schedule, frequency_label, avg_runtime_display, run_count, runtime_ratio, days_remaining, flagged_by, display_reason
 | rename display_name as "Search Name", governance_status as "Status", owner as "Owner", app as "App", cron_schedule as "Schedule", frequency_label as "Frequency", avg_runtime_display as "Avg Runtime", run_count as "Runs", runtime_ratio as "Runtime %", days_remaining as "Days Left", flagged_by as "Flagged By", display_reason as "Reason"</query>
           <earliest>-24h@h</earliest>

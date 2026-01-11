@@ -2754,16 +2754,16 @@ require([
                 return;
             }
 
-            // Filter out already flagged searches (pending, notified, disabled, review)
+            // Filter out already flagged searches (pending, notified, review) - disabled CAN be re-flagged
             var unflaggedSearches = selectedSearches.filter(function(s) {
                 var status = (s.status || '').toLowerCase();
-                return status !== 'pending' && status !== 'notified' && status !== 'disabled' &&
+                return status !== 'pending' && status !== 'notified' &&
                        status !== 'review' && status !== 'flagged' &&
-                       status.indexOf('pending') === -1 && status.indexOf('disabled') === -1;
+                       status.indexOf('pending') === -1;
             });
 
             if (unflaggedSearches.length === 0) {
-                alert('All selected searches are already flagged.\n\nPlease select unflagged searches or use the Flagged view to manage existing flags.');
+                alert('All selected searches are already flagged.\n\nPlease select unflagged or disabled searches to flag them.');
                 return;
             }
 
@@ -4178,7 +4178,8 @@ require([
     }
 
     function parseFieldRuns(field, max) {
-        if (field === '*') return 1;
+        // '*' means every value in the range (e.g., every minute = 60, every hour = 24)
+        if (field === '*') return max;
         if (field.indexOf('*/') === 0) {
             var step = parseInt(field.substring(2));
             return Math.ceil(max / step);
@@ -4187,18 +4188,28 @@ require([
             return field.split(',').length;
         }
         if (field.indexOf('-') > -1) {
-            var parts = field.split('-');
-            return parseInt(parts[1]) - parseInt(parts[0]) + 1;
+            var rangeParts = field.split('-');
+            // Handle step notation like "0-59/5"
+            if (rangeParts[1].indexOf('/') > -1) {
+                var endStep = rangeParts[1].split('/');
+                var rangeSize = parseInt(endStep[0]) - parseInt(rangeParts[0]) + 1;
+                return Math.ceil(rangeSize / parseInt(endStep[1]));
+            }
+            return parseInt(rangeParts[1]) - parseInt(rangeParts[0]) + 1;
         }
         return 1;
     }
 
     function formatFrequency(freq) {
-        if (freq >= 1440) return Math.round(freq) + 'x';
-        if (freq >= 60) return Math.round(freq) + 'x';
-        if (freq >= 1) return Math.round(freq) + 'x';
-        if (freq >= 0.1) return freq.toFixed(1) + 'x';
-        return '<1x';
+        // freq is runs per day
+        if (freq >= 1440) return Math.round(freq) + 'x/day';
+        if (freq >= 48) return Math.round(freq) + 'x/day';
+        if (freq >= 24) return Math.round(freq) + 'x/day';
+        if (freq >= 2) return Math.round(freq) + 'x/day';
+        if (freq >= 1) return Math.round(freq) + 'x/day';
+        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';
+        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';
+        return '<1x/month';
     }
 
     function describeCron(minute, hour, dayMonth, month, dayWeek) {
@@ -4976,7 +4987,7 @@ require([
                 searchQuery = '| inputlookup governance_search_cache.csv | where (disabled="0" OR disabled=0) AND is_suspicious=1 | lookup flagged_searches_lookup search_name as title OUTPUT status as flag_status | lookup ok_searches_lookup search_name as title OUTPUT approved_time as ok_approved | where (isnull(flag_status) OR flag_status="") AND isnull(ok_approved) | eval status_display="suspicious" | table title, owner, app, status_display, suspicious_reason | head 50';
                 break;
             case 'flagged':
-                searchQuery = '| inputlookup flagged_searches_lookup | search status IN ("flagged", "pending", "notified", "disabled", "review") | dedup search_name | eval status_display=status | eval deadline_epoch=remediation_deadline | eval days_remaining=round((remediation_deadline - now()) / 86400, 2) | table search_name, search_owner, search_app, status_display, reason, status, deadline_epoch, days_remaining | head 50';
+                searchQuery = '| inputlookup flagged_searches_lookup | search status IN ("flagged", "pending", "notified", "review") | dedup search_name | eval status_display=status | eval deadline_epoch=remediation_deadline | eval days_remaining=round((remediation_deadline - now()) / 86400, 2) | table search_name, search_owner, search_app, status_display, reason, status, deadline_epoch, days_remaining | head 50';
                 break;
             case 'expiring':
                 searchQuery = '| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | dedup search_name | eval days_remaining = round((remediation_deadline - now()) / 86400, 1) | where days_remaining >= 0 AND days_remaining <= 3 | eval status_display="expiring" | table search_name, search_owner, search_app, status_display, days_remaining, reason | head 50';
