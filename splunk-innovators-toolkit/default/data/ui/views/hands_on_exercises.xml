@@ -6,258 +6,527 @@
     <panel>
       <html>
         <style>
-          .exercise-container {
-            background: var(--sit-bg-medium);
-            border: 1px solid var(--sit-border-color);
-            border-radius: var(--sit-radius-lg);
-            padding: 24px;
-            margin-bottom: 24px;
+          /* ========================================
+             PAGE LAYOUT
+             ======================================== */
+          .exercises-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
           }
+
+          .hero-section {
+            text-align: center;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, rgba(253, 24, 117, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+            border-radius: 24px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(253, 24, 117, 0.3);
+          }
+
+          .hero-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 16px 0;
+            background: linear-gradient(135deg, #FD1875 0%, #6366F1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+
+          .hero-section p {
+            color: var(--sit-text-secondary);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+          }
+
+          /* ========================================
+             EXERCISE CARDS
+             ======================================== */
+          .exercise-card {
+            background: linear-gradient(180deg, var(--sit-bg-medium) 0%, var(--sit-bg-dark) 100%);
+            border: 1px solid var(--sit-border-color);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .exercise-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FD1875 0%, #6366F1 100%);
+          }
+
           .exercise-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 16px;
+            margin-bottom: 20px;
           }
+
           .exercise-number {
-            background: var(--sit-primary);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #FD1875 0%, #6366F1 100%);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
           }
+
           .exercise-title {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 600;
             margin: 0;
           }
+
           .exercise-description {
             color: var(--sit-text-secondary);
-            margin-bottom: 16px;
-            line-height: 1.6;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 24px;
           }
-          .exercise-task {
-            background: var(--sit-info-bg);
-            border: 1px solid var(--sit-info);
-            border-radius: var(--sit-radius-md);
-            padding: 16px;
-            margin-bottom: 20px;
+
+          /* ========================================
+             TASK BOX
+             ======================================== */
+          .task-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
           }
-          .exercise-task h4 {
-            margin: 0 0 8px 0;
-            color: var(--sit-info);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-          }
-          .code-editor {
-            width: 100%;
-            min-height: 150px;
-            padding: 16px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            background: #1e1e1e;
-            color: #d4d4d4;
-            border: 1px solid var(--sit-border-color);
-            border-radius: var(--sit-radius-md);
-            resize: vertical;
-            tab-size: 2;
-          }
-          .code-editor:focus {
-            outline: none;
-            border-color: var(--sit-primary);
-            box-shadow: 0 0 0 3px var(--sit-primary-light);
-          }
-          .output-area {
-            border: 2px dashed var(--sit-border-color);
-            border-radius: var(--sit-radius-md);
-            padding: 24px;
-            min-height: 100px;
-            margin-top: 16px;
-            background: var(--sit-bg-dark);
-          }
-          .output-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--sit-text-muted);
-            margin-bottom: 12px;
-          }
-          .button-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-          }
-          .success-banner {
-            background: var(--sit-success-bg);
-            border: 1px solid var(--sit-success);
-            border-radius: var(--sit-radius-md);
-            padding: 12px 16px;
-            margin-top: 16px;
-            display: none;
-            color: var(--sit-success);
-            font-weight: 500;
-          }
-          .success-banner.show {
+
+          .task-box-header {
             display: flex;
             align-items: center;
             gap: 8px;
-          }
-          .error-banner {
-            background: var(--sit-error-bg);
-            border: 1px solid var(--sit-error);
-            border-radius: var(--sit-radius-md);
-            padding: 12px 16px;
-            margin-top: 16px;
-            display: none;
-            color: var(--sit-error);
-          }
-          .error-banner.show {
-            display: block;
-          }
-          .hint-section {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid var(--sit-border-color);
-          }
-          .hint-toggle {
+            margin-bottom: 12px;
+            color: #818CF8;
+            font-weight: 600;
             font-size: 0.875rem;
-            color: var(--sit-info);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          .task-box p {
+            margin: 0;
+            color: var(--sit-text-primary);
+            line-height: 1.6;
+          }
+
+          .task-box code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            color: #C084FC;
+          }
+
+          /* ========================================
+             CODE EDITOR
+             ======================================== */
+          .editor-container {
+            background: #0D1117;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #30363D;
+          }
+
+          .editor-header {
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #161B22;
+            border-bottom: 1px solid #30363D;
           }
-          .hint-toggle:hover {
-            text-decoration: underline;
+
+          .editor-dots {
+            display: flex;
+            gap: 8px;
           }
-          .hint-content {
-            background: var(--sit-bg-dark);
-            border-radius: var(--sit-radius-md);
-            padding: 16px;
-            margin-top: 12px;
+
+          .editor-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+          }
+
+          .editor-dot.red { background: #FF5F56; }
+          .editor-dot.yellow { background: #FFBD2E; }
+          .editor-dot.green { background: #27CA40; }
+
+          .editor-label {
+            font-size: 0.75rem;
+            color: #8B949E;
+            font-family: 'Monaco', 'Menlo', monospace;
+          }
+
+          .code-editor {
+            width: 100%;
+            min-height: 180px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #0D1117;
+            color: #E6EDF3;
+            border: none;
+            resize: vertical;
+            tab-size: 2;
+          }
+
+          .code-editor:focus {
+            outline: none;
+          }
+
+          .code-editor::placeholder {
+            color: #484F58;
+          }
+
+          /* ========================================
+             BUTTONS
+             ======================================== */
+          .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+          }
+
+          .btn-run {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #FD1875 0%, #E91E63 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(253, 24, 117, 0.3);
+          }
+
+          .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 24, 117, 0.4);
+          }
+
+          .btn-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818CF8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .btn-hint:hover {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+          }
+
+          .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: transparent;
+            color: var(--sit-text-secondary);
+            border: 1px solid var(--sit-border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .btn-reset:hover {
+            background: var(--sit-bg-light);
+            color: var(--sit-text-primary);
+          }
+
+          .hint-counter {
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+          }
+
+          /* ========================================
+             OUTPUT AREA
+             ======================================== */
+          .output-container {
+            margin-top: 24px;
             display: none;
-            font-size: 0.875rem;
           }
-          .hint-content.show {
+
+          .output-container.show {
             display: block;
+            animation: slideUp 0.4s ease;
           }
-          .hint-content pre {
-            background: #1e1e1e;
-            padding: 12px;
-            border-radius: var(--sit-radius-sm);
-            overflow-x: auto;
-            margin: 8px 0;
-            color: #d4d4d4;
+
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          .intro-section {
+
+          .output-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: var(--sit-success);
+            font-weight: 600;
+          }
+
+          .output-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+          }
+
+          .output-message {
+            color: var(--sit-text-primary);
+            line-height: 1.6;
+          }
+
+          /* ========================================
+             ERROR STATE
+             ======================================== */
+          .error-container {
+            margin-top: 16px;
+            display: none;
+          }
+
+          .error-container.show {
+            display: block;
+            animation: shake 0.4s ease;
+          }
+
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+
+          .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: #F87171;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          /* ========================================
+             PROGRESS SECTION
+             ======================================== */
+          .progress-section {
+            background: linear-gradient(180deg, var(--sit-bg-medium) 0%, var(--sit-bg-dark) 100%);
+            border: 1px solid var(--sit-border-color);
+            border-radius: 20px;
+            padding: 40px;
             text-align: center;
-            padding: 32px;
+          }
+
+          .progress-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+          }
+
+          .progress-subtitle {
+            color: var(--sit-text-secondary);
             margin-bottom: 32px;
           }
-          .intro-section h2 {
+
+          .progress-badges {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+          }
+
+          .progress-badge {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            border: 3px solid var(--sit-border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.75rem;
-            margin-bottom: 12px;
-          }
-          .intro-section p {
-            color: var(--sit-text-secondary);
-            max-width: 700px;
-            margin: 0 auto;
-          }
-          .reference-box {
-            background: var(--sit-bg-dark);
-            border-radius: var(--sit-radius-md);
-            padding: 16px;
-            margin-bottom: 16px;
-            font-size: 0.875rem;
-          }
-          .reference-box h5 {
-            margin: 0 0 8px 0;
+            font-weight: 700;
             color: var(--sit-text-muted);
-            text-transform: uppercase;
-            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            background: var(--sit-bg-dark);
           }
-          .reference-box code {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.8rem;
+
+          .progress-badge.complete {
+            border-color: var(--sit-success);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+            color: var(--sit-success);
+          }
+
+          .all-complete {
+            display: none;
+            animation: celebrate 0.6s ease;
+          }
+
+          .all-complete.show {
+            display: block;
+          }
+
+          @keyframes celebrate {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+
+          .celebration-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+          }
+
+          .celebration-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--sit-success);
+            margin-bottom: 8px;
+          }
+
+          .celebration-message {
+            color: var(--sit-text-secondary);
           }
         </style>
 
-        <div class="intro-section">
-          <h2>Hands-On Exercises</h2>
-          <p>Put your knowledge to the test! Write JavaScript code in the editors below and click "Run Code" to see your components come to life. Each exercise builds on what you learned in the demo.</p>
+        <div class="exercises-page">
+          <div class="hero-section">
+            <h1>Hands-On Exercises</h1>
+            <p>Put your knowledge to the test! Write JavaScript code in the editors below and click "Run Code" to see your components come to life.</p>
+          </div>
         </div>
       </html>
     </panel>
   </row>
 
-  <!-- Exercise 1: Show a Toast Notification -->
+  <!-- Exercise 1: Toast Notification -->
   <row>
     <panel>
       <html>
-        <div class="exercise-container">
-          <div class="exercise-header">
-            <div class="exercise-number">1</div>
-            <h3 class="exercise-title">Show a Toast Notification</h3>
-          </div>
+        <div class="exercises-page">
+          <div class="exercise-card">
+            <div class="exercise-header">
+              <div class="exercise-number">1</div>
+              <h2 class="exercise-title">Show a Toast Notification</h2>
+            </div>
 
-          <p class="exercise-description">
-            Toast notifications are great for giving users feedback. Your task is to write code that displays a success toast with a custom message.
-          </p>
+            <p class="exercise-description">
+              Toast notifications provide quick feedback to users. They appear briefly and then fade away automatically.
+              Your goal is to create a success toast that congratulates the user.
+            </p>
 
-          <div class="exercise-task">
-            <h4>Your Task</h4>
-            <p>Write code to show a <strong>success</strong> toast notification with the title "Well Done!" and message "You completed your first exercise!"</p>
-          </div>
+            <div class="task-box">
+              <div class="task-box-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Your Task
+              </div>
+              <p>Show a <code>success</code> toast with title <code>"Well Done!"</code> and message <code>"You completed your first exercise!"</code></p>
+            </div>
 
-          <div class="reference-box">
-            <h5>Quick Reference</h5>
-            <p>Use <code>toast.show({ type: '...', title: '...', message: '...' })</code></p>
-            <p>Available types: <code>success</code>, <code>error</code>, <code>warning</code>, <code>info</code></p>
-          </div>
-
-          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
-          <textarea class="code-editor" id="ex1-code" placeholder="// Write your code here...
-// Example: toast.show({ type: 'info', title: 'Hello', message: 'World' });">toast.show({
+            <div class="editor-container">
+              <div class="editor-header">
+                <div class="editor-dots">
+                  <div class="editor-dot red"></div>
+                  <div class="editor-dot yellow"></div>
+                  <div class="editor-dot green"></div>
+                </div>
+                <span class="editor-label">script.js</span>
+              </div>
+              <textarea class="code-editor" id="ex1-code" placeholder="// Start typing your code here...">toast.show({
 
 });</textarea>
+            </div>
 
-          <div class="button-row">
-            <button class="sit-btn sit-btn-primary" id="ex1-run">Run Code</button>
-            <button class="sit-btn sit-btn-secondary" id="ex1-reset">Reset</button>
-          </div>
+            <div class="button-row">
+              <button class="btn-run" id="ex1-run">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Run Code
+              </button>
+              <button class="btn-hint" id="ex1-hint">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+                </svg>
+                Hint <span class="hint-counter" id="ex1-hint-count">0/2</span>
+              </button>
+              <button class="btn-reset" id="ex1-reset">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+                Reset
+              </button>
+            </div>
 
-          <div class="success-banner" id="ex1-success">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            Exercise Complete! You showed a success toast.
-          </div>
-          <div class="error-banner" id="ex1-error"></div>
+            <div class="error-container" id="ex1-error">
+              <div class="error-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <span id="ex1-error-text"></span>
+              </div>
+            </div>
 
-          <div class="hint-section">
-            <button class="hint-toggle" id="ex1-hint-toggle">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-              </svg>
-              Need a hint?
-            </button>
-            <div class="hint-content" id="ex1-hint">
-              <p><strong>Solution:</strong></p>
-              <pre>toast.show({
-  type: 'success',
-  title: 'Well Done!',
-  message: 'You completed your first exercise!'
-});</pre>
+            <div class="output-container" id="ex1-output">
+              <div class="output-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Exercise Complete!
+              </div>
+              <div class="output-box">
+                <p class="output-message">Your toast notification appeared in the top-right corner. You've learned how to provide user feedback with toast messages!</p>
+              </div>
             </div>
           </div>
         </div>
@@ -265,70 +534,89 @@
     </panel>
   </row>
 
-  <!-- Exercise 2: Open a Modal Dialog -->
+  <!-- Exercise 2: Modal Dialog -->
   <row>
     <panel>
       <html>
-        <div class="exercise-container">
-          <div class="exercise-header">
-            <div class="exercise-number">2</div>
-            <h3 class="exercise-title">Open a Modal Dialog</h3>
-          </div>
+        <div class="exercises-page">
+          <div class="exercise-card">
+            <div class="exercise-header">
+              <div class="exercise-number">2</div>
+              <h2 class="exercise-title">Open a Modal Dialog</h2>
+            </div>
 
-          <p class="exercise-description">
-            Modals are useful for displaying important information or collecting user input. Your task is to create and open a modal with custom content.
-          </p>
+            <p class="exercise-description">
+              Modals are overlay windows that focus user attention on important content or actions.
+              They're perfect for confirmations, forms, or displaying detailed information.
+            </p>
 
-          <div class="exercise-task">
-            <h4>Your Task</h4>
-            <p>Create a modal with the title "Welcome!" and body content that says "This is my first modal." Then call <code>.open()</code> to display it.</p>
-          </div>
+            <div class="task-box">
+              <div class="task-box-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Your Task
+              </div>
+              <p>Create a modal with title <code>"Welcome!"</code> and body <code>"This is my first modal."</code> then call <code>.open()</code></p>
+            </div>
 
-          <div class="reference-box">
-            <h5>Quick Reference</h5>
-            <p>Create: <code>var modal = new SITModal({ title: '...', body: '...' })</code></p>
-            <p>Open: <code>modal.open()</code></p>
-            <p>Optional: <code>size: 'sm'</code>, <code>size: 'md'</code>, <code>size: 'lg'</code></p>
-          </div>
-
-          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
-          <textarea class="code-editor" id="ex2-code" placeholder="// Create a modal and open it
-var modal = new SITModal({
+            <div class="editor-container">
+              <div class="editor-header">
+                <div class="editor-dots">
+                  <div class="editor-dot red"></div>
+                  <div class="editor-dot yellow"></div>
+                  <div class="editor-dot green"></div>
+                </div>
+                <span class="editor-label">script.js</span>
+              </div>
+              <textarea class="code-editor" id="ex2-code" placeholder="// Start typing your code here...">var modal = new SITModal({
 
 });
-modal.open();">var modal = new SITModal({
+</textarea>
+            </div>
 
-});
-modal.open();</textarea>
+            <div class="button-row">
+              <button class="btn-run" id="ex2-run">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Run Code
+              </button>
+              <button class="btn-hint" id="ex2-hint">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+                </svg>
+                Hint <span class="hint-counter" id="ex2-hint-count">0/2</span>
+              </button>
+              <button class="btn-reset" id="ex2-reset">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+                Reset
+              </button>
+            </div>
 
-          <div class="button-row">
-            <button class="sit-btn sit-btn-primary" id="ex2-run">Run Code</button>
-            <button class="sit-btn sit-btn-secondary" id="ex2-reset">Reset</button>
-          </div>
+            <div class="error-container" id="ex2-error">
+              <div class="error-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <span id="ex2-error-text"></span>
+              </div>
+            </div>
 
-          <div class="success-banner" id="ex2-success">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            Exercise Complete! Your modal appeared.
-          </div>
-          <div class="error-banner" id="ex2-error"></div>
-
-          <div class="hint-section">
-            <button class="hint-toggle" id="ex2-hint-toggle">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-              </svg>
-              Need a hint?
-            </button>
-            <div class="hint-content" id="ex2-hint">
-              <p><strong>Solution:</strong></p>
-              <pre>var modal = new SITModal({
-  title: 'Welcome!',
-  body: 'This is my first modal.'
-});
-modal.open();</pre>
+            <div class="output-container" id="ex2-output">
+              <div class="output-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Exercise Complete!
+              </div>
+              <div class="output-box">
+                <p class="output-message">Your modal appeared with custom content! Modals are great for focusing user attention on important information or actions.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -336,92 +624,94 @@ modal.open();</pre>
     </panel>
   </row>
 
-  <!-- Exercise 3: Build Interactive Components -->
+  <!-- Exercise 3: Confirm Dialog -->
   <row>
     <panel>
       <html>
-        <div class="exercise-container">
-          <div class="exercise-header">
-            <div class="exercise-number">3</div>
-            <h3 class="exercise-title">Create an Interactive Confirmation</h3>
-          </div>
+        <div class="exercises-page">
+          <div class="exercise-card">
+            <div class="exercise-header">
+              <div class="exercise-number">3</div>
+              <h2 class="exercise-title">Create a Confirmation Dialog</h2>
+            </div>
 
-          <p class="exercise-description">
-            Combine what you've learned! Use the built-in confirm dialog to ask the user a question, then show a different toast based on their answer.
-          </p>
+            <p class="exercise-description">
+              Confirmation dialogs ask users to confirm an action. They're essential for destructive actions
+              or important decisions. You'll handle both the confirm and cancel responses.
+            </p>
 
-          <div class="exercise-task">
-            <h4>Your Task</h4>
-            <p>Use <code>SITModal.confirm()</code> to ask "Do you like this toolkit?" - If they click OK, show a success toast saying "Thanks!". If they cancel, show an info toast saying "No problem!"</p>
-          </div>
+            <div class="task-box">
+              <div class="task-box-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Your Task
+              </div>
+              <p>Use <code>SITModal.confirm()</code> to ask <code>"Do you like this toolkit?"</code> - show a success toast on OK, info toast on Cancel</p>
+            </div>
 
-          <div class="reference-box">
-            <h5>Quick Reference</h5>
-            <p>Confirm dialog: <code>SITModal.confirm(message, onConfirm, onCancel)</code></p>
-            <p>The <code>onConfirm</code> function runs when user clicks OK</p>
-            <p>The <code>onCancel</code> function runs when user clicks Cancel</p>
-          </div>
-
-          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
-          <textarea class="code-editor" id="ex3-code" placeholder="// Use SITModal.confirm() with callbacks
-SITModal.confirm(
-  'Your question here',
-  function() {
-    // This runs on OK
-  },
-  function() {
-    // This runs on Cancel
-  }
-);">SITModal.confirm(
+            <div class="editor-container">
+              <div class="editor-header">
+                <div class="editor-dots">
+                  <div class="editor-dot red"></div>
+                  <div class="editor-dot yellow"></div>
+                  <div class="editor-dot green"></div>
+                </div>
+                <span class="editor-label">script.js</span>
+              </div>
+              <textarea class="code-editor" id="ex3-code" placeholder="// Start typing your code here...">SITModal.confirm(
   '',
   function() {
-
+    // On confirm
   },
   function() {
-
+    // On cancel
   }
 );</textarea>
+            </div>
 
-          <div class="button-row">
-            <button class="sit-btn sit-btn-primary" id="ex3-run">Run Code</button>
-            <button class="sit-btn sit-btn-secondary" id="ex3-reset">Reset</button>
-          </div>
+            <div class="button-row">
+              <button class="btn-run" id="ex3-run">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Run Code
+              </button>
+              <button class="btn-hint" id="ex3-hint">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
+                </svg>
+                Hint <span class="hint-counter" id="ex3-hint-count">0/2</span>
+              </button>
+              <button class="btn-reset" id="ex3-reset">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+                Reset
+              </button>
+            </div>
 
-          <div class="success-banner" id="ex3-success">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-            Exercise Complete! You handled both confirm and cancel actions.
-          </div>
-          <div class="error-banner" id="ex3-error"></div>
+            <div class="error-container" id="ex3-error">
+              <div class="error-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <span id="ex3-error-text"></span>
+              </div>
+            </div>
 
-          <div class="hint-section">
-            <button class="hint-toggle" id="ex3-hint-toggle">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-              </svg>
-              Need a hint?
-            </button>
-            <div class="hint-content" id="ex3-hint">
-              <p><strong>Solution:</strong></p>
-              <pre>SITModal.confirm(
-  'Do you like this toolkit?',
-  function() {
-    toast.show({
-      type: 'success',
-      title: 'Thanks!',
-      message: 'We appreciate your feedback!'
-    });
-  },
-  function() {
-    toast.show({
-      type: 'info',
-      title: 'No problem!',
-      message: 'Thanks for trying it out.'
-    });
-  }
-);</pre>
+            <div class="output-container" id="ex3-output">
+              <div class="output-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Exercise Complete!
+              </div>
+              <div class="output-box">
+                <p class="output-message">You handled both user responses! Confirmation dialogs help prevent accidental actions and give users control over important decisions.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -429,24 +719,26 @@ SITModal.confirm(
     </panel>
   </row>
 
-  <!-- Completion Section -->
+  <!-- Progress Section -->
   <row>
     <panel>
       <html>
-        <div style="text-align: center; padding: 40px; background: var(--sit-bg-medium); border-radius: var(--sit-radius-lg); border: 1px solid var(--sit-border-color);">
-          <div id="completion-status">
-            <h3 style="margin-bottom: 12px;">Track Your Progress</h3>
-            <p style="color: var(--sit-text-secondary); margin-bottom: 20px;">Complete all 3 exercises to master the basics!</p>
-            <div style="display: flex; justify-content: center; gap: 16px;">
-              <div id="progress-ex1" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">1</div>
-              <div id="progress-ex2" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">2</div>
-              <div id="progress-ex3" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">3</div>
+        <div class="exercises-page">
+          <div class="progress-section">
+            <div id="progress-tracker">
+              <h3 class="progress-title">Your Progress</h3>
+              <p class="progress-subtitle">Complete all 3 exercises to master the basics!</p>
+              <div class="progress-badges">
+                <div class="progress-badge" id="badge-1">1</div>
+                <div class="progress-badge" id="badge-2">2</div>
+                <div class="progress-badge" id="badge-3">3</div>
+              </div>
             </div>
-          </div>
-          <div id="all-complete" style="display: none;">
-            <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
-            <h3 style="margin-bottom: 12px; color: var(--sit-success);">All Exercises Complete!</h3>
-            <p style="color: var(--sit-text-secondary);">You've mastered the basics of the Splunk Innovators Toolkit. Check out the Code Examples page for more advanced patterns!</p>
+            <div class="all-complete" id="all-complete">
+              <div class="celebration-icon">🎉</div>
+              <h3 class="celebration-title">Congratulations!</h3>
+              <p class="celebration-message">You've completed all exercises and mastered the basics of the Splunk Innovators Toolkit!</p>
+            </div>
           </div>
         </div>
 
@@ -458,34 +750,58 @@ SITModal.confirm(
             '/static/app/splunk-innovators-toolkit/components/sit-toast.js'
           ], function($, _, SITModal, SITToast) {
 
-            // Initialize toast system
             var toast = new SITToast();
-
-            // Track completed exercises
             var completed = { ex1: false, ex2: false, ex3: false };
 
+            // Hint progressions for each exercise
+            var hints = {
+              ex1: {
+                count: 0,
+                steps: [
+                  "toast.show({\n  type: 'success'\n});",
+                  "toast.show({\n  type: 'success',\n  title: 'Well Done!'\n});",
+                  "toast.show({\n  type: 'success',\n  title: 'Well Done!',\n  message: 'You completed your first exercise!'\n});"
+                ]
+              },
+              ex2: {
+                count: 0,
+                steps: [
+                  "var modal = new SITModal({\n  title: 'Welcome!'\n});\n",
+                  "var modal = new SITModal({\n  title: 'Welcome!',\n  body: 'This is my first modal.'\n});\n",
+                  "var modal = new SITModal({\n  title: 'Welcome!',\n  body: 'This is my first modal.'\n});\nmodal.open();"
+                ]
+              },
+              ex3: {
+                count: 0,
+                steps: [
+                  "SITModal.confirm(\n  'Do you like this toolkit?',\n  function() {\n    // On confirm\n  },\n  function() {\n    // On cancel\n  }\n);",
+                  "SITModal.confirm(\n  'Do you like this toolkit?',\n  function() {\n    toast.show({ type: 'success', title: 'Thanks!' });\n  },\n  function() {\n    // On cancel\n  }\n);",
+                  "SITModal.confirm(\n  'Do you like this toolkit?',\n  function() {\n    toast.show({ type: 'success', title: 'Thanks!', message: 'We appreciate it!' });\n  },\n  function() {\n    toast.show({ type: 'info', title: 'No problem!', message: 'Thanks for trying!' });\n  }\n);"
+                ]
+              }
+            };
+
+            var defaults = {
+              ex1: "toast.show({\n  \n});",
+              ex2: "var modal = new SITModal({\n  \n});\n",
+              ex3: "SITModal.confirm(\n  '',\n  function() {\n    // On confirm\n  },\n  function() {\n    // On cancel\n  }\n);"
+            };
+
             function updateProgress() {
-              Object.keys(completed).forEach(function(key) {
-                var num = key.replace('ex', '');
-                var $badge = $('#progress-ex' + num);
-                if (completed[key]) {
-                  $badge.css({
-                    'border-color': 'var(--sit-success)',
-                    'background': 'var(--sit-success)',
-                    'color': 'white'
-                  }).html('<svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>');
+              ['ex1', 'ex2', 'ex3'].forEach(function(ex, i) {
+                var $badge = $('#badge-' + (i + 1));
+                if (completed[ex]) {
+                  $badge.addClass('complete').html('✓');
                 }
               });
 
-              // Check if all complete
               if (completed.ex1 &amp;&amp; completed.ex2 &amp;&amp; completed.ex3) {
-                $('#completion-status').hide();
-                $('#all-complete').show();
+                $('#progress-tracker').hide();
+                $('#all-complete').addClass('show');
               }
             }
 
-            // Helper to safely execute user code
-            function executeCode(code, context) {
+            function executeCode(code) {
               try {
                 var fn = new Function('toast', 'SITModal', '_', '$', code);
                 fn(toast, SITModal, _, $);
@@ -495,133 +811,146 @@ SITModal.confirm(
               }
             }
 
-            // Default code for each exercise
-            var defaults = {
-              ex1: 'toast.show({\n  \n});',
-              ex2: 'var modal = new SITModal({\n  \n});\nmodal.open();',
-              ex3: "SITModal.confirm(\n  '',\n  function() {\n    \n  },\n  function() {\n    \n  }\n);"
-            };
+            function updateHintCounter(ex) {
+              var h = hints[ex];
+              $('#' + ex + '-hint-count').text(h.count + '/2');
+            }
 
-            // ========================================
-            // Exercise 1: Toast Notification
-            // ========================================
+            // ========== Exercise 1 ==========
+            $('#ex1-hint').on('click', function() {
+              var h = hints.ex1;
+              h.count = Math.min(h.count + 1, 2);
+              updateHintCounter('ex1');
 
-            $('#ex1-hint-toggle').on('click', function() {
-              $('#ex1-hint').toggleClass('show');
+              $('#ex1-code').val(h.steps[h.count]);
+
+              if (h.count >= 2) {
+                // Auto-execute on final hint
+                setTimeout(function() {
+                  $('#ex1-run').click();
+                }, 300);
+              }
             });
 
             $('#ex1-reset').on('click', function() {
               $('#ex1-code').val(defaults.ex1);
-              $('#ex1-success').removeClass('show');
+              $('#ex1-output').removeClass('show');
               $('#ex1-error').removeClass('show');
+              hints.ex1.count = 0;
+              updateHintCounter('ex1');
             });
 
             $('#ex1-run').on('click', function() {
               var code = $('#ex1-code').val();
               $('#ex1-error').removeClass('show');
+              $('#ex1-output').removeClass('show');
 
-              var result = executeCode(code, { toast: toast });
+              var result = executeCode(code);
 
               if (!result.success) {
-                $('#ex1-error').text('Error: ' + result.error).addClass('show');
+                $('#ex1-error-text').text(result.error);
+                $('#ex1-error').addClass('show');
                 return;
               }
 
-              // Check if code contains success type
               if (code.includes("'success'") || code.includes('"success"')) {
                 completed.ex1 = true;
-                $('#ex1-success').addClass('show');
+                $('#ex1-output').addClass('show');
                 updateProgress();
               }
             });
 
-            // ========================================
-            // Exercise 2: Modal Dialog
-            // ========================================
+            // ========== Exercise 2 ==========
+            $('#ex2-hint').on('click', function() {
+              var h = hints.ex2;
+              h.count = Math.min(h.count + 1, 2);
+              updateHintCounter('ex2');
 
-            $('#ex2-hint-toggle').on('click', function() {
-              $('#ex2-hint').toggleClass('show');
+              $('#ex2-code').val(h.steps[h.count]);
+
+              if (h.count >= 2) {
+                setTimeout(function() {
+                  $('#ex2-run').click();
+                }, 300);
+              }
             });
 
             $('#ex2-reset').on('click', function() {
               $('#ex2-code').val(defaults.ex2);
-              $('#ex2-success').removeClass('show');
+              $('#ex2-output').removeClass('show');
               $('#ex2-error').removeClass('show');
+              hints.ex2.count = 0;
+              updateHintCounter('ex2');
             });
 
             $('#ex2-run').on('click', function() {
               var code = $('#ex2-code').val();
               $('#ex2-error').removeClass('show');
+              $('#ex2-output').removeClass('show');
 
-              var result = executeCode(code, { SITModal: SITModal });
+              var result = executeCode(code);
 
               if (!result.success) {
-                $('#ex2-error').text('Error: ' + result.error).addClass('show');
+                $('#ex2-error-text').text(result.error);
+                $('#ex2-error').addClass('show');
                 return;
               }
 
-              // Check if a modal was opened (look for .sit-modal-backdrop)
               setTimeout(function() {
                 if ($('.sit-modal-backdrop').length > 0) {
                   completed.ex2 = true;
-                  $('#ex2-success').addClass('show');
+                  $('#ex2-output').addClass('show');
                   updateProgress();
                 }
-              }, 100);
+              }, 200);
             });
 
-            // ========================================
-            // Exercise 3: Confirm Dialog
-            // ========================================
+            // ========== Exercise 3 ==========
+            $('#ex3-hint').on('click', function() {
+              var h = hints.ex3;
+              h.count = Math.min(h.count + 1, 2);
+              updateHintCounter('ex3');
 
-            var ex3ConfirmClicked = false;
-            var ex3CancelClicked = false;
+              $('#ex3-code').val(h.steps[h.count]);
 
-            $('#ex3-hint-toggle').on('click', function() {
-              $('#ex3-hint').toggleClass('show');
+              if (h.count >= 2) {
+                setTimeout(function() {
+                  $('#ex3-run').click();
+                }, 300);
+              }
             });
 
             $('#ex3-reset').on('click', function() {
               $('#ex3-code').val(defaults.ex3);
-              $('#ex3-success').removeClass('show');
+              $('#ex3-output').removeClass('show');
               $('#ex3-error').removeClass('show');
-              ex3ConfirmClicked = false;
-              ex3CancelClicked = false;
+              hints.ex3.count = 0;
+              updateHintCounter('ex3');
             });
 
             $('#ex3-run').on('click', function() {
               var code = $('#ex3-code').val();
               $('#ex3-error').removeClass('show');
+              $('#ex3-output').removeClass('show');
 
-              // Wrap the callbacks to track if they were called
-              var wrappedCode = code.replace(
-                /SITModal\.confirm\s*\(/,
-                'window._ex3ConfirmCalled = false; window._ex3CancelCalled = false; SITModal.confirm('
-              );
-
-              var result = executeCode(code, { SITModal: SITModal, toast: toast });
+              var result = executeCode(code);
 
               if (!result.success) {
-                $('#ex3-error').text('Error: ' + result.error).addClass('show');
+                $('#ex3-error-text').text(result.error);
+                $('#ex3-error').addClass('show');
                 return;
               }
 
-              // Check if code has proper structure
-              if (code.includes('SITModal.confirm') &amp;&amp;
-                  code.includes('function()') &amp;&amp;
-                  (code.includes('toast.show') || code.includes('toast.'))) {
-
-                // Wait for user interaction with the confirm dialog
+              if (code.includes('SITModal.confirm') &amp;&amp; code.includes('toast.show')) {
                 var checkComplete = setInterval(function() {
                   if ($('.sit-modal-backdrop').length === 0) {
                     clearInterval(checkComplete);
                     completed.ex3 = true;
-                    $('#ex3-success').addClass('show');
+                    $('#ex3-output').addClass('show');
                     updateProgress();
                   }
-                }, 500);
+                }, 300);
 
-                // Timeout after 30 seconds
                 setTimeout(function() {
                   clearInterval(checkComplete);
                 }, 30000);
