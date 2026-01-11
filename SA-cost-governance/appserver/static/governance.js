@@ -531,7 +531,8 @@ require([
         var statusLower = (status || '').toLowerCase();
 
         // Badge styles - color coded by urgency/status
-        // Yellow (#f8be34): awaiting action (notified), suspicious
+        // Blue (#3498db): notified (timer running)
+        // Yellow (#f8be34): suspicious
         // Orange (#f1813f): newly flagged (flagged, pending)
         // Red (#dc4e41): expiring soon, critical
         // Gray (#708794): disabled
@@ -540,7 +541,7 @@ require([
         var badgeStyles = {
             flagged: 'background: #f1813f; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             pending: 'background: #f1813f; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
-            notified: 'background: #f8be34; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
+            notified: 'background: #3498db; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             enabled: 'background: #53a051; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             disabled: 'background: #708794; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             expiring: 'background: #dc4e41; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
@@ -2570,7 +2571,7 @@ require([
                 // Note: 'pending' = Flagged (awaiting notification), 'notified' = user has been notified
                 statuses = [
                     { value: 'pending', label: 'Flagged', color: '#f1813f' },
-                    { value: 'notified', label: 'Notified', color: '#f8be34' },
+                    { value: 'notified', label: 'Notified', color: '#3498db' },
                     { value: 'review', label: 'Under Review', color: '#6f42c1' },
                     { value: 'disabled', label: 'Disabled', color: '#dc4e41' },
                     { value: 'resolved', label: 'Resolved (Unflag)', color: '#53a051' }
@@ -2628,14 +2629,12 @@ require([
             var currentStatusLower = currentStatus.toLowerCase();
             var isUnflagged = currentStatusLower === 'ok' || currentStatusLower === 'suspicious';
 
-            // Check if already flagged (pending, notified, disabled, review states)
+            // Check if already flagged (pending, notified, review states) - disabled CAN be re-flagged
             var isAlreadyFlagged = currentStatusLower === 'flagged' ||
                                    currentStatusLower === 'pending' ||
                                    currentStatusLower === 'notified' ||
-                                   currentStatusLower === 'disabled' ||
                                    currentStatusLower === 'review' ||
-                                   currentStatusLower.indexOf('pending') > -1 ||
-                                   currentStatusLower.indexOf('disabled') > -1;
+                                   currentStatusLower.indexOf('pending') > -1;
 
             // Close menu
             $('.status-dropdown-menu').remove();
@@ -3455,7 +3454,7 @@ require([
                                 // Update status badge
                                 var $statusCell = $row.find('.status-cell');
                                 var newBadgeHtml = '<div class="status-dropdown-wrapper" data-search="' + escapeHtml(search.name) + '" data-owner="' + escapeHtml(search.owner) + '" data-app="' + escapeHtml(search.app) + '" data-current-status="notified" style="cursor: pointer; position: relative;" title="Click to change status">' +
-                                    '<span class="status-badge notified" style="background: #f8be34; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">NOTIFIED</span>' +
+                                    '<span class="status-badge notified" style="background: #3498db; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">NOTIFIED</span>' +
                                     '<span style="margin-left: 4px; font-size: 10px; opacity: 0.7;">▼</span>' +
                                     '</div>';
                                 $statusCell.html(newBadgeHtml);
@@ -3909,6 +3908,19 @@ require([
             var owner = currentCronSearch.owner;
             var app = currentCronSearch.app;
 
+            // Get locale prefix and CSRF token for AJAX calls
+            var locale = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+            var localePrefix = locale ? '/' + locale[1] : '';
+            var csrfToken = '';
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.indexOf('splunkweb_csrf_token_' + window.location.port) === 0) {
+                    csrfToken = cookie.split('=')[1];
+                    break;
+                }
+            }
+
             if (!searchName || !app) {
                 alert("Missing search information. Please try again.");
                 return;
@@ -3954,8 +3966,7 @@ require([
 
             function fallbackRestUpdate() {
                 // First, find the search with wildcard context to get the real owner/app
-                var locale = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
-                var localePrefix = locale ? '/' + locale[1] : '';
+                // localePrefix is defined at parent scope
                 var findEndpoint = localePrefix + '/splunkd/__raw/servicesNS/-/-/saved/searches/' + encodeURIComponent(searchName) + '?output_mode=json';
 
                 console.log("Finding search at:", findEndpoint);
@@ -4051,7 +4062,54 @@ require([
                 $('.cron-clickable[data-search="' + searchName + '"]').text(newCron).attr('data-cron', newCron);
                 currentCronSearch.cron = newCron;
 
-                // Don't auto-refresh - the visual update is done
+                // Also update the Frequency column to match the new schedule
+                var newFreq = getCronFrequencyPerDay(newCron);
+                var newFreqLabel = formatFrequency(newFreq);
+
+                // Find the row containing this search and update the Frequency cell
+                var $cronCell = $('.cron-clickable[data-search="' + searchName + '"]').closest('td');
+                if ($cronCell.length) {
+                    var $row = $cronCell.closest('tr');
+                    var $table = $row.closest('table');
+
+                    // Find Frequency column index from header
+                    var freqColIndex = -1;
+                    $table.find('thead th').each(function(index) {
+                        if ($(this).text().trim() === 'Frequency') {
+                            freqColIndex = index;
+                            return false;
+                        }
+                    });
+
+                    // Update the frequency cell if found
+                    if (freqColIndex >= 0) {
+                        var $freqCell = $row.find('td').eq(freqColIndex);
+                        if ($freqCell.length) {
+                            $freqCell.text(newFreqLabel);
+                        }
+                    }
+                }
+
+                // Dispatch the quick cron update saved search to update governance_search_cache.csv
+                // This reads fresh cron schedules from Splunk's REST API - much faster than full cache rebuild
+                var savedSearchName = encodeURIComponent('Governance - Quick Cron Update');
+                $.ajax({
+                    url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+                    type: 'POST',
+                    headers: {
+                        'X-Splunk-Form-Key': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        'dispatch.now': 'true'
+                    },
+                    success: function(response) {
+                        console.log("Cache refresh search dispatched successfully");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error dispatching cache refresh:", status, error);
+                    }
+                });
             }
         });
 
@@ -4201,15 +4259,20 @@ require([
     }
 
     function formatFrequency(freq) {
-        // freq is runs per day
-        if (freq >= 1440) return Math.round(freq) + 'x/day';
-        if (freq >= 48) return Math.round(freq) + 'x/day';
-        if (freq >= 24) return Math.round(freq) + 'x/day';
-        if (freq >= 2) return Math.round(freq) + 'x/day';
-        if (freq >= 1) return Math.round(freq) + 'x/day';
-        if (freq >= 0.14) return Math.round(freq * 7) + 'x/week';
-        if (freq >= 0.03) return Math.round(freq * 30) + 'x/month';
-        return '<1x/month';
+        // freq is runs per day - return labels matching cache's frequency_label
+        // frequency_seconds = 86400 / freq
+        var freqSeconds = freq > 0 ? Math.round(86400 / freq) : 86400;
+
+        if (freqSeconds <= 60) return 'Every 1 min';
+        if (freqSeconds <= 120) return 'Every 2 min';
+        if (freqSeconds <= 300) return 'Every 5 min';
+        if (freqSeconds <= 600) return 'Every 10 min';
+        if (freqSeconds <= 900) return 'Every 15 min';
+        if (freqSeconds <= 1800) return 'Every 30 min';
+        if (freqSeconds <= 3600) return 'Hourly';
+        if (freqSeconds <= 14400) return 'Every Few Hours';
+        if (freqSeconds <= 86400) return 'Daily';
+        return 'Custom';
     }
 
     function describeCron(minute, hour, dayMonth, month, dayWeek) {
@@ -5189,6 +5252,7 @@ require([
             var skipCheckboxes = true;
 
             var scheduleColIndex = -1;
+            var frequencyColIndex = -1;
             var searchNameColIndex = -1;
             var ownerColIndex = -1;
             var appColIndex = -1;
@@ -5204,6 +5268,7 @@ require([
             $table.find('thead th').each(function(index) {
                 var text = $(this).text().trim();
                 if (text === 'Schedule') scheduleColIndex = index;
+                if (text === 'Frequency') frequencyColIndex = index;
                 if (text === 'Search Name') searchNameColIndex = index;
                 if (text === 'Dashboard') { dashboardColIndex = index; isDashboardTable = true; }
                 if (text === 'Owner') ownerColIndex = index;
@@ -5371,7 +5436,7 @@ require([
                         $row.addClass('row-disabled');
                     } else if (isNotified) {
                         // NOTIFIED - timer is running
-                        var notifiedHtml = '<span class="notified-indicator" style="color: #f8be34; margin-right: 6px; font-size: 12px;" title="User notified - awaiting remediation">🔔</span>';
+                        var notifiedHtml = '<span class="notified-indicator" style="color: #3498db; margin-right: 6px; font-size: 12px;" title="User notified - awaiting remediation">🔔</span>';
                         $searchNameCell.prepend(notifiedHtml);
                         $row.addClass('row-notified');
                     } else if (isPendingReview) {
