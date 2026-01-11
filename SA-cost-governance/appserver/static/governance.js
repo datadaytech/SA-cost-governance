@@ -1986,20 +1986,8 @@ require([
                             '<span class="cron-search-info-value" id="cronModalApp">-</span>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="cron-section-title">Quick Presets <span style="font-size: 10px; color: rgba(255,255,255,0.5); font-weight: normal;">(with scheduler-friendly offsets)</span></div>' +
-                    '<div class="cron-preset-grid">' +
-                        '<div class="cron-preset-btn" data-cron="3-59/5 * * * *"><div class="cron-preset-label">Every 5 Min</div><div class="cron-preset-cron">3-59/5 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="7,22,37,52 * * * *"><div class="cron-preset-label">Every 15 Min</div><div class="cron-preset-cron">7,22,37,52 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="11,41 * * * *"><div class="cron-preset-label">Every 30 Min</div><div class="cron-preset-cron">11,41 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="3 * * * *"><div class="cron-preset-label">Hourly</div><div class="cron-preset-cron">3 * * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="7 */2 * * *"><div class="cron-preset-label">Every 2 Hours</div><div class="cron-preset-cron">7 */2 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="13 */4 * * *"><div class="cron-preset-label">Every 4 Hours</div><div class="cron-preset-cron">13 */4 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="17 */6 * * *"><div class="cron-preset-label">Every 6 Hours</div><div class="cron-preset-cron">17 */6 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="23 */12 * * *"><div class="cron-preset-label">Twice Daily</div><div class="cron-preset-cron">23 */12 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="19 0 * * *"><div class="cron-preset-label">Daily ~Midnight</div><div class="cron-preset-cron">19 0 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="11 6 * * *"><div class="cron-preset-label">Daily ~6 AM</div><div class="cron-preset-cron">11 6 * * *</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="29 0 * * 0"><div class="cron-preset-label">Weekly</div><div class="cron-preset-cron">29 0 * * 0</div></div>' +
-                        '<div class="cron-preset-btn" data-cron="37 0 1 * *"><div class="cron-preset-label">Monthly</div><div class="cron-preset-cron">37 0 1 * *</div></div>' +
+                    '<div class="cron-section-title">Quick Presets <span style="font-size: 10px; color: rgba(255,255,255,0.5); font-weight: normal;">(randomized offsets for load distribution)</span></div>' +
+                    '<div class="cron-preset-grid" id="cronPresetGrid">' +
                     '</div>' +
                     '<div class="cron-section-title">Custom Schedule</div>' +
                     '<div class="cron-input-section">' +
@@ -4521,6 +4509,48 @@ require([
         return text;
     }
 
+    // Generate randomized cron presets for load distribution
+    function generateRandomizedPresets() {
+        // Random minute offsets (0-59)
+        var r = function(max) { return Math.floor(Math.random() * max); };
+
+        // For every N minutes, randomize the starting offset
+        var m5 = r(5);  // 0-4 for every 5 min
+        var m15 = r(15); // 0-14 for every 15 min
+        var m30 = r(30); // 0-29 for every 30 min
+        var mHour = r(60); // 0-59 for hourly+
+
+        // Generate the 15-min intervals with random offset
+        var min15 = [m15, (m15 + 15) % 60, (m15 + 30) % 60, (m15 + 45) % 60].sort(function(a,b){return a-b}).join(',');
+        // Generate the 30-min intervals with random offset
+        var min30 = [m30, (m30 + 30) % 60].sort(function(a,b){return a-b}).join(',');
+
+        var presets = [
+            { label: 'Every 5 Min', cron: m5 + '-59/5 * * * *' },
+            { label: 'Every 15 Min', cron: min15 + ' * * * *' },
+            { label: 'Every 30 Min', cron: min30 + ' * * * *' },
+            { label: 'Hourly', cron: r(60) + ' * * * *' },
+            { label: 'Every 2 Hours', cron: r(60) + ' */2 * * *' },
+            { label: 'Every 4 Hours', cron: r(60) + ' */4 * * *' },
+            { label: 'Every 6 Hours', cron: r(60) + ' */6 * * *' },
+            { label: 'Twice Daily', cron: r(60) + ' */12 * * *' },
+            { label: 'Daily ~Midnight', cron: r(60) + ' 0 * * *' },
+            { label: 'Daily ~6 AM', cron: r(60) + ' 6 * * *' },
+            { label: 'Weekly', cron: r(60) + ' 0 * * ' + r(7) },
+            { label: 'Monthly', cron: r(60) + ' 0 ' + (r(28) + 1) + ' * *' }
+        ];
+
+        var html = '';
+        presets.forEach(function(p) {
+            html += '<div class="cron-preset-btn" data-cron="' + p.cron + '">' +
+                '<div class="cron-preset-label">' + p.label + '</div>' +
+                '<div class="cron-preset-cron">' + p.cron + '</div>' +
+                '</div>';
+        });
+
+        $('#cronPresetGrid').html(html);
+    }
+
     function openCronModal(searchName, cronSchedule, owner, app) {
         console.log("Opening cron modal for:", searchName, cronSchedule);
         currentCronSearch = { name: searchName, cron: cronSchedule, owner: owner, app: app };
@@ -4537,6 +4567,9 @@ require([
             $('#cronMonth').val(parts[3]);
             $('#cronDayWeek').val(parts[4]);
         }
+
+        // Generate new randomized presets each time modal opens
+        generateRandomizedPresets();
 
         $('.cron-preset-btn').removeClass('active');
         updateCronPreview();
