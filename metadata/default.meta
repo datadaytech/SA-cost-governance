@@ -1,0 +1,15 @@
+#
+# Default metadata for SA Topology Analyzer
+#
+
+[]
+export = system
+
+[views]
+export = system
+
+[nav]
+export = system
+
+[savedsearches]
+export = system

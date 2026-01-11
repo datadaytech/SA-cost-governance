@@ -1,0 +1,532 @@
+/**
+ * SA Topology Analyzer - Tile View Stylesheet
+ * ITSI-style Service Analyzer tile view with severity-sorted tiles
+ *
+ * @version 1.0.0
+ * @author DataDay Technology Solutions
+ */
+
+/* ==========================================
+   Header Styles
+   ========================================== */
+
+.tile-view-header {
+    background: #ffffff;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-left h1 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: #333;
+    font-weight: 600;
+}
+
+.header-left p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* ==========================================
+   Severity Summary Pills
+   ========================================== */
+
+.severity-summary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.severity-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform 0.2s ease;
+}
+
+.severity-pill:hover {
+    transform: scale(1.05);
+}
+
+.severity-pill .count {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.severity-pill .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.severity-pill.critical {
+    background: rgba(220, 78, 65, 0.15);
+    color: #DC4E41;
+    border: 2px solid #DC4E41;
+}
+
+.severity-pill.high {
+    background: rgba(245, 130, 32, 0.15);
+    color: #F58220;
+    border: 2px solid #F58220;
+}
+
+.severity-pill.medium {
+    background: rgba(248, 190, 52, 0.15);
+    color: #D9A400;
+    border: 2px solid #F8BE34;
+}
+
+.severity-pill.low {
+    background: rgba(107, 164, 184, 0.15);
+    color: #5A9EB0;
+    border: 2px solid #6BA4B8;
+}
+
+.severity-pill.normal {
+    background: rgba(101, 166, 55, 0.15);
+    color: #65A637;
+    border: 2px solid #65A637;
+}
+
+/* ==========================================
+   Tile Section Styles
+   ========================================== */
+
+.tile-section {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+.section-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.section-controls select:hover {
+    border-color: #ccc;
+}
+
+.section-controls select:focus {
+    border-color: #65A637;
+}
+
+/* ==========================================
+   Tiles Grid
+   ========================================== */
+
+.tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .tiles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .tiles-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* ==========================================
+   Loading and No Data States
+   ========================================== */
+
+.loading-indicator {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.loading-indicator::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 16px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #65A637;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* ==========================================
+   Service Tile Styles
+   ========================================== */
+
+.service-tile {
+    background: #65A637;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.service-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.tile-score {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.tile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tile-type {
+    font-size: 11px;
+    color: #fff;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.tile-severity {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* ==========================================
+   KPI Tile Styles
+   ========================================== */
+
+.kpi-tile {
+    background: #65A637;
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.kpi-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.tile-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.tile-kpi-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 8px;
+}
+
+.tile-source {
+    font-size: 10px;
+    color: #fff;
+    opacity: 0.8;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   Modal Styles
+   ========================================== */
+
+#tile-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#tile-modal {
+    background: #1a1a2e;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    max-height: 85vh;
+    overflow: hidden;
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.modal-body {
+    padding: 16px 24px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #2d3748;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ==========================================
+   KPI Row in Modal
+   ========================================== */
+
+.kpi-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.kpi-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ==========================================
+   Splunk Dashboard Overrides
+   ========================================== */
+
+.dashboard-body {
+    background: #f5f5f5 !important;
+}
+
+.panel-body {
+    padding: 0 !important;
+}
+
+.dashboard-panel {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.fieldset {
+    margin-bottom: 16px !important;
+}
+
+/* ==========================================
+   Responsive Styles
+   ========================================== */
+
+@media (max-width: 768px) {
+    .tile-view-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .severity-summary {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .severity-pill {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .severity-pill .count {
+        font-size: 14px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .tiles-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .service-tile,
+    .kpi-tile {
+        min-height: auto;
+        padding: 12px;
+    }
+
+    .tile-score {
+        font-size: 28px;
+    }
+
+    .tile-value {
+        font-size: 20px;
+    }
+
+    #tile-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .tiles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .severity-summary {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .severity-pill {
+        flex: 1;
+        min-width: calc(50% - 8px);
+        justify-content: center;
+    }
+}
+
+/* ==========================================
+   Print Styles
+   ========================================== */
+
+@media print {
+    .tile-view-header,
+    .tile-section {
+        break-inside: avoid;
+    }
+
+    .service-tile,
+    .kpi-tile {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+
+    #tile-modal-overlay {
+        display: none !important;
+    }
+}

@@ -1,0 +1,8 @@
+setting_key,setting_value,updated_by,updated_time
+schedule_enabled,"true",system,2026-01-11T00:00:00Z
+schedule_hour,"2",system,2026-01-11T00:00:00Z
+schedule_minute,"3",system,2026-01-11T00:00:00Z
+discovery_range,"-24h",system,2026-01-11T00:00:00Z
+default_view_mode,"mock",system,2026-01-11T00:00:00Z
+warning_threshold,"60",system,2026-01-11T00:00:00Z
+critical_threshold,"240",system,2026-01-11T00:00:00Z
