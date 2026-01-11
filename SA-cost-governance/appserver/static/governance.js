@@ -531,7 +531,8 @@ require([
         var statusLower = (status || '').toLowerCase();
 
         // Badge styles - color coded by urgency/status
-        // Yellow (#f8be34): awaiting action (notified), suspicious
+        // Blue (#3498db): notified (timer running)
+        // Yellow (#f8be34): suspicious
         // Orange (#f1813f): newly flagged (flagged, pending)
         // Red (#dc4e41): expiring soon, critical
         // Gray (#708794): disabled
@@ -540,7 +541,7 @@ require([
         var badgeStyles = {
             flagged: 'background: #f1813f; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             pending: 'background: #f1813f; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
-            notified: 'background: #f8be34; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
+            notified: 'background: #3498db; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             enabled: 'background: #53a051; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             disabled: 'background: #708794; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
             expiring: 'background: #dc4e41; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 4px;',
@@ -2570,7 +2571,7 @@ require([
                 // Note: 'pending' = Flagged (awaiting notification), 'notified' = user has been notified
                 statuses = [
                     { value: 'pending', label: 'Flagged', color: '#f1813f' },
-                    { value: 'notified', label: 'Notified', color: '#f8be34' },
+                    { value: 'notified', label: 'Notified', color: '#3498db' },
                     { value: 'review', label: 'Under Review', color: '#6f42c1' },
                     { value: 'disabled', label: 'Disabled', color: '#dc4e41' },
                     { value: 'resolved', label: 'Resolved (Unflag)', color: '#53a051' }
@@ -3455,7 +3456,7 @@ require([
                                 // Update status badge
                                 var $statusCell = $row.find('.status-cell');
                                 var newBadgeHtml = '<div class="status-dropdown-wrapper" data-search="' + escapeHtml(search.name) + '" data-owner="' + escapeHtml(search.owner) + '" data-app="' + escapeHtml(search.app) + '" data-current-status="notified" style="cursor: pointer; position: relative;" title="Click to change status">' +
-                                    '<span class="status-badge notified" style="background: #f8be34; color: #000; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">NOTIFIED</span>' +
+                                    '<span class="status-badge notified" style="background: #3498db; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">NOTIFIED</span>' +
                                     '<span style="margin-left: 4px; font-size: 10px; opacity: 0.7;">▼</span>' +
                                     '</div>';
                                 $statusCell.html(newBadgeHtml);
@@ -5371,7 +5372,7 @@ require([
                         $row.addClass('row-disabled');
                     } else if (isNotified) {
                         // NOTIFIED - timer is running
-                        var notifiedHtml = '<span class="notified-indicator" style="color: #f8be34; margin-right: 6px; font-size: 12px;" title="User notified - awaiting remediation">🔔</span>';
+                        var notifiedHtml = '<span class="notified-indicator" style="color: #3498db; margin-right: 6px; font-size: 12px;" title="User notified - awaiting remediation">🔔</span>';
                         $searchNameCell.prepend(notifiedHtml);
                         $row.addClass('row-notified');
                     } else if (isPendingReview) {
