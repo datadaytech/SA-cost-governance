@@ -5,6 +5,27 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.7] - 2025-01-10
+
+### Added
+- **ITSI-style KPI Modal**: Click any node to open a detailed modal with KPIs
+- **Health Score**: 0-100 scale calculated from weighted KPI severities
+- **5-Level Severity System**: Critical (red), High (orange), Medium (yellow), Low (blue), Normal (green)
+- **Sparkline Visualizations**: 24-hour trend graphs for each KPI and health score
+- **KPI Definitions by Node Type**:
+  - Universal Forwarders: Events/sec, Queue Fill %, CPU, Memory, Connection Health
+  - Heavy Forwarders: Events/sec, Parse Queue, TCP Out Queue, Indexer Ack Time, CPU, Memory
+  - Indexers: Events/sec, Index Latency, Disk Usage, Hot Buckets, Replication Health, Search Factor
+  - Search Heads: Concurrent Searches, Avg Search Time, Scheduled/Skipped Searches, CPU, Memory
+  - SHC Members: Bundle Replication, Captain Stability, Active Members
+- **Trend Indicators**: Arrows showing KPI direction with color-coded severity impact
+- **Modal Features**: ESC to close, click outside to close, "View in Splunk Search" drilldown button
+
+### Technical Details
+- Mock KPI values generated based on node health status
+- Inverse threshold support for "higher is better" metrics
+- D3.js-powered sparklines with area fills and current value dots
+
 ## [v1.0.6] - 2025-01-10
 
 ### Changed
