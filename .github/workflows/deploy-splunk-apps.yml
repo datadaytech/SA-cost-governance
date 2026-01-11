@@ -7,25 +7,110 @@ on:
     paths:
       - 'SA-*/**'
       - 'TA-*/**'
-  workflow_dispatch:  # Allow manual trigger
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'SA-*/**'
+      - 'TA-*/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'build'
+        type: choice
+        options:
+          - build
+          - dev
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  # Deploy PRs to Build environment for testing
+  deploy-to-build:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'build')
+    runs-on: [self-hosted, splunk-build]
+    environment: build
 
     steps:
-      - name: Deploy to Splunk
+      - name: Deploy to Build Splunk
         env:
           SPLUNK_PASSWORD: ${{ secrets.SPLUNK_ADMIN_PASSWORD }}
         run: |
           set -e
           cd /root/apps
 
+          echo "=== Deploying to BUILD environment ==="
+          echo "PR: #${{ github.event.pull_request.number || 'N/A' }}"
+          echo "Branch: ${{ github.head_ref || github.ref_name }}"
+
+          echo "=== Fixing permissions for git ==="
+          /usr/bin/sudo chown -R $(whoami):$(whoami) . 2>/dev/null || true
+
+          echo "=== Fetching PR branch ==="
+          git fetch origin ${{ github.head_ref || github.ref_name }}
+          git checkout ${{ github.head_ref || github.ref_name }}
+          git pull origin ${{ github.head_ref || github.ref_name }}
+
+          echo "=== Finding Splunk apps (SA-* and TA-*) ==="
+          APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
+
+          if [ -z "$APPS" ]; then
+            echo "No Splunk apps found"
+            exit 0
+          fi
+
+          echo "Found apps:"
+          echo "$APPS"
+
+          echo "=== Setting Splunk permissions ==="
+          for app in $APPS; do
+            /usr/bin/sudo chown -R 41812:41812 "$app" 2>/dev/null || true
+          done
+
+          echo "=== Reloading Splunk app configs ==="
+          for app in $APPS; do
+            echo "Reloading $app"
+            /usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
+              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app"
+          done
+
+          echo "=== Build deployment complete ==="
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Deployed to Build Environment\n\n**Splunk Build URL:** http://192.168.71.147:8000\n\n**Apps deployed:**\n- SA-cost-governance\n- SA-pii-detection\n- TA-governance-test-searches\n- TA-schedule-builder\n- TA-splunk_diagnostic\n- TA-user-governance\n\nPlease test your changes before merging.`
+            })
+
+  # Deploy to Dev environment when PR is merged to main
+  deploy-to-dev:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    runs-on: [self-hosted, splunk-lxc]
+    environment: dev
+
+    steps:
+      - name: Deploy to Dev Splunk
+        env:
+          SPLUNK_PASSWORD: ${{ secrets.SPLUNK_ADMIN_PASSWORD }}
+        run: |
+          set -e
+          cd /root/apps
+
+          echo "=== Deploying to DEV environment ==="
+          echo "Commit: ${{ github.sha }}"
+
           echo "=== Fixing permissions for git pull ==="
           /usr/bin/sudo chown -R $(whoami):$(whoami) . 2>/dev/null || true
 
           echo "=== Pulling latest changes ==="
           git fetch origin main
+          git checkout main
           git reset --hard origin/main
 
           echo "=== Finding Splunk apps (SA-* and TA-*) ==="
@@ -41,7 +126,6 @@ jobs:
 
           echo "=== Setting Splunk permissions ==="
           for app in $APPS; do
-            echo "Setting permissions for $app"
             /usr/bin/sudo chown -R 41812:41812 "$app" 2>/dev/null || true
           done
 
@@ -49,18 +133,19 @@ jobs:
           for app in $APPS; do
             echo "Reloading $app"
             /usr/bin/sudo docker exec splunk curl -s -k -u admin:${SPLUNK_PASSWORD} \
-              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app (may not be installed yet)"
+              -X POST "https://localhost:8089/services/apps/local/${app}/_reload" > /dev/null || echo "Warning: Could not reload $app"
           done
 
-          echo "=== Deployment complete ==="
-          echo "Deployed apps: $APPS"
+          echo "=== Dev deployment complete ==="
 
       - name: Generate deployment summary
         run: |
           cd /root/apps
           APPS=$(find . -maxdepth 1 -type d \( -name "SA-*" -o -name "TA-*" \) | sed 's|^\./||' | sort)
 
-          echo "## Splunk Apps Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Deployed to Dev Environment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Splunk Dev URL:** http://192.168.71.199:8000" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
