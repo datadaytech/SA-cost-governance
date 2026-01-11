@@ -212,17 +212,18 @@
     font-size: var(--sit-font-size-xl);
     font-weight: var(--sit-font-weight-semibold);
     margin: 0;
+    color: #ffffff;
 }
 
 .sit-modal-close {
     background: none;
     border: none;
-    color: var(--sit-text-secondary);
+    color: #c0c0c0;
     cursor: pointer;
     padding: var(--sit-spacing-xs);
     border-radius: var(--sit-radius-sm);
     transition: all var(--sit-transition-fast);
-    font-size: 20px;
+    font-size: 24px;
     line-height: 1;
 }
 
@@ -235,6 +236,17 @@
     padding: var(--sit-spacing-lg);
     overflow-y: auto;
     flex: 1;
+    color: #e0e0e0;
+}
+
+.sit-modal-body p {
+    color: #e0e0e0;
+    margin: 0 0 1em 0;
+    line-height: 1.6;
+}
+
+.sit-modal-body p:last-child {
+    margin-bottom: 0;
 }
 
 .sit-modal-footer {
@@ -322,6 +334,7 @@
 .sit-toast-title {
     font-weight: var(--sit-font-weight-semibold);
     margin-bottom: var(--sit-spacing-xxs);
+    color: #ffffff;
 }
 
 .sit-toast-message {
@@ -368,9 +381,9 @@
 .sit-checkbox-box {
     width: 18px;
     height: 18px;
-    border: 2px solid var(--sit-border-color);
+    border: 2px solid #5a6577;
     border-radius: var(--sit-radius-sm);
-    background: var(--sit-bg-dark);
+    background: #3a4149;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -435,10 +448,11 @@
 .sit-toggle-track {
     width: 44px;
     height: 24px;
-    background: var(--sit-bg-light);
+    background: #4a5568;
+    border: 2px solid #5a6577;
     border-radius: var(--sit-radius-full);
     position: relative;
-    transition: background var(--sit-transition-fast);
+    transition: all var(--sit-transition-fast);
     flex-shrink: 0;
 }
 
@@ -456,6 +470,7 @@
 
 .sit-toggle-input:checked + .sit-toggle-track {
     background: var(--sit-primary);
+    border-color: var(--sit-primary);
 }
 
 .sit-toggle-input:checked + .sit-toggle-track .sit-toggle-thumb {
