@@ -14,8 +14,9 @@ require([
     '/static/app/splunk-innovators-toolkit/components/sit-button.js',
     '/static/app/splunk-innovators-toolkit/components/sit-checkbox.js',
     '/static/app/splunk-innovators-toolkit/components/sit-toggle.js',
-    '/static/app/splunk-innovators-toolkit/components/sit-table.js'
-], function($, _, mvc, ready, SITModal, SITToast, SITButton, SITCheckbox, SITToggle, SITTable) {
+    '/static/app/splunk-innovators-toolkit/components/sit-table.js',
+    '/static/app/splunk-innovators-toolkit/js/sit-funny-messages.js'
+], function($, _, mvc, ready, SITModal, SITToast, SITButton, SITCheckbox, SITToggle, SITTable, FunnyMessages) {
     'use strict';
 
     console.log('Splunk Innovators Toolkit loaded!');
@@ -27,7 +28,8 @@ require([
         Button: SITButton,
         Checkbox: SITCheckbox,
         Toggle: SITToggle,
-        Table: SITTable
+        Table: SITTable,
+        FunnyMessages: FunnyMessages
     };
 
     // ========================================
@@ -35,33 +37,22 @@ require([
     // ========================================
     
     $('#demo-modal').on('click', function() {
+        var funnyContent = FunnyMessages.getRandomContent();
         var modal = new SITModal({
-            title: 'Example Modal',
-            content: [
-                '<p>This is a customizable modal dialog. You can put any content here:</p>',
-                '<ul style="margin: 16px 0; padding-left: 20px;">',
-                '  <li>Forms and inputs</li>',
-                '  <li>Data visualizations</li>',
-                '  <li>Confirmation messages</li>',
-                '  <li>Complex workflows</li>',
-                '</ul>',
-                '<div class="sit-form-group">',
-                '  <label class="sit-label">Example Input</label>',
-                '  <input type="text" class="sit-input" placeholder="Type something..." />',
-                '</div>'
-            ].join(''),
+            title: FunnyMessages.getRandomTitle(),
+            content: '<p style="font-size: 15px; line-height: 1.6;">' + funnyContent + '</p>',
             size: 'md',
             buttons: [
                 {
-                    label: 'Cancel',
+                    label: 'Meh, Whatever',
                     type: 'secondary',
                     action: 'close'
                 },
                 {
-                    label: 'Save Changes',
+                    label: 'That Was Hilarious!',
                     type: 'primary',
                     callback: function() {
-                        SITToast.success('Changes saved successfully!');
+                        SITToast.success(FunnyMessages.getRandomSuccess());
                         modal.close();
                     }
                 }
@@ -76,13 +67,13 @@ require([
     
     $('#demo-confirm').on('click', function() {
         SITModal.confirm(
-            'Are you sure you want to perform this action? This cannot be undone.',
-            'Confirm Action',
+            FunnyMessages.getRandomConfirm(),
+            'The Big Decision',
             function() {
-                SITToast.success('Action confirmed!');
+                SITToast.success(FunnyMessages.getRandomSuccess());
             },
             function() {
-                SITToast.info('Action cancelled');
+                SITToast.info('You chickened out! Just kidding, smart choice maybe?');
             }
         );
     });
@@ -200,7 +191,7 @@ require([
         striped: true,
         clickable: true,
         onRowClick: function(row) {
-            SITModal.alert('Selected: ' + row.host, 'Row Clicked');
+            SITModal.alert('You clicked on ' + row.host + '! ' + FunnyMessages.getRandomAlert(), FunnyMessages.getRandomAlertTitle());
         }
     });
     
@@ -237,27 +228,27 @@ require([
     // Reference Modal Demos
     $('#ref-modal-basic').on('click', function() {
         var modal = new SITModal({
-            title: 'Basic Modal Example',
-            content: '<p>This is a basic modal dialog. You can customize the title, content, size, and buttons.</p>',
+            title: FunnyMessages.getRandomTitle(),
+            content: '<p style="font-size: 15px; line-height: 1.6;">' + FunnyMessages.getRandomContent() + '</p>',
             size: 'md',
             buttons: [
-                { label: 'Close', type: 'secondary', action: 'close' },
-                { label: 'Got It', type: 'primary', action: 'close' }
+                { label: 'Nope', type: 'secondary', action: 'close' },
+                { label: 'Yep!', type: 'primary', action: 'close' }
             ]
         });
         modal.show();
     });
 
     $('#ref-modal-alert').on('click', function() {
-        SITModal.alert('This is a simple alert message.', 'Alert Example');
+        SITModal.alert(FunnyMessages.getRandomAlert(), FunnyMessages.getRandomAlertTitle());
     });
 
     $('#ref-modal-confirm').on('click', function() {
         SITModal.confirm(
-            'This is a confirm dialog. Click Confirm or Cancel.',
-            'Confirm Example',
-            function() { SITToast.success('You clicked Confirm!'); },
-            function() { SITToast.info('You clicked Cancel.'); }
+            FunnyMessages.getRandomConfirm(),
+            'Decision Time!',
+            function() { SITToast.success(FunnyMessages.getRandomSuccess()); },
+            function() { SITToast.info('Maybe next time! No pressure.'); }
         );
     });
 
