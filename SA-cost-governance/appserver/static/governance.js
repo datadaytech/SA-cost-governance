@@ -3908,6 +3908,19 @@ require([
             var owner = currentCronSearch.owner;
             var app = currentCronSearch.app;
 
+            // Get locale prefix and CSRF token for AJAX calls
+            var locale = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+            var localePrefix = locale ? '/' + locale[1] : '';
+            var csrfToken = '';
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.indexOf('splunkweb_csrf_token_' + window.location.port) === 0) {
+                    csrfToken = cookie.split('=')[1];
+                    break;
+                }
+            }
+
             if (!searchName || !app) {
                 alert("Missing search information. Please try again.");
                 return;
@@ -3953,8 +3966,7 @@ require([
 
             function fallbackRestUpdate() {
                 // First, find the search with wildcard context to get the real owner/app
-                var locale = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
-                var localePrefix = locale ? '/' + locale[1] : '';
+                // localePrefix is defined at parent scope
                 var findEndpoint = localePrefix + '/splunkd/__raw/servicesNS/-/-/saved/searches/' + encodeURIComponent(searchName) + '?output_mode=json';
 
                 console.log("Finding search at:", findEndpoint);
@@ -4077,6 +4089,27 @@ require([
                         }
                     }
                 }
+
+                // Dispatch the quick cron update saved search to update governance_search_cache.csv
+                // This reads fresh cron schedules from Splunk's REST API - much faster than full cache rebuild
+                var savedSearchName = encodeURIComponent('Governance - Quick Cron Update');
+                $.ajax({
+                    url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+                    type: 'POST',
+                    headers: {
+                        'X-Splunk-Form-Key': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        'dispatch.now': 'true'
+                    },
+                    success: function(response) {
+                        console.log("Cache refresh search dispatched successfully");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error dispatching cache refresh:", status, error);
+                    }
+                });
             }
         });
 
