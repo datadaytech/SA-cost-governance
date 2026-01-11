@@ -6090,15 +6090,61 @@ require([
     // ============================================
 
     function checkAutoDisable() {
+        // Get locale prefix for REST calls
+        var localePrefix = window.location.pathname.match(/^\/([a-z]{2}-[A-Z]{2})\//);
+        localePrefix = localePrefix ? '/' + localePrefix[1] : '';
+
+        // Get CSRF token from cookie
+        var csrfToken = '';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf('splunkweb_csrf_token_') === 0) {
+                csrfToken = cookie.split('=')[1];
+                break;
+            }
+        }
+
+        // Dispatch saved search with run_as_owner=1 to auto-disable overdue searches
+        var savedSearchName = encodeURIComponent('Governance - Auto Disable Overdue');
+
+        $.ajax({
+            url: localePrefix + '/splunkd/__raw/servicesNS/admin/SA-cost-governance/saved/searches/' + savedSearchName + '/dispatch',
+            type: 'POST',
+            headers: {
+                'X-Splunk-Form-Key': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            data: {
+                'dispatch.now': 'true'
+            },
+            success: function(response) {
+                console.log("Auto-disable check completed", response);
+                // Check if any searches were disabled by querying the lookup
+                checkForNewlyDisabledSearches();
+            },
+            error: function(xhr, status, error) {
+                console.error("Auto-disable check error:", xhr.status, error);
+            }
+        });
+    }
+
+    // Check if any searches were just auto-disabled and refresh if so
+    function checkForNewlyDisabledSearches() {
         var now = Math.floor(Date.now() / 1000);
+        var fiveMinAgo = now - 300; // Check for recent auto-disables
 
-        var updateQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
-            '| outputlookup flagged_searches_lookup';
+        // Query for recently disabled searches
+        var checkQuery = '| inputlookup flagged_searches_lookup | search status="disabled" notes="*AUTO-DISABLED*" | where remediation_deadline > ' + fiveMinAgo + ' OR remediation_deadline < ' + (now + 60) + ' | stats count';
 
-        runSearch(updateQuery, function(err, state) {
-            if (!err) {
-                console.log("Auto-disable check completed");
+        runSearch(checkQuery, function(err, results) {
+            if (!err && results && results.length > 0) {
+                var count = parseInt(results[0].count) || 0;
+                if (count > 0) {
+                    console.log("Found " + count + " recently auto-disabled search(es), refreshing dashboard...");
+                    showToast('🔴 ' + count + ' search(es) auto-disabled (deadline reached)');
+                    refreshDashboard();
+                }
             }
         });
     }
