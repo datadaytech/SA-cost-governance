@@ -1591,10 +1591,14 @@ require([
         var nodePositions = {};
 
         // Position management tier nodes in side panel
+        // Calculate x position relative to main g group for proper connection alignment
+        // mgmtGroup is at absolute x=20, nodes are at mgmtPanelWidth/2 within it
+        // Main g is at absolute x=margin.left, so relative x = (20 + mgmtPanelWidth/2) - margin.left
+        var mgmtNodeX = 20 + (mgmtPanelWidth / 2) - margin.left;
         var mgmtSpacing = (height - margin.top - margin.bottom) / (mgmtNodes.length + 1);
         mgmtNodes.forEach(function(node, i) {
             nodePositions[node.id] = {
-                x: -margin.left + 70, // In the management panel area
+                x: mgmtNodeX,
                 y: mgmtSpacing * (i + 1),
                 data: node,
                 isManagement: true

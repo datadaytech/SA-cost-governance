@@ -92,13 +92,21 @@
    RESET & BASE STYLES
    ============================================ */
 
-/* Force dark theme on all Splunk wrappers */
+/* Force dark theme on ALL elements */
 body,
 html,
 .main-section-body,
 .dashboard-body,
 .dashboard-view,
-.shared-page {
+.shared-page,
+.dashboard-panel,
+.dashboard-element,
+.dashboard-cell,
+.panel-element-row,
+.fieldset,
+form,
+.splunk-view,
+.html {
     background: #0a0a0f !important;
     background-color: #0a0a0f !important;
     color: #f4f4f5 !important;
@@ -109,12 +117,17 @@ html,
     min-height: 100vh;
 }
 
-.dashboard-row {
-    background: transparent !important;
+.dashboard-row,
+.dashboard-row-group {
+    background: #0a0a0f !important;
+    background-color: #0a0a0f !important;
 }
 
-.panel-body {
-    background: transparent !important;
+.panel-body,
+.panel-element-row,
+.dashboard-panel {
+    background: #0a0a0f !important;
+    background-color: #0a0a0f !important;
     border: none !important;
     padding: 0 !important;
 }
@@ -123,6 +136,21 @@ html,
 .panel-head h3,
 .panel-title {
     display: none !important;
+}
+
+/* Force all inputs and selects to have dark backgrounds */
+input,
+select,
+textarea,
+button {
+    background-color: #12121a !important;
+    color: #f4f4f5 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+select option {
+    background-color: #12121a !important;
+    color: #f4f4f5 !important;
 }
 
 /* Ensure all text uses proper contrast colors */

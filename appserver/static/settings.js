@@ -230,6 +230,13 @@ require([
                         $('#schedule-status').removeClass('active');
                         $('#schedule-badge').text('Disabled').addClass('warning');
                     }
+
+                    // Update the frequency display with human-readable time
+                    updateFrequencyDisplay(hour, minute);
+
+                    // Update the "Next Run" calculation after loading schedule
+                    updateNextRunDisplay(hour, minute);
+
                 } catch (e) {
                     console.warn('SA Topology Settings: Could not parse saved search config:', e);
                 }
@@ -239,8 +246,51 @@ require([
                 // Fall back to defaults
                 $('#schedule-hour').val('2');
                 $('#schedule-minute').val('3');
+                updateFrequencyDisplay('2', '3');
+                updateNextRunDisplay('2', '3');
             }
         });
+    }
+
+    // Update the frequency badge with human-readable schedule time
+    function updateFrequencyDisplay(hour, minute) {
+        var h = parseInt(hour) || 0;
+        var m = parseInt(minute) || 0;
+
+        // Format time in 12-hour format with AM/PM
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var hour12 = h % 12;
+        if (hour12 === 0) hour12 = 12;
+        var minuteStr = m < 10 ? '0' + m : m;
+
+        var timeStr = hour12 + ':' + minuteStr + ' ' + ampm;
+        var frequencyText = 'Daily at ' + timeStr;
+
+        // Update the time badge
+        $('.time-badge').text(frequencyText);
+
+        console.log('SA Topology Settings: Updated frequency display to:', frequencyText);
+    }
+
+    // Update the "Next Run" display
+    function updateNextRunDisplay(hour, minute) {
+        var h = parseInt(hour) || 2;
+        var m = parseInt(minute) || 3;
+        var now = new Date();
+        var nextRun = new Date(now);
+        nextRun.setHours(h, m, 0, 0);
+
+        if (nextRun <= now) {
+            nextRun.setDate(nextRun.getDate() + 1);
+        }
+
+        var timeUntil = nextRun - now;
+        var hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60));
+        var minutesUntil = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+
+        $('#next-run').text(hoursUntil + 'h ' + minutesUntil + 'm');
+
+        console.log('SA Topology Settings: Updated next run display to:', hoursUntil + 'h ' + minutesUntil + 'm');
     }
 
     // Load settings using the unified Storage interface
@@ -701,9 +751,12 @@ require([
         });
         $('#clear-cache-btn').on('click', clearCache);
 
-        // Update next run time when schedule changes
+        // Update next run time and frequency display when schedule changes
         $('#schedule-hour, #schedule-minute').on('change', function() {
-            loadDiscoveryStatus();
+            var hour = $('#schedule-hour').val();
+            var minute = $('#schedule-minute').val();
+            updateFrequencyDisplay(hour, minute);
+            updateNextRunDisplay(hour, minute);
         });
     });
 });
