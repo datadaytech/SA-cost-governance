@@ -5,6 +5,25 @@ All notable changes to SA Topology Analyzer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.12] - 2025-01-10
+
+### Changed
+- **Settings Page Dark Theme Redesign**: Complete UI overhaul for better readability
+  - GitHub-inspired dark color palette (#0d1117 primary, #161b22 secondary)
+  - Premium toggle switches with smooth animations
+  - Gradient buttons with hover effects and shadow depth
+  - Card-based layout with hover animations
+  - Status cards with gradient top borders
+  - CSS variables for consistent theming
+  - Responsive design for all screen sizes
+  - Better visual hierarchy with proper contrast ratios
+
+### Technical Details
+- CSS custom properties (variables) for maintainable dark theme
+- Splunk dashboard style overrides for seamless integration
+- Notification system with slide-in animations
+- Help section with numbered workflow cards
+
 ## [v1.0.11] - 2025-01-10
 
 ### Added

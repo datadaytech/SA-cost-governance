@@ -1,41 +1,126 @@
 /**
  * SA Topology Analyzer - Settings Page Styles
+ * Modern dark theme matching topology visualization
  */
 
+/* ============================================
+   BASE STYLES & VARIABLES
+   ============================================ */
+:root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-card: #1c2128;
+    --bg-hover: #262c36;
+    --border-color: #30363d;
+    --border-subtle: #21262d;
+
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+
+    --accent-green: #65A637;
+    --accent-green-hover: #7bc043;
+    --accent-blue: #58a6ff;
+    --accent-orange: #f0883e;
+    --accent-red: #f85149;
+    --accent-purple: #a371f7;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}
+
+/* Override Splunk's default styles */
+.dashboard-body {
+    background: var(--bg-primary) !important;
+}
+
+.dashboard-row {
+    background: transparent !important;
+}
+
+.panel-body {
+    background: transparent !important;
+    border: none !important;
+}
+
+.panel-head h3 {
+    display: none !important;
+}
+
+/* ============================================
+   SETTINGS CONTAINER
+   ============================================ */
 .settings-container {
-    padding: 20px 0;
+    padding: 32px 0 16px;
+}
+
+.settings-header {
+    text-align: center;
+    margin-bottom: 8px;
 }
 
 .settings-header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    color: #1a1a2e;
-    margin: 0 0 8px 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+    letter-spacing: -0.5px;
 }
 
 .settings-header p {
-    color: #6c757d;
-    font-size: 14px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* ============================================
+   SETTINGS SECTIONS (Cards)
+   ============================================ */
+.settings-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 28px;
     margin: 0;
 }
 
-.settings-section {
-    padding: 20px;
+.setting-description {
+    background: linear-gradient(135deg, rgba(101, 166, 55, 0.1) 0%, rgba(101, 166, 55, 0.05) 100%);
+    border: 1px solid rgba(101, 166, 55, 0.2);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
 }
 
-.setting-description {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 24px;
-    border-left: 4px solid #65A637;
+.setting-description::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-green);
 }
 
 .setting-description p {
-    margin: 0 0 8px 0;
-    color: #495057;
+    margin: 0 0 10px 0;
+    color: var(--text-secondary);
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .setting-description p:last-child {
@@ -43,18 +128,30 @@
 }
 
 .setting-description code {
-    background: #e9ecef;
-    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 3px 8px;
     border-radius: 4px;
     font-size: 13px;
-    color: #d63384;
+    color: var(--accent-blue);
+    font-family: 'SF Mono', 'Consolas', monospace;
 }
 
+/* ============================================
+   SETTING ROWS
+   ============================================ */
 .setting-row {
     display: flex;
     align-items: flex-start;
-    padding: 16px 0;
-    border-bottom: 1px solid #e9ecef;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background var(--transition-fast);
+}
+
+.setting-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+    margin: 0 -28px;
+    padding: 20px 28px;
+    border-radius: var(--radius-sm);
 }
 
 .setting-row:last-of-type {
@@ -63,46 +160,50 @@
 
 .setting-label {
     flex: 1;
-    padding-right: 24px;
+    padding-right: 32px;
 }
 
 .setting-label label {
     display: block;
     font-weight: 600;
-    color: #212529;
-    font-size: 14px;
-    margin-bottom: 4px;
+    color: var(--text-primary);
+    font-size: 15px;
+    margin-bottom: 6px;
 }
 
 .setting-help {
     display: block;
-    color: #6c757d;
-    font-size: 12px;
-    line-height: 1.4;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 .setting-control {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 .setting-control.inline-inputs {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px;
 }
 
 .setting-control.inline-inputs label {
     font-size: 13px;
-    color: #495057;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
-/* Toggle Switch */
+/* ============================================
+   TOGGLE SWITCH (Premium Look)
+   ============================================ */
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 26px;
+    width: 52px;
+    height: 28px;
 }
 
 .toggle-switch input {
@@ -118,9 +219,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
-    transition: 0.3s;
-    border-radius: 26px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    transition: var(--transition-normal);
+    border-radius: 28px;
 }
 
 .toggle-slider:before {
@@ -128,140 +230,214 @@
     content: "";
     height: 20px;
     width: 20px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.3s;
+    left: 2px;
+    bottom: 2px;
+    background: var(--text-secondary);
+    transition: var(--transition-normal);
     border-radius: 50%;
+    box-shadow: var(--shadow-sm);
 }
 
 input:checked + .toggle-slider {
-    background-color: #65A637;
+    background: var(--accent-green);
+    border-color: var(--accent-green);
 }
 
 input:checked + .toggle-slider:before {
     transform: translateX(24px);
+    background: white;
+}
+
+input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(101, 166, 55, 0.3);
 }
 
 .toggle-label {
-    font-size: 13px;
-    color: #495057;
-    min-width: 60px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 70px;
 }
 
-/* Schedule Inputs */
+/* ============================================
+   SELECT INPUTS (Dark Theme)
+   ============================================ */
 .schedule-input {
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
     font-size: 14px;
-    color: #495057;
-    background: white;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
     cursor: pointer;
+    transition: all var(--transition-fast);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.schedule-input:hover {
+    border-color: var(--text-muted);
+    background-color: var(--bg-hover);
 }
 
 .schedule-input:focus {
     outline: none;
-    border-color: #65A637;
-    box-shadow: 0 0 0 3px rgba(101, 166, 55, 0.15);
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(101, 166, 55, 0.2);
+}
+
+.schedule-input option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .schedule-input.wide {
-    min-width: 250px;
+    min-width: 280px;
 }
 
 .schedule-input.small {
-    min-width: 100px;
+    min-width: 120px;
 }
 
 .schedule-separator {
-    font-size: 18px;
-    font-weight: 600;
-    color: #495057;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-muted);
 }
 
 .schedule-info {
     font-size: 13px;
-    color: #6c757d;
+    color: var(--text-muted);
     margin-left: 8px;
+    background: var(--bg-tertiary);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
 }
 
-/* Buttons */
+/* ============================================
+   BUTTONS (Premium Style)
+   ============================================ */
 .setting-actions {
     display: flex;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid #e9ecef;
+    gap: 16px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-subtle);
 }
 
 .btn {
-    padding: 10px 20px;
-    border-radius: 6px;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     border: none;
-    transition: all 0.2s;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-primary {
-    background: #65A637;
+    background: linear-gradient(135deg, var(--accent-green) 0%, #5a9430 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(101, 166, 55, 0.3);
 }
 
 .btn-primary:hover {
-    background: #5a9430;
+    background: linear-gradient(135deg, var(--accent-green-hover) 0%, var(--accent-green) 100%);
+    box-shadow: 0 4px 16px rgba(101, 166, 55, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-secondary {
-    background: #6c757d;
-    color: white;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
+    background: var(--bg-hover);
+    border-color: var(--text-muted);
 }
 
 .btn-danger {
-    background: #dc3545;
-    color: white;
+    background: rgba(248, 81, 73, 0.1);
+    color: var(--accent-red);
+    border: 1px solid rgba(248, 81, 73, 0.3);
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: rgba(248, 81, 73, 0.2);
+    border-color: var(--accent-red);
 }
 
-/* Status Grid */
+/* ============================================
+   STATUS CARDS (Dashboard Style)
+   ============================================ */
 .status-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 20px;
 }
 
 .status-card {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
     text-align: center;
-    border: 1px solid #e9ecef;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.status-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.status-card:hover {
+    border-color: var(--border-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.status-card:hover::before {
+    opacity: 1;
 }
 
 .status-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
 }
 
 .status-icon.success {
-    color: #65A637;
+    color: var(--accent-green);
 }
 
 .status-icon.warning {
-    color: #ffc107;
+    color: var(--accent-orange);
 }
 
 .status-icon.error {
-    color: #dc3545;
+    color: var(--accent-red);
 }
 
 .status-info {
@@ -269,28 +445,73 @@ input:checked + .toggle-slider:before {
 }
 
 .status-label {
-    font-size: 12px;
-    color: #6c757d;
+    font-size: 11px;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
 .status-value {
     font-size: 14px;
-    color: #212529;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .status-value-large {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
-    color: #65A637;
+    color: var(--accent-green);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
 }
 
-/* Help Section */
+/* ============================================
+   TABLES (Dark Theme)
+   ============================================ */
+.panel-body .table,
+.panel-body table {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-md) !important;
+    overflow: hidden;
+}
+
+.panel-body .table th,
+.panel-body table th {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+    padding: 14px 16px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.panel-body .table td,
+.panel-body table td {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    padding: 12px 16px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+.panel-body .table tr:hover td,
+.panel-body table tr:hover td {
+    background: var(--bg-hover) !important;
+}
+
+/* ============================================
+   HELP SECTION
+   ============================================ */
 .help-section {
-    background: #f8f9fa;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 28px;
 }
 
 .help-grid {
@@ -303,17 +524,24 @@ input:checked + .toggle-slider:before {
 .help-card {
     display: flex;
     gap: 16px;
-    background: white;
-    border-radius: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 20px;
-    border: 1px solid #e9ecef;
+    transition: all var(--transition-fast);
+}
+
+.help-card:hover {
+    border-color: var(--border-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .help-number {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    background: #65A637;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent-green) 0%, #5a9430 100%);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -321,43 +549,54 @@ input:checked + .toggle-slider:before {
     justify-content: center;
     font-weight: 700;
     font-size: 16px;
+    box-shadow: 0 2px 8px rgba(101, 166, 55, 0.3);
 }
 
 .help-content h4 {
     margin: 0 0 8px 0;
     font-size: 14px;
     font-weight: 600;
-    color: #212529;
+    color: var(--text-primary);
 }
 
 .help-content p {
     margin: 0;
     font-size: 13px;
-    color: #6c757d;
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
 .help-content code {
-    background: #e9ecef;
+    background: rgba(0, 0, 0, 0.3);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
-    color: #d63384;
+    color: var(--accent-blue);
 }
 
-/* Runtime Table */
+/* ============================================
+   RUNTIME TABLE
+   ============================================ */
 .estimated-runtime {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid #e9ecef;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
 }
 
 .estimated-runtime h4 {
-    margin: 0 0 16px 0;
-    font-size: 14px;
+    margin: 0 0 20px 0;
+    font-size: 15px;
     font-weight: 600;
-    color: #212529;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.estimated-runtime h4::before {
+    content: '⏱';
+    font-size: 18px;
 }
 
 .runtime-table {
@@ -367,27 +606,83 @@ input:checked + .toggle-slider:before {
 
 .runtime-table th,
 .runtime-table td {
-    padding: 10px 16px;
+    padding: 12px 16px;
     text-align: left;
-    border-bottom: 1px solid #e9ecef;
     font-size: 13px;
 }
 
 .runtime-table th {
-    background: #f8f9fa;
+    background: var(--bg-secondary);
     font-weight: 600;
-    color: #495057;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .runtime-table td {
-    color: #6c757d;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .runtime-table tr:last-child td {
     border-bottom: none;
 }
 
-/* Responsive */
+.runtime-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ============================================
+   NOTIFICATIONS
+   ============================================ */
+.settings-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 14px 28px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+.settings-notification.success {
+    background: linear-gradient(135deg, var(--accent-green) 0%, #5a9430 100%);
+    color: white;
+}
+
+.settings-notification.error {
+    background: linear-gradient(135deg, var(--accent-red) 0%, #da3633 100%);
+    color: white;
+}
+
+.settings-notification.info {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
 @media (max-width: 1200px) {
     .status-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -401,11 +696,16 @@ input:checked + .toggle-slider:before {
 @media (max-width: 768px) {
     .setting-row {
         flex-direction: column;
+        gap: 16px;
+    }
+
+    .setting-row:hover {
+        margin: 0;
+        padding: 20px 0;
     }
 
     .setting-label {
         padding-right: 0;
-        margin-bottom: 12px;
     }
 
     .status-grid {
@@ -415,4 +715,38 @@ input:checked + .toggle-slider:before {
     .help-grid {
         grid-template-columns: 1fr;
     }
+
+    .setting-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   PANEL TITLE OVERRIDES
+   ============================================ */
+.dashboard-panel .panel-title,
+.panel-head .panel-title {
+    color: var(--text-primary) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    padding: 16px 20px !important;
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    margin: 0 !important;
+}
+
+/* Error message styling */
+.msg-error,
+.alert-error {
+    background: rgba(248, 81, 73, 0.1) !important;
+    border: 1px solid rgba(248, 81, 73, 0.3) !important;
+    color: var(--accent-red) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 12px 16px !important;
 }
