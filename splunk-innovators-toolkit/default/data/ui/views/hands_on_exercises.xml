@@ -1,6 +1,6 @@
 <dashboard version="1.1" script="js/sit-toolkit.js" stylesheet="css/sit-theme.css,css/sit-components.css">
   <label>Hands-On Exercises</label>
-  <description>Practice what you've learned with these interactive exercises</description>
+  <description>Practice applying what you've learned by writing code and seeing it run</description>
 
   <row>
     <panel>
@@ -40,70 +40,121 @@
             margin-bottom: 16px;
             line-height: 1.6;
           }
-          .exercise-objectives {
-            background: var(--sit-bg-dark);
+          .exercise-task {
+            background: var(--sit-info-bg);
+            border: 1px solid var(--sit-info);
             border-radius: var(--sit-radius-md);
             padding: 16px;
             margin-bottom: 20px;
           }
-          .exercise-objectives h4 {
+          .exercise-task h4 {
             margin: 0 0 8px 0;
+            color: var(--sit-info);
             font-size: 0.875rem;
             text-transform: uppercase;
-            color: var(--sit-text-muted);
           }
-          .exercise-objectives ul {
-            margin: 0;
-            padding-left: 20px;
+          .code-editor {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid var(--sit-border-color);
+            border-radius: var(--sit-radius-md);
+            resize: vertical;
+            tab-size: 2;
           }
-          .exercise-objectives li {
-            margin-bottom: 4px;
+          .code-editor:focus {
+            outline: none;
+            border-color: var(--sit-primary);
+            box-shadow: 0 0 0 3px var(--sit-primary-light);
           }
-          .exercise-workspace {
+          .output-area {
             border: 2px dashed var(--sit-border-color);
             border-radius: var(--sit-radius-md);
             padding: 24px;
-            min-height: 200px;
+            min-height: 100px;
+            margin-top: 16px;
+            background: var(--sit-bg-dark);
           }
-          .exercise-workspace-label {
+          .output-label {
             font-size: 0.75rem;
             text-transform: uppercase;
             color: var(--sit-text-muted);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
           }
-          .success-message {
+          .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+          }
+          .success-banner {
             background: var(--sit-success-bg);
             border: 1px solid var(--sit-success);
             border-radius: var(--sit-radius-md);
-            padding: 16px;
+            padding: 12px 16px;
             margin-top: 16px;
             display: none;
+            color: var(--sit-success);
+            font-weight: 500;
           }
-          .success-message.show {
+          .success-banner.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .error-banner {
+            background: var(--sit-error-bg);
+            border: 1px solid var(--sit-error);
+            border-radius: var(--sit-radius-md);
+            padding: 12px 16px;
+            margin-top: 16px;
+            display: none;
+            color: var(--sit-error);
+          }
+          .error-banner.show {
             display: block;
           }
-          .hint-btn {
+          .hint-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--sit-border-color);
+          }
+          .hint-toggle {
             font-size: 0.875rem;
             color: var(--sit-info);
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
-            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
           }
-          .hint-btn:hover {
+          .hint-toggle:hover {
             text-decoration: underline;
           }
-          .hint-text {
-            background: var(--sit-info-bg);
+          .hint-content {
+            background: var(--sit-bg-dark);
             border-radius: var(--sit-radius-md);
-            padding: 12px;
-            margin-top: 8px;
-            font-size: 0.875rem;
+            padding: 16px;
+            margin-top: 12px;
             display: none;
+            font-size: 0.875rem;
           }
-          .hint-text.show {
+          .hint-content.show {
             display: block;
+          }
+          .hint-content pre {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: var(--sit-radius-sm);
+            overflow-x: auto;
+            margin: 8px 0;
+            color: #d4d4d4;
           }
           .intro-section {
             text-align: center;
@@ -116,272 +167,286 @@
           }
           .intro-section p {
             color: var(--sit-text-secondary);
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
           }
-          .form-row {
-            display: flex;
-            gap: 16px;
+          .reference-box {
+            background: var(--sit-bg-dark);
+            border-radius: var(--sit-radius-md);
+            padding: 16px;
             margin-bottom: 16px;
+            font-size: 0.875rem;
           }
-          .form-row > div {
-            flex: 1;
-          }
-          .task-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: var(--sit-bg-dark);
-            border-radius: var(--sit-radius-md);
-            margin-bottom: 8px;
-          }
-          .task-item.completed {
-            opacity: 0.6;
-          }
-          .task-item.completed .task-text {
-            text-decoration: line-through;
-          }
-          .task-text {
-            flex: 1;
-          }
-          .notification-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: var(--sit-bg-dark);
-            border-radius: var(--sit-radius-md);
-            margin-bottom: 8px;
-            border-left: 3px solid var(--sit-info);
-          }
-          .notification-item.unread {
-            background: var(--sit-bg-light);
-          }
-          .notification-content {
-            flex: 1;
-          }
-          .notification-title {
-            font-weight: 500;
-          }
-          .notification-time {
-            font-size: 0.75rem;
+          .reference-box h5 {
+            margin: 0 0 8px 0;
             color: var(--sit-text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+          }
+          .reference-box code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
           }
         </style>
 
         <div class="intro-section">
           <h2>Hands-On Exercises</h2>
-          <p>Put your knowledge to the test! Complete these exercises to practice using the SIT components you learned about in the demo.</p>
+          <p>Put your knowledge to the test! Write JavaScript code in the editors below and click "Run Code" to see your components come to life. Each exercise builds on what you learned in the demo.</p>
         </div>
       </html>
     </panel>
   </row>
 
-  <!-- Exercise 1: Feedback Form -->
+  <!-- Exercise 1: Show a Toast Notification -->
   <row>
     <panel>
       <html>
         <div class="exercise-container">
           <div class="exercise-header">
             <div class="exercise-number">1</div>
-            <h3 class="exercise-title">Build a Feedback Form</h3>
+            <h3 class="exercise-title">Show a Toast Notification</h3>
           </div>
 
           <p class="exercise-description">
-            Create a simple feedback form that collects a user's name, email, and message.
-            When submitted, display a success toast notification and show a confirmation message.
+            Toast notifications are great for giving users feedback. Your task is to write code that displays a success toast with a custom message.
           </p>
 
-          <div class="exercise-objectives">
-            <h4>Learning Objectives</h4>
-            <ul>
-              <li>Use text inputs to collect user data</li>
-              <li>Handle button click events</li>
-              <li>Display toast notifications for feedback</li>
-              <li>Validate form fields before submission</li>
-            </ul>
+          <div class="exercise-task">
+            <h4>Your Task</h4>
+            <p>Write code to show a <strong>success</strong> toast notification with the title "Well Done!" and message "You completed your first exercise!"</p>
           </div>
 
-          <div class="exercise-workspace">
-            <div class="exercise-workspace-label">Your Workspace</div>
-
-            <div id="exercise1-form">
-              <div class="form-row">
-                <div class="sit-form-group">
-                  <label class="sit-label">Your Name</label>
-                  <input type="text" class="sit-input" id="ex1-name" placeholder="Enter your name" />
-                </div>
-                <div class="sit-form-group">
-                  <label class="sit-label">Email Address</label>
-                  <input type="email" class="sit-input" id="ex1-email" placeholder="Enter your email" />
-                </div>
-              </div>
-
-              <div class="sit-form-group">
-                <label class="sit-label">Your Feedback</label>
-                <textarea class="sit-input" id="ex1-message" rows="4" placeholder="Tell us what you think..." style="resize: vertical;"></textarea>
-              </div>
-
-              <div style="display: flex; gap: 12px;">
-                <button class="sit-btn sit-btn-primary" id="ex1-submit">Submit Feedback</button>
-                <button class="sit-btn sit-btn-secondary" id="ex1-clear">Clear Form</button>
-              </div>
-            </div>
-
-            <div id="ex1-success" class="success-message">
-              <strong>Thank you for your feedback!</strong>
-              <p style="margin: 8px 0 0 0;">Your submission has been received. We appreciate you taking the time to share your thoughts.</p>
-            </div>
+          <div class="reference-box">
+            <h5>Quick Reference</h5>
+            <p>Use <code>toast.show({ type: '...', title: '...', message: '...' })</code></p>
+            <p>Available types: <code>success</code>, <code>error</code>, <code>warning</code>, <code>info</code></p>
           </div>
 
-          <button class="hint-btn" id="ex1-hint-btn">Need a hint?</button>
-          <div class="hint-text" id="ex1-hint">
-            <strong>Hint:</strong> Make sure to check that all fields have values before submitting.
-            Use <code>SIT.toast.success()</code> to show a success message, and add the <code>show</code>
-            class to the success message div to display the confirmation.
+          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
+          <textarea class="code-editor" id="ex1-code" placeholder="// Write your code here...
+// Example: toast.show({ type: 'info', title: 'Hello', message: 'World' });">toast.show({
+
+});</textarea>
+
+          <div class="button-row">
+            <button class="sit-btn sit-btn-primary" id="ex1-run">Run Code</button>
+            <button class="sit-btn sit-btn-secondary" id="ex1-reset">Reset</button>
+          </div>
+
+          <div class="success-banner" id="ex1-success">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Exercise Complete! You showed a success toast.
+          </div>
+          <div class="error-banner" id="ex1-error"></div>
+
+          <div class="hint-section">
+            <button class="hint-toggle" id="ex1-hint-toggle">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+              </svg>
+              Need a hint?
+            </button>
+            <div class="hint-content" id="ex1-hint">
+              <p><strong>Solution:</strong></p>
+              <pre>toast.show({
+  type: 'success',
+  title: 'Well Done!',
+  message: 'You completed your first exercise!'
+});</pre>
+            </div>
           </div>
         </div>
       </html>
     </panel>
   </row>
 
-  <!-- Exercise 2: Task Tracker -->
+  <!-- Exercise 2: Open a Modal Dialog -->
   <row>
     <panel>
       <html>
         <div class="exercise-container">
           <div class="exercise-header">
             <div class="exercise-number">2</div>
-            <h3 class="exercise-title">Create a Task Tracker</h3>
+            <h3 class="exercise-title">Open a Modal Dialog</h3>
           </div>
 
           <p class="exercise-description">
-            Build a simple task tracker where you can add tasks, mark them as complete using checkboxes,
-            and use a toggle to show/hide completed tasks.
+            Modals are useful for displaying important information or collecting user input. Your task is to create and open a modal with custom content.
           </p>
 
-          <div class="exercise-objectives">
-            <h4>Learning Objectives</h4>
-            <ul>
-              <li>Dynamically add items to a list</li>
-              <li>Use checkboxes to track completion state</li>
-              <li>Use toggle switches to filter content</li>
-              <li>Update the UI based on user interactions</li>
-            </ul>
+          <div class="exercise-task">
+            <h4>Your Task</h4>
+            <p>Create a modal with the title "Welcome!" and body content that says "This is my first modal." Then call <code>.open()</code> to display it.</p>
           </div>
 
-          <div class="exercise-workspace">
-            <div class="exercise-workspace-label">Your Workspace</div>
-
-            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-              <input type="text" class="sit-input" id="ex2-task-input" placeholder="Enter a new task..." style="flex: 1;" />
-              <button class="sit-btn sit-btn-primary" id="ex2-add-task">Add Task</button>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding: 12px; background: var(--sit-bg-dark); border-radius: var(--sit-radius-md);">
-              <span id="ex2-toggle-container"></span>
-              <span style="color: var(--sit-text-secondary); font-size: 0.875rem;" id="ex2-task-count">0 tasks total</span>
-            </div>
-
-            <div id="ex2-task-list">
-              <!-- Tasks will be added here dynamically -->
-              <div style="text-align: center; padding: 32px; color: var(--sit-text-muted);">
-                No tasks yet. Add your first task above!
-              </div>
-            </div>
+          <div class="reference-box">
+            <h5>Quick Reference</h5>
+            <p>Create: <code>var modal = new SITModal({ title: '...', body: '...' })</code></p>
+            <p>Open: <code>modal.open()</code></p>
+            <p>Optional: <code>size: 'sm'</code>, <code>size: 'md'</code>, <code>size: 'lg'</code></p>
           </div>
 
-          <button class="hint-btn" id="ex2-hint-btn">Need a hint?</button>
-          <div class="hint-text" id="ex2-hint">
-            <strong>Hint:</strong> When adding a task, create a new <code>SITCheckbox</code> component
-            and append it to the task list. Listen for the checkbox's <code>change</code> event to
-            update the task's visual state. Use the toggle's state to show/hide completed tasks.
+          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
+          <textarea class="code-editor" id="ex2-code" placeholder="// Create a modal and open it
+var modal = new SITModal({
+
+});
+modal.open();">var modal = new SITModal({
+
+});
+modal.open();</textarea>
+
+          <div class="button-row">
+            <button class="sit-btn sit-btn-primary" id="ex2-run">Run Code</button>
+            <button class="sit-btn sit-btn-secondary" id="ex2-reset">Reset</button>
+          </div>
+
+          <div class="success-banner" id="ex2-success">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Exercise Complete! Your modal appeared.
+          </div>
+          <div class="error-banner" id="ex2-error"></div>
+
+          <div class="hint-section">
+            <button class="hint-toggle" id="ex2-hint-toggle">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+              </svg>
+              Need a hint?
+            </button>
+            <div class="hint-content" id="ex2-hint">
+              <p><strong>Solution:</strong></p>
+              <pre>var modal = new SITModal({
+  title: 'Welcome!',
+  body: 'This is my first modal.'
+});
+modal.open();</pre>
+            </div>
           </div>
         </div>
       </html>
     </panel>
   </row>
 
-  <!-- Exercise 3: Notification Center -->
+  <!-- Exercise 3: Build Interactive Components -->
   <row>
     <panel>
       <html>
         <div class="exercise-container">
           <div class="exercise-header">
             <div class="exercise-number">3</div>
-            <h3 class="exercise-title">Build a Notification Center</h3>
+            <h3 class="exercise-title">Create an Interactive Confirmation</h3>
           </div>
 
           <p class="exercise-description">
-            Create a notification center that displays different types of alerts. Users should be able
-            to trigger notifications, mark them as read, and clear all notifications.
+            Combine what you've learned! Use the built-in confirm dialog to ask the user a question, then show a different toast based on their answer.
           </p>
 
-          <div class="exercise-objectives">
-            <h4>Learning Objectives</h4>
-            <ul>
-              <li>Use different toast notification types</li>
-              <li>Work with badges to show counts</li>
-              <li>Handle multiple button actions</li>
-              <li>Manage a list of notifications</li>
-            </ul>
+          <div class="exercise-task">
+            <h4>Your Task</h4>
+            <p>Use <code>SITModal.confirm()</code> to ask "Do you like this toolkit?" - If they click OK, show a success toast saying "Thanks!". If they cancel, show an info toast saying "No problem!"</p>
           </div>
 
-          <div class="exercise-workspace">
-            <div class="exercise-workspace-label">Your Workspace</div>
-
-            <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-              <button class="sit-btn sit-btn-success" id="ex3-notify-success">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm3.78-9.72a.75.75 0 0 0-1.06-1.06L7 8.94 5.28 7.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06 0l4.25-4.25z"/>
-                </svg>
-                Success Alert
-              </button>
-              <button class="sit-btn sit-btn-primary" id="ex3-notify-info">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                </svg>
-                Info Alert
-              </button>
-              <button class="sit-btn sit-btn-warning" id="ex3-notify-warning" style="background: var(--sit-warning); border-color: var(--sit-warning);">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                </svg>
-                Warning Alert
-              </button>
-              <button class="sit-btn sit-btn-danger" id="ex3-notify-error">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
-                </svg>
-                Error Alert
-              </button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 12px; background: var(--sit-bg-dark); border-radius: var(--sit-radius-md);">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-weight: 500;">Notifications</span>
-                <span class="sit-badge sit-badge-primary" id="ex3-unread-badge">0 unread</span>
-              </div>
-              <div style="display: flex; gap: 8px;">
-                <button class="sit-btn sit-btn-sm sit-btn-secondary" id="ex3-mark-read">Mark All Read</button>
-                <button class="sit-btn sit-btn-sm sit-btn-ghost" id="ex3-clear-all">Clear All</button>
-              </div>
-            </div>
-
-            <div id="ex3-notification-list">
-              <div style="text-align: center; padding: 32px; color: var(--sit-text-muted);">
-                No notifications yet. Click the buttons above to generate some!
-              </div>
-            </div>
+          <div class="reference-box">
+            <h5>Quick Reference</h5>
+            <p>Confirm dialog: <code>SITModal.confirm(message, onConfirm, onCancel)</code></p>
+            <p>The <code>onConfirm</code> function runs when user clicks OK</p>
+            <p>The <code>onCancel</code> function runs when user clicks Cancel</p>
           </div>
 
-          <button class="hint-btn" id="ex3-hint-btn">Need a hint?</button>
-          <div class="hint-text" id="ex3-hint">
-            <strong>Hint:</strong> Each notification button should call the corresponding
-            <code>SIT.toast</code> method AND add an item to the notification list. Track
-            unread notifications in an array and update the badge count when items are
-            added or marked as read.
+          <label style="font-size: 0.875rem; color: var(--sit-text-secondary); display: block; margin-bottom: 8px;">Your Code:</label>
+          <textarea class="code-editor" id="ex3-code" placeholder="// Use SITModal.confirm() with callbacks
+SITModal.confirm(
+  'Your question here',
+  function() {
+    // This runs on OK
+  },
+  function() {
+    // This runs on Cancel
+  }
+);">SITModal.confirm(
+  '',
+  function() {
+
+  },
+  function() {
+
+  }
+);</textarea>
+
+          <div class="button-row">
+            <button class="sit-btn sit-btn-primary" id="ex3-run">Run Code</button>
+            <button class="sit-btn sit-btn-secondary" id="ex3-reset">Reset</button>
+          </div>
+
+          <div class="success-banner" id="ex3-success">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Exercise Complete! You handled both confirm and cancel actions.
+          </div>
+          <div class="error-banner" id="ex3-error"></div>
+
+          <div class="hint-section">
+            <button class="hint-toggle" id="ex3-hint-toggle">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
+              </svg>
+              Need a hint?
+            </button>
+            <div class="hint-content" id="ex3-hint">
+              <p><strong>Solution:</strong></p>
+              <pre>SITModal.confirm(
+  'Do you like this toolkit?',
+  function() {
+    toast.show({
+      type: 'success',
+      title: 'Thanks!',
+      message: 'We appreciate your feedback!'
+    });
+  },
+  function() {
+    toast.show({
+      type: 'info',
+      title: 'No problem!',
+      message: 'Thanks for trying it out.'
+    });
+  }
+);</pre>
+            </div>
+          </div>
+        </div>
+      </html>
+    </panel>
+  </row>
+
+  <!-- Completion Section -->
+  <row>
+    <panel>
+      <html>
+        <div style="text-align: center; padding: 40px; background: var(--sit-bg-medium); border-radius: var(--sit-radius-lg); border: 1px solid var(--sit-border-color);">
+          <div id="completion-status">
+            <h3 style="margin-bottom: 12px;">Track Your Progress</h3>
+            <p style="color: var(--sit-text-secondary); margin-bottom: 20px;">Complete all 3 exercises to master the basics!</p>
+            <div style="display: flex; justify-content: center; gap: 16px;">
+              <div id="progress-ex1" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">1</div>
+              <div id="progress-ex2" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">2</div>
+              <div id="progress-ex3" class="progress-badge" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--sit-border-color); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">3</div>
+            </div>
+          </div>
+          <div id="all-complete" style="display: none;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+            <h3 style="margin-bottom: 12px; color: var(--sit-success);">All Exercises Complete!</h3>
+            <p style="color: var(--sit-text-secondary);">You've mastered the basics of the Splunk Innovators Toolkit. Check out the Code Examples page for more advanced patterns!</p>
           </div>
         </div>
 
@@ -390,333 +455,177 @@
             'jquery',
             'underscore',
             '/static/app/splunk-innovators-toolkit/components/sit-modal.js',
-            '/static/app/splunk-innovators-toolkit/components/sit-toast.js',
-            '/static/app/splunk-innovators-toolkit/components/sit-checkbox.js',
-            '/static/app/splunk-innovators-toolkit/components/sit-toggle.js'
-          ], function($, _, SITModal, SITToast, SITCheckbox, SITToggle) {
+            '/static/app/splunk-innovators-toolkit/components/sit-toast.js'
+          ], function($, _, SITModal, SITToast) {
 
             // Initialize toast system
             var toast = new SITToast();
 
+            // Track completed exercises
+            var completed = { ex1: false, ex2: false, ex3: false };
+
+            function updateProgress() {
+              Object.keys(completed).forEach(function(key) {
+                var num = key.replace('ex', '');
+                var $badge = $('#progress-ex' + num);
+                if (completed[key]) {
+                  $badge.css({
+                    'border-color': 'var(--sit-success)',
+                    'background': 'var(--sit-success)',
+                    'color': 'white'
+                  }).html('<svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>');
+                }
+              });
+
+              // Check if all complete
+              if (completed.ex1 &amp;&amp; completed.ex2 &amp;&amp; completed.ex3) {
+                $('#completion-status').hide();
+                $('#all-complete').show();
+              }
+            }
+
+            // Helper to safely execute user code
+            function executeCode(code, context) {
+              try {
+                var fn = new Function('toast', 'SITModal', '_', '$', code);
+                fn(toast, SITModal, _, $);
+                return { success: true };
+              } catch (e) {
+                return { success: false, error: e.message };
+              }
+            }
+
+            // Default code for each exercise
+            var defaults = {
+              ex1: 'toast.show({\n  \n});',
+              ex2: 'var modal = new SITModal({\n  \n});\nmodal.open();',
+              ex3: "SITModal.confirm(\n  '',\n  function() {\n    \n  },\n  function() {\n    \n  }\n);"
+            };
+
             // ========================================
-            // Exercise 1: Feedback Form
+            // Exercise 1: Toast Notification
             // ========================================
 
-            $('#ex1-hint-btn').on('click', function() {
+            $('#ex1-hint-toggle').on('click', function() {
               $('#ex1-hint').toggleClass('show');
             });
 
-            $('#ex1-submit').on('click', function() {
-              var name = $('#ex1-name').val().trim();
-              var email = $('#ex1-email').val().trim();
-              var message = $('#ex1-message').val().trim();
-
-              // Validate fields
-              if (!name || !email || !message) {
-                toast.show({
-                  type: 'warning',
-                  title: 'Missing Fields',
-                  message: 'Please fill in all fields before submitting.'
-                });
-                return;
-              }
-
-              // Validate email format
-              if (!email.includes('@')) {
-                toast.show({
-                  type: 'error',
-                  title: 'Invalid Email',
-                  message: 'Please enter a valid email address.'
-                });
-                return;
-              }
-
-              // Success!
-              toast.show({
-                type: 'success',
-                title: 'Feedback Submitted!',
-                message: 'Thank you, ' + name + '! Your feedback has been received.'
-              });
-
-              $('#ex1-success').addClass('show');
-              $('#exercise1-form').hide();
-            });
-
-            $('#ex1-clear').on('click', function() {
-              $('#ex1-name').val('');
-              $('#ex1-email').val('');
-              $('#ex1-message').val('');
+            $('#ex1-reset').on('click', function() {
+              $('#ex1-code').val(defaults.ex1);
               $('#ex1-success').removeClass('show');
-              $('#exercise1-form').show();
-
-              toast.show({
-                type: 'info',
-                title: 'Form Cleared',
-                message: 'All fields have been reset.'
-              });
+              $('#ex1-error').removeClass('show');
             });
 
-            // ========================================
-            // Exercise 2: Task Tracker
-            // ========================================
+            $('#ex1-run').on('click', function() {
+              var code = $('#ex1-code').val();
+              $('#ex1-error').removeClass('show');
 
-            var tasks = [];
-            var showCompleted = true;
+              var result = executeCode(code, { toast: toast });
 
-            // Create the toggle for showing/hiding completed tasks
-            var showCompletedToggle = new SITToggle({
-              name: 'show-completed',
-              label: 'Show Completed Tasks',
-              checked: true,
-              onChange: function(checked) {
-                showCompleted = checked;
-                renderTasks();
+              if (!result.success) {
+                $('#ex1-error').text('Error: ' + result.error).addClass('show');
+                return;
+              }
+
+              // Check if code contains success type
+              if (code.includes("'success'") || code.includes('"success"')) {
+                completed.ex1 = true;
+                $('#ex1-success').addClass('show');
+                updateProgress();
               }
             });
-            showCompletedToggle.render();
-            $('#ex2-toggle-container').append(showCompletedToggle.$el);
 
-            $('#ex2-hint-btn').on('click', function() {
+            // ========================================
+            // Exercise 2: Modal Dialog
+            // ========================================
+
+            $('#ex2-hint-toggle').on('click', function() {
               $('#ex2-hint').toggleClass('show');
             });
 
-            function updateTaskCount() {
-              var total = tasks.length;
-              var completed = tasks.filter(function(t) { return t.completed; }).length;
-              $('#ex2-task-count').text(total + ' tasks (' + completed + ' completed)');
-            }
+            $('#ex2-reset').on('click', function() {
+              $('#ex2-code').val(defaults.ex2);
+              $('#ex2-success').removeClass('show');
+              $('#ex2-error').removeClass('show');
+            });
 
-            function renderTasks() {
-              var $list = $('#ex2-task-list');
-              $list.empty();
+            $('#ex2-run').on('click', function() {
+              var code = $('#ex2-code').val();
+              $('#ex2-error').removeClass('show');
 
-              var visibleTasks = tasks.filter(function(t) {
-                return showCompleted || !t.completed;
-              });
+              var result = executeCode(code, { SITModal: SITModal });
 
-              if (visibleTasks.length === 0) {
-                if (tasks.length === 0) {
-                  $list.html('<div style="text-align: center; padding: 32px; color: var(--sit-text-muted);">No tasks yet. Add your first task above!</div>');
-                } else {
-                  $list.html('<div style="text-align: center; padding: 32px; color: var(--sit-text-muted);">All tasks are completed! Toggle "Show Completed" to see them.</div>');
+              if (!result.success) {
+                $('#ex2-error').text('Error: ' + result.error).addClass('show');
+                return;
+              }
+
+              // Check if a modal was opened (look for .sit-modal-backdrop)
+              setTimeout(function() {
+                if ($('.sit-modal-backdrop').length > 0) {
+                  completed.ex2 = true;
+                  $('#ex2-success').addClass('show');
+                  updateProgress();
                 }
-                return;
-              }
-
-              visibleTasks.forEach(function(task, index) {
-                var $item = $('<div class="task-item' + (task.completed ? ' completed' : '') + '"></div>');
-
-                var checkbox = new SITCheckbox({
-                  name: 'task-' + task.id,
-                  value: task.id,
-                  label: '',
-                  checked: task.completed,
-                  onChange: function(checked) {
-                    task.completed = checked;
-                    renderTasks();
-                    updateTaskCount();
-
-                    if (checked) {
-                      toast.show({
-                        type: 'success',
-                        title: 'Task Completed!',
-                        message: '"' + task.text + '" marked as done.'
-                      });
-                    }
-                  }
-                });
-                checkbox.render();
-
-                $item.append(checkbox.$el);
-                $item.append('<span class="task-text">' + _.escape(task.text) + '</span>');
-
-                var $deleteBtn = $('<button class="sit-btn sit-btn-sm sit-btn-ghost" style="color: var(--sit-error);">Delete</button>');
-                $deleteBtn.on('click', function() {
-                  tasks = tasks.filter(function(t) { return t.id !== task.id; });
-                  renderTasks();
-                  updateTaskCount();
-                  toast.show({
-                    type: 'info',
-                    title: 'Task Deleted',
-                    message: 'Task removed from the list.'
-                  });
-                });
-                $item.append($deleteBtn);
-
-                $list.append($item);
-              });
-            }
-
-            $('#ex2-add-task').on('click', function() {
-              var text = $('#ex2-task-input').val().trim();
-
-              if (!text) {
-                toast.show({
-                  type: 'warning',
-                  title: 'Empty Task',
-                  message: 'Please enter a task description.'
-                });
-                return;
-              }
-
-              tasks.push({
-                id: Date.now(),
-                text: text,
-                completed: false
-              });
-
-              $('#ex2-task-input').val('');
-              renderTasks();
-              updateTaskCount();
-
-              toast.show({
-                type: 'success',
-                title: 'Task Added',
-                message: '"' + text + '" added to your list.'
-              });
-            });
-
-            $('#ex2-task-input').on('keypress', function(e) {
-              if (e.which === 13) {
-                $('#ex2-add-task').click();
-              }
+              }, 100);
             });
 
             // ========================================
-            // Exercise 3: Notification Center
+            // Exercise 3: Confirm Dialog
             // ========================================
 
-            var notifications = [];
+            var ex3ConfirmClicked = false;
+            var ex3CancelClicked = false;
 
-            $('#ex3-hint-btn').on('click', function() {
+            $('#ex3-hint-toggle').on('click', function() {
               $('#ex3-hint').toggleClass('show');
             });
 
-            function updateUnreadBadge() {
-              var unread = notifications.filter(function(n) { return !n.read; }).length;
-              $('#ex3-unread-badge').text(unread + ' unread');
+            $('#ex3-reset').on('click', function() {
+              $('#ex3-code').val(defaults.ex3);
+              $('#ex3-success').removeClass('show');
+              $('#ex3-error').removeClass('show');
+              ex3ConfirmClicked = false;
+              ex3CancelClicked = false;
+            });
 
-              if (unread > 0) {
-                $('#ex3-unread-badge').removeClass('sit-badge-primary').addClass('sit-badge-error');
-              } else {
-                $('#ex3-unread-badge').removeClass('sit-badge-error').addClass('sit-badge-primary');
-              }
-            }
+            $('#ex3-run').on('click', function() {
+              var code = $('#ex3-code').val();
+              $('#ex3-error').removeClass('show');
 
-            function renderNotifications() {
-              var $list = $('#ex3-notification-list');
-              $list.empty();
+              // Wrap the callbacks to track if they were called
+              var wrappedCode = code.replace(
+                /SITModal\.confirm\s*\(/,
+                'window._ex3ConfirmCalled = false; window._ex3CancelCalled = false; SITModal.confirm('
+              );
 
-              if (notifications.length === 0) {
-                $list.html('<div style="text-align: center; padding: 32px; color: var(--sit-text-muted);">No notifications yet. Click the buttons above to generate some!</div>');
+              var result = executeCode(code, { SITModal: SITModal, toast: toast });
+
+              if (!result.success) {
+                $('#ex3-error').text('Error: ' + result.error).addClass('show');
                 return;
               }
 
-              notifications.forEach(function(notif) {
-                var borderColor = {
-                  success: 'var(--sit-success)',
-                  info: 'var(--sit-info)',
-                  warning: 'var(--sit-warning)',
-                  error: 'var(--sit-error)'
-                }[notif.type] || 'var(--sit-info)';
+              // Check if code has proper structure
+              if (code.includes('SITModal.confirm') &amp;&amp;
+                  code.includes('function()') &amp;&amp;
+                  (code.includes('toast.show') || code.includes('toast.'))) {
 
-                var $item = $('<div class="notification-item' + (notif.read ? '' : ' unread') + '" style="border-left-color: ' + borderColor + ';"></div>');
+                // Wait for user interaction with the confirm dialog
+                var checkComplete = setInterval(function() {
+                  if ($('.sit-modal-backdrop').length === 0) {
+                    clearInterval(checkComplete);
+                    completed.ex3 = true;
+                    $('#ex3-success').addClass('show');
+                    updateProgress();
+                  }
+                }, 500);
 
-                $item.html(
-                  '<div class="notification-content">' +
-                  '  <div class="notification-title">' + _.escape(notif.title) + '</div>' +
-                  '  <div class="notification-time">' + notif.time + '</div>' +
-                  '</div>'
-                );
-
-                if (!notif.read) {
-                  var $readBtn = $('<button class="sit-btn sit-btn-sm sit-btn-ghost">Mark Read</button>');
-                  $readBtn.on('click', function() {
-                    notif.read = true;
-                    renderNotifications();
-                    updateUnreadBadge();
-                  });
-                  $item.append($readBtn);
-                }
-
-                $list.prepend($item);
-              });
-            }
-
-            function addNotification(type, title) {
-              var now = new Date();
-              var time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-              notifications.push({
-                id: Date.now(),
-                type: type,
-                title: title,
-                time: time,
-                read: false
-              });
-
-              renderNotifications();
-              updateUnreadBadge();
-            }
-
-            $('#ex3-notify-success').on('click', function() {
-              toast.show({
-                type: 'success',
-                title: 'Success!',
-                message: 'Operation completed successfully.'
-              });
-              addNotification('success', 'Operation completed successfully');
-            });
-
-            $('#ex3-notify-info').on('click', function() {
-              toast.show({
-                type: 'info',
-                title: 'Information',
-                message: 'Here is some useful information.'
-              });
-              addNotification('info', 'New information available');
-            });
-
-            $('#ex3-notify-warning').on('click', function() {
-              toast.show({
-                type: 'warning',
-                title: 'Warning',
-                message: 'Please review this warning message.'
-              });
-              addNotification('warning', 'Warning: Action required');
-            });
-
-            $('#ex3-notify-error').on('click', function() {
-              toast.show({
-                type: 'error',
-                title: 'Error',
-                message: 'An error has occurred.'
-              });
-              addNotification('error', 'Error: Something went wrong');
-            });
-
-            $('#ex3-mark-read').on('click', function() {
-              notifications.forEach(function(n) { n.read = true; });
-              renderNotifications();
-              updateUnreadBadge();
-
-              toast.show({
-                type: 'info',
-                title: 'All Read',
-                message: 'All notifications marked as read.'
-              });
-            });
-
-            $('#ex3-clear-all').on('click', function() {
-              notifications = [];
-              renderNotifications();
-              updateUnreadBadge();
-
-              toast.show({
-                type: 'info',
-                title: 'Cleared',
-                message: 'All notifications have been cleared.'
-              });
+                // Timeout after 30 seconds
+                setTimeout(function() {
+                  clearInterval(checkComplete);
+                }, 30000);
+              }
             });
 
           });
