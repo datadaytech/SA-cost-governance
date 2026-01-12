@@ -214,13 +214,13 @@
 | eval is_flagged_search = if(flag_status="pending" OR flag_status="notified" OR flag_status="disabled", 1, 0)
 | eval seconds_remaining = if(flag_status="notified" AND isnotnull(remediation_deadline), remediation_deadline - now(), null())
 | eval days_remaining = case(
-    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining > 0,
+    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining &gt; 0,
         floor(seconds_remaining / 86400) . "d " . floor((seconds_remaining % 86400) / 3600) . "h " . floor((seconds_remaining % 3600) / 60) . "m",
-    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining <= 0, "⚠️ EXPIRED",
+    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining &lt;= 0, "EXPIRED",
     flag_status="pending", "⏸ Awaiting",
     flag_status="disabled" OR flag_status="resolved", "N/A",
     1=1, null())
-| eval is_expiring_soon = if(isnotnull(seconds_remaining) AND seconds_remaining >= 0 AND seconds_remaining &lt;= 259200, 1, 0)
+| eval is_expiring_soon = if(isnotnull(seconds_remaining) AND seconds_remaining &gt;= 0 AND seconds_remaining &lt;= 259200, 1, 0)
 | eval is_suspicious_unflagged = if(is_suspicious=1 AND disabled=0 AND (isnull(flag_status) OR flag_status=""), 1, 0)
 | eval is_pending_review = if(flag_status="review", 1, 0)
 | eval view_match = case(
