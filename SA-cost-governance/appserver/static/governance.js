@@ -6508,9 +6508,12 @@ require([
             setTimeout(setupMetricPanelClickHandlers, 2000);
         });
 
-        // Check for deadline-based auto-disable
-        setTimeout(checkAutoDisable, 5000);
-        setInterval(checkAutoDisable, 30000); // Every 30 seconds for testing
+        // Check for deadline-based auto-disable - only on scheduled_search_governance page
+        if (window.location.pathname.indexOf('scheduled_search_governance') !== -1) {
+            console.log("Auto-disable check enabled for scheduled_search_governance page");
+            setTimeout(checkAutoDisable, 5000);
+            setInterval(checkAutoDisable, 30000); // Every 30 seconds for testing
+        }
 
         console.log("SA-cost-governance: Initialization complete");
     });
