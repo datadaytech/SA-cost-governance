@@ -6085,14 +6085,44 @@ require([
     function checkAutoDisable() {
         var now = Math.floor(Date.now() / 1000);
 
-        var updateQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
-            '| outputlookup flagged_searches_lookup';
+        // First, find searches that need to be auto-disabled
+        var findOverdueQuery = '| inputlookup flagged_searches_lookup ' +
+            '| where status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ' ' +
+            '| table search_name, owner, app';
 
-        runSearch(updateQuery, function(err, state) {
-            if (!err) {
-                console.log("Auto-disable check completed");
+        runSearch(findOverdueQuery, function(err, results) {
+            if (err || !results || results.length === 0) {
+                console.log("Auto-disable check: No overdue searches found");
+                return;
             }
+
+            console.log("Auto-disable check: Found " + results.length + " overdue search(es) to disable");
+
+            // Disable via REST API
+            var searchesToDisable = results.map(function(r) {
+                return { name: r.search_name, owner: r.owner, app: r.app };
+            });
+            disableSearchesViaREST(searchesToDisable);
+
+            // Update the lookup to mark as disabled
+            var updateQuery = '| inputlookup flagged_searches_lookup ' +
+                '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
+                '| eval notes = if(status="disabled" AND NOT match(notes, "AUTO-DISABLED"), notes + " | AUTO-DISABLED: Deadline exceeded on " + strftime(now(), "%Y-%m-%d %H:%M"), notes) ' +
+                '| outputlookup flagged_searches_lookup';
+
+            runSearch(updateQuery, function(updateErr) {
+                if (!updateErr) {
+                    console.log("Auto-disable check: Updated lookup for " + results.length + " search(es)");
+                    // Log the actions
+                    results.forEach(function(r) {
+                        logAction('auto-disabled', r.search_name, 'Deadline exceeded - auto-disabled');
+                    });
+                    // Refresh dashboard to show updated statuses
+                    if (typeof refreshDashboard === 'function') {
+                        refreshDashboard();
+                    }
+                }
+            });
         });
     }
 
@@ -6409,7 +6439,7 @@ require([
 
         // Check for deadline-based auto-disable
         setTimeout(checkAutoDisable, 5000);
-        setInterval(checkAutoDisable, 300000); // Every 5 min
+        setInterval(checkAutoDisable, 30000); // Every 30 seconds for testing
 
         console.log("SA-cost-governance: Initialization complete");
     });
