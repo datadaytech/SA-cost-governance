@@ -579,7 +579,7 @@ require([
         } else if (statusLower === 'active') {
             badges.push('<span class="status-badge active" style="' + badgeStyles.active + '">ACTIVE</span>');
         } else if (statusLower === 'review' || statusLower === 'pending review') {
-            badges.push('<span class="status-badge review" style="' + badgeStyles.review + '">📋 PENDING REVIEW</span>');
+            badges.push('<span class="status-badge review" style="' + badgeStyles.review + '">🚩 PENDING REVIEW</span>');
         } else if (statusLower === 'ok' || statusLower === 'resolved') {
             badges.push('<span class="status-badge ok" style="background: #2ecc71; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">OK</span>');
         } else {
@@ -5441,7 +5441,7 @@ require([
                         $row.addClass('row-notified');
                     } else if (isPendingReview) {
                         // PENDING REVIEW - under review
-                        var pendingReviewHtml = '<span class="pending-review-indicator" style="color: #6f42c1; margin-right: 6px; font-size: 12px;" title="Pending review">📋</span>';
+                        var pendingReviewHtml = '<span class="pending-review-indicator" style="color: #6f42c1; margin-right: 6px; font-size: 12px;" title="Pending review">🚩</span>';
                         $searchNameCell.prepend(pendingReviewHtml);
                         $row.addClass('row-pending-review');
                     } else if (isFlagged) {
