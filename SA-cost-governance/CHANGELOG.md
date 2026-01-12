@@ -2,6 +2,15 @@
 
 All notable changes to SA-cost-governance will be documented in this file.
 
+## [v2.1.1] - 2025-01-12
+
+### Added
+- `web.conf` to disable outputlookup confirmation prompts for seamless automation
+
+### Fixed
+- Auto-disable test timeout increased to 2 minutes for reliability
+- Governance automation now executes without user intervention prompts
+
 ## [v2.1.0] - 2025-01-12
 
 ### Added

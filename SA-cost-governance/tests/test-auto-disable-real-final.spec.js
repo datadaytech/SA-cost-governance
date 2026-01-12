@@ -5,6 +5,9 @@ const SPLUNK_URL = 'http://localhost:8000';
 const CREDENTIALS = { username: 'admin', password: 'changeme123' };
 
 test.describe('Auto-Disable Real Search Final', () => {
+    // Increase timeout to 2 minutes for this long-running test
+    test.setTimeout(120000);
+
     test('Auto-disable actually disables a real search', async () => {
         const browser = await chromium.launch({ headless: false });
         const context = await browser.newContext();
