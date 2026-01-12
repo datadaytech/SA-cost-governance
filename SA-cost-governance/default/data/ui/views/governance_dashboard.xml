@@ -72,9 +72,9 @@
     </panel>
     <panel id="flagged_metric_panel">
       <single id="flagged_metric">
-        <title>Flagged (Pending)</title>
+        <title>Flagged</title>
         <search>
-          <query>| inputlookup flagged_searches_lookup | search status="pending" | stats dc(search_name) as count</query>
+          <query>| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | stats dc(search_name) as count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -86,27 +86,27 @@
         <drilldown>
           <set token="metric_popup_type">flagged</set>
           <set token="metric_popup_value">$click.value$</set>
-          <set token="metric_popup_title">Flagged (Pending Notification)</set>
+          <set token="metric_popup_title">Flagged Searches</set>
         </drilldown>
       </single>
     </panel>
-    <panel id="notified_metric_panel">
-      <single id="notified_metric">
-        <title>Notified</title>
+    <panel id="pending_review_metric_panel">
+      <single id="pending_review_metric">
+        <title>Pending Review</title>
         <search>
-          <query>| inputlookup flagged_searches_lookup | search status="notified" | stats dc(search_name) as count</query>
+          <query>| inputlookup flagged_searches_lookup | search status="review" | stats dc(search_name) as count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
         <option name="colorBy">value</option>
         <option name="drilldown">all</option>
-        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeColors">["0x53a051","0x6f42c1","0xdc4e41"]</option>
         <option name="rangeValues">[3,7]</option>
         <option name="useColors">1</option>
         <drilldown>
-          <set token="metric_popup_type">notified</set>
+          <set token="metric_popup_type">pending_review</set>
           <set token="metric_popup_value">$click.value$</set>
-          <set token="metric_popup_title">Notified</set>
+          <set token="metric_popup_title">Pending Review</set>
         </drilldown>
       </single>
     </panel>
@@ -212,12 +212,15 @@
     is_suspicious=1 AND (isnull(flag_status) OR flag_status=""), "Suspicious",
     1=1, "OK")
 | eval is_flagged_search = if(flag_status="pending" OR flag_status="notified" OR flag_status="disabled", 1, 0)
+| eval seconds_remaining = if(flag_status="notified" AND isnotnull(remediation_deadline), remediation_deadline - now(), null())
 | eval days_remaining = case(
-    flag_status="notified" AND isnotnull(remediation_deadline), round((remediation_deadline - now()) / 86400, 1),
+    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining > 0,
+        floor(seconds_remaining / 86400) . "d " . floor((seconds_remaining % 86400) / 3600) . "h " . floor((seconds_remaining % 3600) / 60) . "m",
+    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining <= 0, "⚠️ EXPIRED",
     flag_status="pending", "⏸ Awaiting",
     flag_status="disabled" OR flag_status="resolved", "N/A",
     1=1, null())
-| eval is_expiring_soon = if(isnotnull(days_remaining) AND days_remaining >= 0 AND days_remaining &lt;= 3, 1, 0)
+| eval is_expiring_soon = if(isnotnull(seconds_remaining) AND seconds_remaining >= 0 AND seconds_remaining &lt;= 259200, 1, 0)
 | eval is_suspicious_unflagged = if(is_suspicious=1 AND disabled=0 AND (isnull(flag_status) OR flag_status=""), 1, 0)
 | eval is_pending_review = if(flag_status="review", 1, 0)
 | eval view_match = case(

@@ -3174,16 +3174,15 @@ require([
             if (metricType === 'suspicious') {
                 // For suspicious unflagged searches: show Flag only
                 $('#metricPopupFlag').show();
-            } else if (metricType === 'flagged') {
-                // For flagged (pending) searches: show Notify, Unflag, Disable
+            } else if (metricType === 'flagged' || metricType === 'expiring') {
+                // For flagged searches (pending + notified): show Notify, Extend, Unflag, Disable
                 $('#metricPopupNotify').show();
-                $('#metricPopupUnflag').show();
-                $('#metricPopupDisable').show();
-            } else if (metricType === 'notified' || metricType === 'expiring') {
-                // For notified/expiring searches: show Extend, Unflag, Disable
-                $('#metricPopupUnflag').show();
                 $('#metricPopupExtend').show();
+                $('#metricPopupUnflag').show();
                 $('#metricPopupDisable').show();
+            } else if (metricType === 'pending_review') {
+                // For pending review: show Flag (to re-flag) and remove from review
+                $('#metricPopupFlag').show();
             } else if (metricType === 'disabled') {
                 // For disabled searches: show Unflag/Enable
                 $('#metricPopupUnflag').show();
@@ -4912,9 +4911,9 @@ require([
 
         // If value is 0, show funny message immediately without loading
         if (value === '0' || value === 0 || parseInt(value) === 0) {
-            var colCount = (metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring') ? 7 : 6;
+            var colCount = (metricType === 'flagged' || metricType === 'expiring') ? 7 : 6;
             var funnyMessage = getZeroItemMessage();
-            if (metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring') {
+            if (metricType === 'flagged' || metricType === 'expiring') {
                 $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🚩 Why Flagged</th></tr>');
             } else if (metricType === 'suspicious') {
                 $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">⚠️ Why Suspicious</th></tr>');
@@ -4930,13 +4929,16 @@ require([
             return; // Skip the search since there's nothing to load
         }
 
-        // Add "Time Remaining" column for flagged/notified/expiring metrics ONLY (not suspicious)
-        if (metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring') {
+        // Add "Time Remaining" column for flagged/expiring metrics ONLY
+        if (metricType === 'flagged' || metricType === 'expiring') {
             $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🚩 Why Flagged</th></tr>');
             $('#metricPopupTableBody').html('<tr><td colspan="7" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
         } else if (metricType === 'suspicious') {
             // Suspicious searches show detailed reason - NO days remaining column
             $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">⚠️ Why Suspicious</th></tr>');
+            $('#metricPopupTableBody').html('<tr><td colspan="6" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
+        } else if (metricType === 'pending_review') {
+            $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🔍 Review Notes</th></tr>');
             $('#metricPopupTableBody').html('<tr><td colspan="6" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
         } else if (metricType === 'disabled') {
             $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🔴 Why Disabled</th></tr>');
@@ -4967,12 +4969,12 @@ require([
                 searchQuery = '| inputlookup governance_search_cache.csv | where (disabled="0" OR disabled=0) AND is_suspicious=1 | lookup flagged_searches_lookup search_name as title OUTPUT status as flag_status | lookup ok_searches_lookup search_name as title OUTPUT approved_time as ok_approved | where (isnull(flag_status) OR flag_status="") AND isnull(ok_approved) | eval status_display="suspicious" | table title, owner, app, status_display, suspicious_reason | head 50';
                 break;
             case 'flagged':
-                // Only pending status (not yet notified)
-                searchQuery = '| inputlookup flagged_searches_lookup | search status="pending" | dedup search_name | eval status_display=status | eval deadline_epoch=remediation_deadline | eval days_remaining=round((remediation_deadline - now()) / 86400, 2) | table search_name, search_owner, search_app, status_display, reason, status, deadline_epoch, days_remaining | head 50';
+                // Flagged includes both pending and notified statuses
+                searchQuery = '| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | dedup search_name | eval status_display=status | eval deadline_epoch=remediation_deadline | eval days_remaining=round((remediation_deadline - now()) / 86400, 2) | table search_name, search_owner, search_app, status_display, reason, status, deadline_epoch, days_remaining | head 50';
                 break;
-            case 'notified':
-                // Only notified status (notification sent, awaiting remediation)
-                searchQuery = '| inputlookup flagged_searches_lookup | search status="notified" | dedup search_name | eval status_display=status | eval deadline_epoch=remediation_deadline | eval days_remaining=round((remediation_deadline - now()) / 86400, 2) | table search_name, search_owner, search_app, status_display, reason, status, deadline_epoch, days_remaining | head 50';
+            case 'pending_review':
+                // Pending review - not flagged, can be re-flagged
+                searchQuery = '| inputlookup flagged_searches_lookup | search status="review" | dedup search_name | eval status_display="review" | table search_name, search_owner, search_app, status_display, reason | head 50';
                 break;
             case 'expiring':
                 searchQuery = '| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | dedup search_name | eval days_remaining = round((remediation_deadline - now()) / 86400, 1) | where days_remaining >= 0 AND days_remaining <= 3 | eval status_display="expiring" | table search_name, search_owner, search_app, status_display, days_remaining, reason | head 50';
@@ -5001,7 +5003,7 @@ require([
                     var rows = results.data().rows;
                     var fields = results.data().fields;
 
-                    var colCount = (metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring') ? 7 : 6;
+                    var colCount = (metricType === 'flagged' || metricType === 'expiring') ? 7 : 6;
                     if (!rows || rows.length === 0) {
                         var funnyMessage = getZeroItemMessage();
                         $('#metricPopupTableBody').html('<tr><td colspan="' + colCount + '" style="text-align: center; color: #5cc05c; padding: 30px; font-size: 14px;"><div style="font-size: 36px; margin-bottom: 10px;">🎉</div>' + funnyMessage + '</td></tr>');
@@ -5010,7 +5012,7 @@ require([
 
                     currentMetricSearches = [];
                     var html = '';
-                    var hasFlaggedCountdown = (metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring');
+                    var hasFlaggedCountdown = (metricType === 'flagged' || metricType === 'expiring');
 
                     for (var i = 0; i < rows.length; i++) {
                         var row = rows[i];
@@ -5057,9 +5059,13 @@ require([
                         if (metricType === 'suspicious' && detail && detail !== '-') {
                             html += '<td style="padding: 8px; background: rgba(248, 190, 52, 0.15); border-left: 3px solid #f8be34; color: #f8be34; font-weight: 500;">' +
                                 '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
-                        } else if ((metricType === 'flagged' || metricType === 'notified' || metricType === 'expiring') && detail && detail !== '-') {
+                        } else if ((metricType === 'flagged' || metricType === 'expiring') && detail && detail !== '-') {
                             // For flagged/expiring searches, show reason with orange/red theme
                             html += '<td style="padding: 8px; background: rgba(241, 129, 63, 0.15); border-left: 3px solid #f1813f; color: #f1813f; font-weight: 500;">' +
+                                '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
+                        } else if (metricType === 'pending_review' && detail && detail !== '-') {
+                            // For pending review, show notes with purple theme
+                            html += '<td style="padding: 8px; background: rgba(111, 66, 193, 0.15); border-left: 3px solid #6f42c1; color: #6f42c1; font-weight: 500;">' +
                                 '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
                         } else if (metricType === 'disabled' && detail && detail !== '-') {
                             // For disabled searches, show reason with red/gray theme
