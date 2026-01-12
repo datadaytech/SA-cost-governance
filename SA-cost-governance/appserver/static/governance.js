@@ -400,16 +400,44 @@ require([
                 localePrefix = '';
             }
 
-            // Try to disable via REST API
-            var disableUrl = localePrefix + '/splunkd/__raw/servicesNS/-/-/saved/searches/' +
+            // Use proper owner/app namespace if available
+            var owner = search.owner || '-';
+            var app = search.app || '-';
+
+            // Try to disable via REST API with proper namespace
+            var disableUrl = localePrefix + '/splunkd/__raw/servicesNS/' +
+                encodeURIComponent(owner) + '/' +
+                encodeURIComponent(app) + '/saved/searches/' +
                 encodeURIComponent(search.name) + '/disable';
+
+            console.log('Attempting to disable search at:', disableUrl);
 
             $.ajax({
                 url: disableUrl,
                 type: 'POST',
                 data: { output_mode: 'json' },
+                success: function() {
+                    console.log('REST disable succeeded for ' + search.name);
+                },
                 error: function(xhr) {
-                    console.log('REST disable failed for ' + search.name + ':', xhr.status);
+                    console.log('REST disable failed for ' + search.name + ':', xhr.status, xhr.responseText);
+                    // Try fallback with wildcard namespace
+                    if (owner !== '-' || app !== '-') {
+                        var fallbackUrl = localePrefix + '/splunkd/__raw/servicesNS/-/-/saved/searches/' +
+                            encodeURIComponent(search.name) + '/disable';
+                        console.log('Trying fallback URL:', fallbackUrl);
+                        $.ajax({
+                            url: fallbackUrl,
+                            type: 'POST',
+                            data: { output_mode: 'json' },
+                            success: function() {
+                                console.log('REST disable fallback succeeded for ' + search.name);
+                            },
+                            error: function(xhr2) {
+                                console.log('REST disable fallback also failed for ' + search.name + ':', xhr2.status);
+                            }
+                        });
+                    }
                 }
             });
         });
@@ -6084,45 +6112,88 @@ require([
 
     function checkAutoDisable() {
         var now = Math.floor(Date.now() / 1000);
+        var searchId = 'auto_disable_check_' + Date.now();
+
+        console.log("Auto-disable check: Starting...");
 
         // First, find searches that need to be auto-disabled
         var findOverdueQuery = '| inputlookup flagged_searches_lookup ' +
             '| where status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ' ' +
             '| table search_name, owner, app';
 
-        runSearch(findOverdueQuery, function(err, results) {
-            if (err || !results || results.length === 0) {
-                console.log("Auto-disable check: No overdue searches found");
-                return;
-            }
+        var findSearch = new SearchManager({
+            id: searchId,
+            search: findOverdueQuery,
+            earliest_time: '-1h',
+            latest_time: 'now',
+            autostart: true
+        });
 
-            console.log("Auto-disable check: Found " + results.length + " overdue search(es) to disable");
+        var resultsModel = findSearch.data('results');
+        var dataHandled = false;
 
-            // Disable via REST API
-            var searchesToDisable = results.map(function(r) {
-                return { name: r.search_name, owner: r.owner, app: r.app };
-            });
-            disableSearchesViaREST(searchesToDisable);
+        if (resultsModel) {
+            resultsModel.on('data', function() {
+                // Only process data once
+                if (dataHandled) return;
 
-            // Update the lookup to mark as disabled
-            var updateQuery = '| inputlookup flagged_searches_lookup ' +
-                '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
-                '| eval notes = if(status="disabled" AND NOT match(notes, "AUTO-DISABLED"), notes + " | AUTO-DISABLED: Deadline exceeded on " + strftime(now(), "%Y-%m-%d %H:%M"), notes) ' +
-                '| outputlookup flagged_searches_lookup';
+                var data = resultsModel.data();
+                var rows = data ? data.rows : null;
+                var fields = data ? data.fields : null;
 
-            runSearch(updateQuery, function(updateErr) {
-                if (!updateErr) {
-                    console.log("Auto-disable check: Updated lookup for " + results.length + " search(es)");
-                    // Log the actions
-                    results.forEach(function(r) {
-                        logAction('auto-disabled', r.search_name, 'Deadline exceeded - auto-disabled');
-                    });
-                    // Refresh dashboard to show updated statuses
-                    if (typeof refreshDashboard === 'function') {
-                        refreshDashboard();
-                    }
+                console.log("Auto-disable check: Data event fired, rows:", rows ? rows.length : 0);
+
+                if (!rows || rows.length === 0) {
+                    console.log("Auto-disable check: No overdue searches found");
+                    return;
                 }
+
+                dataHandled = true;
+
+                console.log("Auto-disable check: Found " + rows.length + " overdue search(es) to disable");
+
+                // Map field indices
+                var fieldMap = {};
+                fields.forEach(function(f, i) { fieldMap[f] = i; });
+
+                // Build list of searches to disable
+                var searchesToDisable = rows.map(function(row) {
+                    return {
+                        name: row[fieldMap['search_name']],
+                        owner: row[fieldMap['owner']],
+                        app: row[fieldMap['app']]
+                    };
+                });
+
+                console.log("Auto-disable check: Disabling searches via REST API...");
+
+                // Disable via REST API
+                disableSearchesViaREST(searchesToDisable);
+
+                // Update the lookup to mark as disabled
+                var updateQuery = '| inputlookup flagged_searches_lookup ' +
+                    '| eval status = if(status IN ("pending", "notified") AND remediation_deadline > 0 AND remediation_deadline < ' + now + ', "disabled", status) ' +
+                    '| eval notes = if(status="disabled" AND NOT match(notes, "AUTO-DISABLED"), notes + " | AUTO-DISABLED: Deadline exceeded on " + strftime(now(), "%Y-%m-%d %H:%M"), notes) ' +
+                    '| outputlookup flagged_searches_lookup';
+
+                runSearch(updateQuery, function(updateErr) {
+                    if (!updateErr) {
+                        console.log("Auto-disable check: Updated lookup for " + rows.length + " search(es)");
+                        // Log the actions
+                        searchesToDisable.forEach(function(s) {
+                            logAction('auto-disabled', s.name, 'Deadline exceeded - auto-disabled');
+                        });
+                        // Refresh dashboard to show updated statuses
+                        if (typeof refreshDashboard === 'function') {
+                            refreshDashboard();
+                        }
+                    }
+                });
             });
+        }
+
+        findSearch.on('search:error', function(err) {
+            console.error("Auto-disable check error:", err);
         });
     }
 
