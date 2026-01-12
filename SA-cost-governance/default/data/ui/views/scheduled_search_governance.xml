@@ -73,9 +73,9 @@
     </panel>
     <panel id="flagged_metric_panel">
       <single id="flagged_metric">
-        <title>Flagged (Awaiting Notification)</title>
+        <title>Flagged (Pending)</title>
         <search>
-          <query>| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | stats dc(search_name) as count</query>
+          <query>| inputlookup flagged_searches_lookup | search status="pending" | stats dc(search_name) as count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -87,7 +87,27 @@
         <drilldown>
           <set token="metric_popup_type">flagged</set>
           <set token="metric_popup_value">$click.value$</set>
-          <set token="metric_popup_title">Flagged Searches</set>
+          <set token="metric_popup_title">Flagged (Pending Notification)</set>
+        </drilldown>
+      </single>
+    </panel>
+    <panel id="notified_metric_panel">
+      <single id="notified_metric">
+        <title>Notified</title>
+        <search>
+          <query>| inputlookup flagged_searches_lookup | search status="notified" | stats dc(search_name) as count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[3,7]</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <set token="metric_popup_type">notified</set>
+          <set token="metric_popup_value">$click.value$</set>
+          <set token="metric_popup_title">Notified Searches</set>
         </drilldown>
       </single>
     </panel>

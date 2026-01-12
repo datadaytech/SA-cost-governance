@@ -72,9 +72,9 @@
     </panel>
     <panel id="flagged_metric_panel">
       <single id="flagged_metric">
-        <title>Flagged (Awaiting Notification)</title>
+        <title>Flagged (Pending)</title>
         <search>
-          <query>| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | stats dc(search_name) as count</query>
+          <query>| inputlookup flagged_searches_lookup | search status="pending" | stats dc(search_name) as count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
@@ -86,7 +86,7 @@
         <drilldown>
           <set token="metric_popup_type">flagged</set>
           <set token="metric_popup_value">$click.value$</set>
-          <set token="metric_popup_title">Flagged Searches</set>
+          <set token="metric_popup_title">Flagged (Pending Notification)</set>
         </drilldown>
       </single>
     </panel>
