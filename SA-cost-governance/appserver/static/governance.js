@@ -4914,9 +4914,11 @@ require([
             var colCount = (metricType === 'flagged' || metricType === 'expiring') ? 7 : 6;
             var funnyMessage = getZeroItemMessage();
             if (metricType === 'flagged' || metricType === 'expiring') {
-                $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th>Reason</th></tr>');
+                $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🚩 Why Flagged</th></tr>');
             } else if (metricType === 'suspicious') {
                 $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">⚠️ Why Suspicious</th></tr>');
+            } else if (metricType === 'disabled') {
+                $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🔴 Why Disabled</th></tr>');
             } else {
                 $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th>Details</th></tr>');
             }
@@ -4929,11 +4931,14 @@ require([
 
         // Add "Time Remaining" column for flagged/expiring metrics ONLY (not suspicious)
         if (metricType === 'flagged' || metricType === 'expiring') {
-            $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th>Reason</th></tr>');
+            $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>⏱ Time Remaining</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🚩 Why Flagged</th></tr>');
             $('#metricPopupTableBody').html('<tr><td colspan="7" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
         } else if (metricType === 'suspicious') {
             // Suspicious searches show detailed reason - NO days remaining column
             $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">⚠️ Why Suspicious</th></tr>');
+            $('#metricPopupTableBody').html('<tr><td colspan="6" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
+        } else if (metricType === 'disabled') {
+            $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th style="min-width: 200px;">🔴 Why Disabled</th></tr>');
             $('#metricPopupTableBody').html('<tr><td colspan="6" style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading...</td></tr>');
         } else {
             $('#metricPopupTableHead').html('<tr><th>#</th><th>Search Name</th><th>Status</th><th>Owner</th><th>App</th><th>Details</th></tr>');
@@ -5044,6 +5049,14 @@ require([
                         // For suspicious searches, show the reason prominently with highlighting
                         if (metricType === 'suspicious' && detail && detail !== '-') {
                             html += '<td style="padding: 8px; background: rgba(248, 190, 52, 0.15); border-left: 3px solid #f8be34; color: #f8be34; font-weight: 500;">' +
+                                '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
+                        } else if ((metricType === 'flagged' || metricType === 'expiring') && detail && detail !== '-') {
+                            // For flagged/expiring searches, show reason with orange/red theme
+                            html += '<td style="padding: 8px; background: rgba(241, 129, 63, 0.15); border-left: 3px solid #f1813f; color: #f1813f; font-weight: 500;">' +
+                                '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
+                        } else if (metricType === 'disabled' && detail && detail !== '-') {
+                            // For disabled searches, show reason with red/gray theme
+                            html += '<td style="padding: 8px; background: rgba(220, 78, 65, 0.15); border-left: 3px solid #dc4e41; color: #dc4e41; font-weight: 500;">' +
                                 '<span title="' + escapeHtml(detail) + '">' + escapeHtml(detail) + '</span></td>';
                         } else {
                             html += '<td style="padding: 8px; color: rgba(255,255,255,0.6);">' + escapeHtml(detail || '-') + '</td>';
