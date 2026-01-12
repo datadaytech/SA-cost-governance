@@ -2,6 +2,24 @@
 
 All notable changes to SA-cost-governance will be documented in this file.
 
+## [v2.1.0] - 2025-01-12
+
+### Added
+- **Pending Review panel** - Separate panel for searches in review status (can be re-flagged)
+- Smart time remaining display format:
+  - Shows "2d 5h 30m" for 1+ days remaining
+  - Shows "19h 46m" for < 1 day remaining
+  - Shows "45m" for < 1 hour remaining
+
+### Changed
+- Flagged panel now includes both pending and notified statuses
+- Improved query performance by replacing modulo operator with subtraction
+
+### Fixed
+- XML syntax errors in dashboard queries (escaped > and <= operators)
+- Dashboard "All Scheduled Searches" panel no longer hangs on load
+- Days Left column no longer shows "0d" prefix when less than 1 day remaining
+
 ## [v2.0.9] - 2025-01-12
 
 ### Added
