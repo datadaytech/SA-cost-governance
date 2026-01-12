@@ -217,9 +217,13 @@
 | eval hours_num = floor((seconds_remaining - (days_num * 86400)) / 3600)
 | eval mins_num = floor((seconds_remaining - (days_num * 86400) - (hours_num * 3600)) / 60)
 | eval days_remaining = case(
-    flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining &gt; 0,
-        days_num . "d " . hours_num . "h " . mins_num . "m",
     flag_status="notified" AND isnotnull(seconds_remaining) AND seconds_remaining &lt;= 0, "EXPIRED",
+    flag_status="notified" AND isnotnull(seconds_remaining) AND days_num &gt;= 1,
+        days_num . "d " . hours_num . "h " . mins_num . "m",
+    flag_status="notified" AND isnotnull(seconds_remaining) AND days_num = 0 AND hours_num &gt;= 1,
+        hours_num . "h " . mins_num . "m",
+    flag_status="notified" AND isnotnull(seconds_remaining) AND days_num = 0 AND hours_num = 0,
+        mins_num . "m",
     flag_status="pending", "Awaiting",
     flag_status="disabled" OR flag_status="resolved", "N/A",
     1=1, null())
