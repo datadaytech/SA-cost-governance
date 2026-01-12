@@ -2077,7 +2077,6 @@ require([
                     '<button class="btn" style="background: #f0ad4e; border-color: #f0ad4e; color: #000; display: none;" id="metricPopupFlag">🚩 Flag Selected</button>' +
                     '<button class="btn" style="background: #007bff; border-color: #007bff; color: white; display: none;" id="metricPopupNotify">📧 Notify User</button>' +
                     '<button class="btn" style="background: #17a2b8; border-color: #17a2b8; color: white; display: none;" id="metricPopupUnflag">✓ Unflag Selected</button>' +
-                    '<button class="btn" style="background: #dc4e41; border-color: #dc4e41; color: white;" id="metricPopupDisable">Disable Selected</button>' +
                     '<button class="btn btn-primary" id="metricPopupExtend">Extend Deadline</button>' +
                     '<button class="btn btn-secondary" id="metricPopupClose">Close</button>' +
                 '</div>' +
