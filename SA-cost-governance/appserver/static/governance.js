@@ -190,7 +190,7 @@ require([
             '3. Contact the governance team if you need assistance\n\n' +
             'EDIT SEARCH:\n' +
             editUrl + '\n\n' +
-            'If no action is taken, this search may be automatically disabled.\n\n' +
+            'If no action is taken by the deadline, this search will be disabled.\n\n' +
             'Best regards,\n' +
             'Splunk Governance Team';
 
@@ -389,116 +389,6 @@ require([
     }
 
     // Note: Countdown timer cleanup is now handled by closeMetricPopup() function
-
-    // Check for overdue searches and prompt for auto-disable
-    function checkAndPromptOverdueSearches() {
-        var overdueSearches = [];
-        var now = Date.now() / 1000;
-
-        currentMetricSearches.forEach(function(search, idx) {
-            // Only check pending/notified searches with valid deadlines
-            if (search.deadlineEpoch &&
-                (search.status === 'pending' || search.status === 'notified') &&
-                search.deadlineEpoch < now) {
-                overdueSearches.push({
-                    name: search.name,
-                    owner: search.owner,
-                    app: search.app,
-                    daysOverdue: Math.abs(Math.floor((search.deadlineEpoch - now) / 86400)),
-                    index: idx
-                });
-            }
-        });
-
-        if (overdueSearches.length > 0) {
-            // Show a notification banner about overdue searches
-            var banner = '<div id="overdueBanner" style="' +
-                'background: linear-gradient(135deg, rgba(220, 78, 65, 0.9) 0%, rgba(180, 50, 40, 0.9) 100%);' +
-                'padding: 12px 16px;' +
-                'margin-bottom: 10px;' +
-                'border-radius: 8px;' +
-                'display: flex;' +
-                'align-items: center;' +
-                'justify-content: space-between;' +
-                'animation: countdownPulse 1.5s ease-in-out infinite;' +
-                '">' +
-                '<div style="display: flex; align-items: center; gap: 10px;">' +
-                '<span style="font-size: 20px;">⚠️</span>' +
-                '<span style="font-weight: 600; color: white;">' +
-                overdueSearches.length + ' search(es) have exceeded their remediation deadline!' +
-                '</span>' +
-                '</div>' +
-                '<button id="autoDisableOverdue" style="' +
-                'background: white;' +
-                'color: #dc4e41;' +
-                'border: none;' +
-                'padding: 8px 16px;' +
-                'border-radius: 6px;' +
-                'font-weight: 600;' +
-                'cursor: pointer;' +
-                'transition: all 0.2s;' +
-                '">Auto-Disable All</button>' +
-                '</div>';
-
-            // Insert banner at top of popup body
-            var $popupBody = $('#metricPopupOverlay .metric-popup-body');
-            $popupBody.prepend(banner);
-
-            // Handle auto-disable button click
-            $('#autoDisableOverdue').on('click', function() {
-                autoDisableOverdueSearches(overdueSearches);
-            });
-        }
-    }
-
-    // Auto-disable all overdue searches
-    function autoDisableOverdueSearches(overdueSearches) {
-        if (!confirm('This will disable ' + overdueSearches.length + ' overdue search(es):\n\n' +
-            overdueSearches.map(function(s) {
-                return '• ' + s.name + ' (' + s.daysOverdue + ' days overdue)';
-            }).join('\n') +
-            '\n\nContinue?')) {
-            return;
-        }
-
-        showToast('Auto-disabling ' + overdueSearches.length + ' overdue search(es)...');
-
-        // Build conditions for all overdue searches
-        var conditions = overdueSearches.map(function(s) {
-            return 'search_name="' + escapeString(s.name) + '"';
-        }).join(' OR ');
-
-        // Update lookup to disable these searches
-        var disableQuery = '| inputlookup flagged_searches_lookup ' +
-            '| eval status = if(' + conditions + ', "disabled", status)' +
-            '| eval notes = if(' + conditions + ', notes + " | AUTO-DISABLED: Deadline exceeded on " + strftime(now(), "%Y-%m-%d %H:%M"), notes)' +
-            '| outputlookup flagged_searches_lookup';
-
-        runSearch(disableQuery, function(err) {
-            if (err) {
-                alert('Error auto-disabling searches: ' + err);
-                return;
-            }
-
-            // Log each disabled search
-            overdueSearches.forEach(function(s) {
-                logAction('auto-disabled', s.name, 'Deadline exceeded by ' + s.daysOverdue + ' days - auto-disabled by ' + currentUser);
-            });
-
-            // Also disable the actual saved searches via REST API
-            disableSearchesViaREST(overdueSearches);
-
-            // Remove the banner
-            $('#overdueBanner').fadeOut(300, function() { $(this).remove(); });
-
-            showToast('✓ ' + overdueSearches.length + ' overdue search(es) have been auto-disabled');
-
-            // Refresh the popup data
-            setTimeout(function() {
-                refreshDashboard();
-            }, 1000);
-        });
-    }
 
     // Disable searches via REST API (helper function)
     function disableSearchesViaREST(searches) {
@@ -1396,7 +1286,7 @@ require([
             "- " + reason + "\n\n" +
             "Search Details:\n" +
             "- Name: " + searchName + "\n\n" +
-            "You have " + CONFIG.remediationDays + " days to remediate this issue. If no action is taken by the deadline, the search will be automatically disabled.\n\n" +
+            "You have " + CONFIG.remediationDays + " days to remediate this issue. If no action is taken by the deadline, the search will be disabled.\n\n" +
             "Please review and optimize your search, or contact the governance team if you believe this is in error.\n\n" +
             "Best regards,\n" +
             "Splunk Governance Team"
@@ -1436,7 +1326,7 @@ require([
                 "Hello " + owner + ",\n\n" +
                 "This is a reminder that the following scheduled search" + (owners[owner].length > 1 ? "es have" : " has") + " been flagged and require remediation:\n\n" +
                 "- " + owners[owner].join("\n- ") + "\n\n" +
-                "If no action is taken before the deadline, " + (owners[owner].length > 1 ? "these searches" : "this search") + " will be automatically disabled.\n\n" +
+                "If no action is taken before the deadline, " + (owners[owner].length > 1 ? "these searches" : "this search") + " will be disabled.\n\n" +
                 "Please address " + (owners[owner].length > 1 ? "these issues" : "this issue") + " as soon as possible.\n\n" +
                 "Best regards,\n" +
                 "Splunk Governance Team"
@@ -4717,8 +4607,7 @@ require([
                         html += '<td style="padding: 12px; color: ' + daysColor + '; font-weight: 600;">' + daysLeft + '</td>';
                         html += '<td style="padding: 12px; text-align: center;">';
                         html += '<button class="flagged-action-btn" data-action="remind" data-search="' + escapeHtml(searchName) + '" data-owner="' + escapeHtml(owner) + '" style="background: #006d9c; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px;">Remind</button>';
-                        html += '<button class="flagged-action-btn" data-action="unflag" data-search="' + escapeHtml(searchName) + '" data-owner="' + escapeHtml(owner) + '" style="background: #53a051; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 4px; font-size: 11px;">Unflag</button>';
-                        html += '<button class="flagged-action-btn" data-action="disable" data-search="' + escapeHtml(searchName) + '" data-owner="' + escapeHtml(owner) + '" style="background: #dc4e41; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;">Disable</button>';
+                        html += '<button class="flagged-action-btn" data-action="unflag" data-search="' + escapeHtml(searchName) + '" data-owner="' + escapeHtml(owner) + '" style="background: #53a051; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;">Unflag</button>';
                         html += '</td>';
                         html += '</tr>';
                     }
@@ -4769,11 +4658,6 @@ require([
                     refreshDashboard();
                 }
             });
-        } else if (action === 'disable') {
-            setToken("manage_search", searchName);
-            setToken("manage_owner", owner);
-            $('#flaggedModalOverlay').removeClass('active');
-            window.disableNow();
         }
     });
 
@@ -6195,7 +6079,7 @@ require([
     }, true);
 
     // ============================================
-    // AUTO-DISABLE CHECK
+    // AUTO-DISABLE CHECK (Deadline-based)
     // ============================================
 
     function checkAutoDisable() {
@@ -6523,7 +6407,7 @@ require([
             setTimeout(setupMetricPanelClickHandlers, 2000);
         });
 
-        // Check auto-disable
+        // Check for deadline-based auto-disable
         setTimeout(checkAutoDisable, 5000);
         setInterval(checkAutoDisable, 300000); // Every 5 min
 
