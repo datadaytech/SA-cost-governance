@@ -75,7 +75,7 @@
       <single id="flagged_metric">
         <title>Flagged (Awaiting Notification)</title>
         <search>
-          <query>| inputlookup flagged_searches_lookup | search status="pending" | stats dc(search_name) as count</query>
+          <query>| inputlookup flagged_searches_lookup | search status="pending" OR status="notified" | stats dc(search_name) as count</query>
           <earliest>-24h@h</earliest>
           <latest>now</latest>
         </search>
